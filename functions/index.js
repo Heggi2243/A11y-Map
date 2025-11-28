@@ -1,5 +1,6 @@
-// functions/index.js - 完整版本
-
+/** Firebase Function
+ * 適用需要呼叫第三方API等比較複雜的邏輯業務
+ */
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 
@@ -13,6 +14,10 @@ const allowedUIDs = [
 
 /**
  * Cloud Function 1: 阻擋未授權用戶
+ * 1. 用戶註冊 -> 檢查 UID 是否在白名單(目前只允許兩位管理員)
+ * 2.1 是管理員 -> 保留帳號
+ * 2.2 不是管理員 -> 立即刪除帳號
+ * (雖然還沒開放會員註冊，但就先擺起來放著)
  */
 exports.blockUnauthorizedUsers = functions.auth.user().onCreate(async (user) => {
     const uid = user.uid;
@@ -37,8 +42,10 @@ exports.blockUnauthorizedUsers = functions.auth.user().onCreate(async (user) => 
 });
 
 /**
- * Cloud Function 2: 監聽新 Session 並發送 Email 通知
- * 當 login_sessions 集合有新文件時觸發
+ * Cloud Function 2: 監聽新 login_sessions 並發送 Email 通知
+ * 偵測到新裝置登入時,發送 Email 通知
+ * 觸發時機:
+ * 每當 login_sessions 集合有新文件時執行
  */
 exports.sendNewDeviceEmail = functions.firestore
     .document('login_sessions/{sessionId}')
@@ -68,26 +75,26 @@ exports.sendNewDeviceEmail = functions.firestore
         const timezone = deviceInfo.timezone || '未知';
 
         const emailContent = `
-親愛的管理員，
+            親愛的管理員，
 
-系統偵測到您的帳號有新裝置登入：
+            系統偵測到您的帳號有新裝置登入：
 
-📧 帳號: ${email}
-🕐 登入時間: ${loginTime ? loginTime.toDate().toLocaleString('zh-TW') : '未知'}
-🌐 IP 位址: ${ipAddress}
-💻 作業系統: ${platform}
-🌍 時區: ${timezone}
-🔍 瀏覽器資訊: ${userAgent}
+            📧 帳號: ${email}
+            🕐 登入時間: ${loginTime ? loginTime.toDate().toLocaleString('zh-TW') : '未知'}
+            🌐 IP 位址: ${ipAddress}
+            💻 作業系統: ${platform}
+            🌍 時區: ${timezone}
+            🔍 瀏覽器資訊: ${userAgent}
 
-如果這不是您本人的操作，請立即：
-1. 變更您的密碼
-2. 檢查 Session 管理後台: https://your-domain.web.app/sessions.html
-3. 聯繫其他管理員
+            如果這不是您本人的操作，請立即：
+            1. 變更您的密碼
+            2. 檢查 Session 管理後台
+            3. 聯繫其他管理員
 
-此為系統自動通知，請勿直接回覆此郵件。
+            此為系統自動通知，請勿直接回覆此郵件。
 
----
-無障礙店家管理系統
+            ---
+            無障礙店家管理系統
         `;
 
         // 發送 Email（使用 Firebase Extensions 的 Trigger Email 或自訂方式）

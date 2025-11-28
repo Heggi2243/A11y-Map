@@ -363,81 +363,120 @@
       });
 
       // ==================== 新增 4/4：Session 記錄函式 ==================== //
+      /**
+     * 生成裝置指紋
+     * 結合多種瀏覽器特徵來產生唯一識別碼
+     */
+    function generateDeviceFingerprint() {
+      // 收集裝置特徵
+      const features = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + 'x' + screen.height,
+        screen.colorDepth,
+        new Date().getTimezoneOffset(),
+        navigator.hardwareConcurrency || 0,
+        navigator.platform
+      ];
       
+      // 簡單的 Hash 函數
+      const fingerprint = features.join('|');
+      let hash = 0;
+      for (let i = 0; i < fingerprint.length; i++) {
+        const char = fingerprint.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // 轉換為 32 位元整數
+      }
+      
+      return Math.abs(hash).toString(36); // 轉為 36 進位字串
+    }
+
       /**
        * 記錄登入 Session
        * 包含：日期時間、管理員(email+UID)、IP、裝置(OS)、瀏覽器、狀態
        */
       async function recordLoginSession(user) {
-        try {
-          // 1. 更新上次未結束的 session 為 browser_closed
-          const previousSessions = await db.collection('login_sessions')
-            .where('uid', '==', user.uid)
-            .where('status', '==', 'active')
-            .get();
-          
-          if (!previousSessions.empty) {
-            const batch = db.batch();
-            previousSessions.forEach(doc => {
-              batch.update(doc.ref, { 
-                status: 'browser_closed',
-                endTime: firebase.firestore.FieldValue.serverTimestamp()
-              });
+      try {
+        // 1. 生成裝置指紋
+        const deviceFingerprint = generateDeviceFingerprint();
+        console.log('🔐 裝置指紋:', deviceFingerprint);
+        
+        // 2. 更新上次未結束的 session 為 browser_closed
+        const previousSessions = await db.collection('login_sessions')
+          .where('uid', '==', user.uid)
+          .where('status', '==', 'active')
+          .get();
+        
+        if (!previousSessions.empty) {
+          const batch = db.batch();
+          previousSessions.forEach(doc => {
+            batch.update(doc.ref, { 
+              status: 'browser_closed',
+              endTime: firebase.firestore.FieldValue.serverTimestamp()
             });
-            await batch.commit();
-          }
-          
-          // 2. 解析瀏覽器和作業系統
-          const ua = navigator.userAgent;
-          let browser = 'Unknown';
-          let os = 'Unknown';
-          
-          if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
-          else if (ua.includes('Firefox')) browser = 'Firefox';
-          else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
-          else if (ua.includes('Edg')) browser = 'Edge';
-          
-          if (ua.includes('Windows')) os = 'Windows';
-          else if (ua.includes('Mac')) os = 'macOS';
-          else if (ua.includes('Linux')) os = 'Linux';
-          else if (ua.includes('Android')) os = 'Android';
-          else if (ua.includes('iOS')) os = 'iOS';
-
-          // 3. 取得 IP 位址
-          let ipAddress = 'unknown';
-          try {
-            const ipResponse = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipResponse.json();
-            ipAddress = ipData.ip;
-                console.log('🔄 開始記錄 Session...');
-              console.log('User UID:', user.uid);
-              console.log('User Email:', user.email);
-          } catch (e) {
-            console.warn('無法取得 IP');
-          }
-
-          // 4. 建立 session 記錄
-          const sessionData = {
-            uid: user.uid,
-            email: user.email,
-            loginTime: firebase.firestore.FieldValue.serverTimestamp(),
-            ipAddress: ipAddress,
-            browser: browser,
-            os: os,
-            status: 'active',
-            endTime: null
-          };
-
-          const sessionRef = await db.collection('login_sessions').add(sessionData);
-          sessionStorage.setItem('currentSessionId', sessionRef.id);
-          
-          console.log('✅ Session 記錄成功:', sessionRef.id);
-          
-        } catch (error) {
-          console.error('❌ Session 記錄失敗:', error);
+          });
+          await batch.commit();
         }
+        
+        // 3. 解析瀏覽器和作業系統
+        const ua = navigator.userAgent;
+        let browser = 'Unknown';
+        let os = 'Unknown';
+        
+        if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+        else if (ua.includes('Firefox')) browser = 'Firefox';
+        else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+        else if (ua.includes('Edg')) browser = 'Edge';
+        
+        if (ua.includes('Windows')) os = 'Windows';
+        else if (ua.includes('Mac')) os = 'macOS';
+        else if (ua.includes('Linux')) os = 'Linux';
+        else if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iOS')) os = 'iOS';
+
+        // 4. 取得 IP 位址
+        let ipAddress = 'unknown';
+        try {
+          const ipResponse = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipResponse.json();
+          ipAddress = ipData.ip;
+          console.log('🔄 開始記錄 Session...');
+          console.log('User UID:', user.uid);
+          console.log('User Email:', user.email);
+          console.log('IP Address:', ipAddress);
+        } catch (e) {
+          console.warn('無法取得 IP');
+        }
+
+        // 5. 建立 session 記錄 (加入 deviceFingerprint)
+        const sessionData = {
+          uid: user.uid,
+          email: user.email,
+          loginTime: firebase.firestore.FieldValue.serverTimestamp(),
+          ipAddress: ipAddress,
+          browser: browser,
+          os: os,
+          deviceFingerprint: deviceFingerprint,  // ← 加入這個
+          deviceInfo: {  // ← 額外的裝置資訊
+            platform: navigator.platform,
+            userAgent: navigator.userAgent,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            screenResolution: `${screen.width}x${screen.height}`
+          },
+          status: 'active',
+          endTime: null
+        };
+
+        const sessionRef = await db.collection('login_sessions').add(sessionData);
+        sessionStorage.setItem('currentSessionId', sessionRef.id);
+        
+        console.log('✅ Session 記錄成功:', sessionRef.id);
+        
+      } catch (error) {
+        console.error('❌ Session 記錄失敗:', error);
       }
-      
+    }
+          
       // ================================================================== //
     </script>
   </body>

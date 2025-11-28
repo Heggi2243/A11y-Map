@@ -187,6 +187,7 @@
                         <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">IP位置</th>
                         <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">作業系統</th>
                         <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">瀏覽器</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">裝置</th>
                         <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">狀態</th>
                         </tr>
                     </thead>
@@ -207,14 +208,8 @@
     <div class="w-full h-16 md:h-24 flex flex-wrap overflow-hidden border-t-4 border-blue-900 mt-auto checkerboard-pattern"></div>
 
     <script>
-        // Firebase 配置
 
-        firebase.initializeApp(FIREBASE_CONFIG);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-
-
-        // DOM 元素
+        // 這個要擺在前面不然畫面會卡住
         const adminSelect = document.getElementById('admin-select');
         const timeSelect = document.getElementById('time-select');
         const filterBtn = document.getElementById('filter-btn');
@@ -222,6 +217,11 @@
         const logoutBtn = document.getElementById('logout-btn');
         const currentUserEmail = document.getElementById('current-user-email');
         const loadingOverlay = document.getElementById('loading-overlay');
+
+        // Firebase 配置
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
         // ========== 新增：身份驗證檢查 ========== //
         auth.onAuthStateChanged(async (user) => {
@@ -303,6 +303,7 @@
                 `;
                 return;
             }
+            console.log(sessions[0].deviceFingerprint);
 
             sessions.forEach(session => {
                 const row = document.createElement('tr');
@@ -328,6 +329,9 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         ${session.browser || 'Unknown'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        ${session.deviceFingerprint || 'Unknown'}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold uppercase tracking-wide border-2 ${getStatusColorClass(session.status)}">
