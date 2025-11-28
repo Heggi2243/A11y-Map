@@ -1,0 +1,7 @@
+node_modules/
+*.local
+
+model/
+
+# Firebase 配置（敏感資訊）
+firebase-config.js

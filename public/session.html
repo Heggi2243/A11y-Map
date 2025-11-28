@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Session Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="/js/firebase-config.js"></script>
+
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- <link rel="stylesheet" href="./css/generic.css"> -->
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Space Mono', monospace;
+        background-color: #fdfbf7;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+      }
+      h1, h2, h3, .retro-font {
+        font-family: 'Archivo Black', sans-serif;
+      }
+      ::-webkit-scrollbar {
+        width: 12px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #fdfbf7;
+        border-left: 2px solid #1e3a8a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1e3a8a;
+        border: 2px solid #fdfbf7;
+      }
+      
+      .checkerboard-pattern {
+        background-image: 
+            linear-gradient(45deg, #1e3a8a 25%, transparent 25%), 
+            linear-gradient(-45deg, #1e3a8a 25%, transparent 25%), 
+            linear-gradient(45deg, transparent 75%, #1e3a8a 75%), 
+            linear-gradient(-45deg, transparent 75%, #1e3a8a 75%);
+        background-size: 40px 40px;
+        background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+        opacity: 0.9;
+      }
+      
+      /* Loading Overlay */
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(253, 251, 247, 0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      
+      #loading-overlay.hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body class="flex flex-col min-h-screen relative overflow-x-hidden text-blue-900">
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+      <div class="text-center">
+        <div class="text-4xl font-bold text-blue-900 mb-4 retro-font">VERIFYING...</div>
+        <div class="text-sm text-gray-600">Checking authentication</div>
+      </div>
+    </div>
+    
+    <!-- Sunburst Decoration -->
+    <div class="absolute top-0 right-0 w-32 h-32 md:w-48 md:h-48 overflow-hidden pointer-events-none z-0">
+      <svg
+        viewBox="0 0 100 100"
+        class="w-full h-full text-amber-400 animate-[spin_10s_linear_infinite]"
+        fill="currentColor"
+      >
+        <path d="M50 50 L50 0 L60 0 Z" />
+        <path d="M50 50 L75 6.7 L82 14 Z" />
+        <path d="M50 50 L93.3 25 L97 35 Z" />
+        <path d="M50 50 L100 50 L100 60 Z" />
+        <path d="M50 50 L93.3 75 L86 82 Z" />
+        <path d="M50 50 L75 93.3 L65 97 Z" />
+        <path d="M50 50 L50 100 L40 100 Z" />
+        <path d="M50 50 L25 93.3 L18 86 Z" />
+        <path d="M50 50 L6.7 75 L3 65 Z" />
+        <path d="M50 50 L0 50 L0 40 Z" />
+        <path d="M50 50 L6.7 25 L14 18 Z" />
+        <path d="M50 50 L25 6.7 L35 3 Z" />
+      </svg>
+    </div>
+
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-12 z-10 relative max-w-6xl">
+        
+        <!-- Header Section -->
+        <header class="mb-12 relative flex justify-between items-start">
+          <div>
+            <h1 class="text-5xl md:text-8xl text-blue-900 leading-[0.85] tracking-tighter retro-font drop-shadow-sm">
+              LOGIN<br />
+              SESSION<br />
+              MANAGER
+            </h1>
+            <div class="w-24 h-4 bg-amber-400 mt-4"></div>
+          </div>
+          
+          <!-- Logout Button -->
+          <button id="logout-btn" class="bg-red-600 text-white border-2 border-red-800 py-2 px-4 font-bold uppercase tracking-wide hover:bg-red-700 transition-all shadow-[4px_4px_0px_0px_rgba(153,27,27,1)] active:translate-y-1">
+            LOGOUT
+          </button>
+        </header>
+
+        <!-- User Info -->
+        <div id="user-info" class="mb-6 bg-blue-100 border-2 border-blue-900 p-4 text-sm font-bold">
+          登入帳號: <span id="current-user-email" class="text-blue-600"></span>
+        </div>
+
+        <!-- Filter Section -->
+        <section class="mb-12 border-4 border-blue-900 bg-white p-6 md:p-8 shadow-[8px_8px_0px_0px_rgba(30,58,138,1)] relative z-10">
+            <h2 class="text-2xl md:text-3xl text-blue-900 mb-6 retro-font tracking-tight">
+                FILTER_LOGS
+            </h2>
+            
+            <div class="flex flex-col md:flex-row gap-6 items-end">
+                <!-- Admin Select -->
+                <div class="w-full md:w-1/3">
+                    <label class="block text-blue-900 font-bold mb-2 uppercase tracking-wider text-sm">
+                        人員
+                    </label>
+                    <div class="relative">
+                        <select id="admin-select" class="block appearance-none w-full bg-blue-50 border-2 border-blue-900 text-blue-900 py-3 px-4 pr-8 rounded-none focus:outline-none focus:bg-white font-bold cursor-pointer hover:bg-blue-100 transition-colors">
+                            <option value="">ALL ADMINISTRATORS</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-900">
+                            <svg class="fill-current h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time Range Select -->
+                <div class="w-full md:w-1/3">
+                    <label class="block text-blue-900 font-bold mb-2 uppercase tracking-wider text-sm">
+                        時間範圍
+                    </label>
+                    <div class="relative">
+                        <select id="time-select" class="block appearance-none w-full bg-blue-50 border-2 border-blue-900 text-blue-900 py-3 px-4 pr-8 rounded-none focus:outline-none focus:bg-white font-bold cursor-pointer hover:bg-blue-100 transition-colors">
+                            <option value="TODAY">TODAY</option>
+                            <option value="ONE_WEEK" selected>LAST 7 DAYS</option>
+                            <option value="ONE_MONTH">LAST 30 DAYS</option>
+                            <option value="THREE_MONTHS">LAST 3 MONTHS</option>
+                            <option value="ALL">ALL TIME</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-900">
+                            <svg class="fill-current h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="w-full md:w-1/3">
+                    <button id="filter-btn" class="w-full bg-blue-900 text-amber-400 border-2 border-blue-900 py-3 px-6 font-bold uppercase tracking-widest hover:bg-blue-800 hover:text-white transition-all active:translate-y-1 shadow-[4px_4px_0px_0px_rgba(251,191,36,1)]">
+                        篩選查詢
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Table Section -->
+        <section class="mb-12 border-4 border-blue-900 bg-white shadow-[8px_8px_0px_0px_rgba(30,58,138,1)] relative z-10 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left">
+                    <thead class="bg-blue-900 text-amber-400">
+                        <tr>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">時間</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">管理員</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">IP位置</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">作業系統</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">瀏覽器</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody id="session-table-body" class="divide-y-2 divide-blue-100">
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                Loading sessions...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Checkerboard Footer -->
+    <div class="w-full h-16 md:h-24 flex flex-wrap overflow-hidden border-t-4 border-blue-900 mt-auto checkerboard-pattern"></div>
+
+    <script>
+        // Firebase 配置
+
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+
+        // DOM 元素
+        const adminSelect = document.getElementById('admin-select');
+        const timeSelect = document.getElementById('time-select');
+        const filterBtn = document.getElementById('filter-btn');
+        const tableBody = document.getElementById('session-table-body');
+        const logoutBtn = document.getElementById('logout-btn');
+        const currentUserEmail = document.getElementById('current-user-email');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        // ========== 新增：身份驗證檢查 ========== //
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                // 未登入，重導向到登入頁
+                console.log('未登入，重導向到登入頁');
+                window.location.href = '/loginPage.html';
+                return;
+            }
+
+            // 已登入，顯示使用者資訊
+            console.log('已登入:', user.email);
+            currentUserEmail.textContent = user.email;
+            
+            // 隱藏 loading overlay
+            loadingOverlay.classList.add('hidden');
+            
+            // 載入資料
+            await loadAdminList();
+            await applyFilters();
+        });
+
+        // 登出功能
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                // 更新當前 session 狀態為 logged_out
+                const sessionId = sessionStorage.getItem('currentSessionId');
+                if (sessionId) {
+                    await db.collection('login_sessions').doc(sessionId).update({
+                        status: 'logged_out',
+                        endTime: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    sessionStorage.removeItem('currentSessionId');
+                }
+                
+                await auth.signOut();
+                console.log('登出成功');
+                window.location.href = '/loginPage.html';
+            } catch (error) {
+                console.error('登出失敗:', error);
+                alert('登出失敗: ' + error.message);
+            }
+        });
+        // ======================================= //
+
+        // 狀態樣式
+        function getStatusColorClass(status) {
+            switch (status) {
+                case 'active': return 'bg-green-100 text-green-800 border-green-800';
+                case 'logged_out': return 'bg-blue-100 text-blue-800 border-blue-800';
+                case 'expired': return 'bg-orange-100 text-orange-800 border-orange-800';
+                case 'browser_closed': return 'bg-gray-100 text-gray-600 border-gray-500';
+                default: return 'bg-gray-100 text-gray-800 border-gray-800';
+            }
+        }
+
+        // 狀態顯示文字
+        function getStatusDisplayText(status) {
+            switch (status) {
+                case 'active': return '線上';
+                case 'logged_out': return '已登出';
+                case 'expired': return '連線過期';
+                case 'browser_closed': return '已關閉瀏覽器';
+                default: return 'UNKNOWN';
+            }
+        }
+
+        // 渲染表格
+        function renderTable(sessions) {
+            tableBody.innerHTML = '';
+            
+            if (sessions.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500 italic">
+                            No sessions found for the selected criteria.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            sessions.forEach(session => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-blue-50 transition-colors';
+                
+                // 處理時間顯示
+                const loginTime = session.loginTime ? 
+                    new Date(session.loginTime.seconds * 1000).toLocaleString('zh-TW') : 
+                    'Unknown';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-blue-900 font-bold">
+                        ${loginTime}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-bold">
+                        ${session.email || 'Unknown'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">
+                        ${session.ipAddress || 'Unknown'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        ${session.os || 'Unknown'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        ${session.browser || 'Unknown'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold uppercase tracking-wide border-2 ${getStatusColorClass(session.status)}">
+                            ${getStatusDisplayText(session.status)}
+                        </span>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 載入管理員列表
+        async function loadAdminList() {
+            try {
+                const snapshot = await db.collection('login_sessions')
+                    .orderBy('loginTime', 'desc')
+                    .limit(100)
+                    .get();
+
+                const emails = new Set();
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.email) emails.add(data.email);
+                });
+
+                adminSelect.innerHTML = '<option value="">ALL ADMINISTRATORS</option>';
+                emails.forEach(email => {
+                    const option = document.createElement('option');
+                    option.value = email;
+                    option.textContent = email;
+                    adminSelect.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('載入管理員列表失敗:', error);
+            }
+        }
+
+        // 套用篩選
+        async function applyFilters() {
+            filterBtn.textContent = 'Loading...';
+            filterBtn.disabled = true;
+
+            try {
+                const selectedEmail = adminSelect.value;
+                const timeRange = timeSelect.value;
+                
+                let query = db.collection('login_sessions').orderBy('loginTime', 'desc');
+
+                // 管理員篩選
+                if (selectedEmail) {
+                    query = query.where('email', '==', selectedEmail);
+                }
+
+                // 時間範圍篩選
+                if (timeRange !== 'ALL') {
+                    const now = new Date();
+                    let startDate;
+
+                    switch (timeRange) {
+                        case 'TODAY':
+                            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                            break;
+                        case 'ONE_WEEK':
+                            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            break;
+                        case 'ONE_MONTH':
+                            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                            break;
+                        case 'THREE_MONTHS':
+                            startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                            break;
+                    }
+
+                    if (startDate) {
+                        query = query.where('loginTime', '>=', startDate);
+                    }
+                }
+
+                // 限制最多 50 筆
+                query = query.limit(50);
+
+                const snapshot = await query.get();
+                const sessions = [];
+                
+                snapshot.forEach(doc => {
+                    sessions.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                console.log(`找到 ${sessions.length} 筆 Session 記錄`);
+                renderTable(sessions);
+
+            } catch (error) {
+                console.error('載入 Sessions 失敗:', error);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-red-600">
+                            Error loading sessions: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                filterBtn.textContent = '篩選查詢';
+                filterBtn.disabled = false;
+            }
+        }
+
+        // 事件監聽
+        filterBtn.addEventListener('click', applyFilters);
+    </script>
+  </body>
+</html>

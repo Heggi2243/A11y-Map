@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>店家資料上傳 - 暢行無阻</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200..900&display=swap" rel="stylesheet">
+    <!-- tailwindCSS -->
+    <link rel="stylesheet" href="/output.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  
+  <body class="min-h-screen flex flex-col font-body text-gray-800"> 
+    <!-- Header -->
+    <header class="pt-12 pb-8 px-4 relative overflow-hidden">
+      <!-- Sunburst Decoration -->
+      <div id="Sunburst"></div>
+      <div class="max-w-3xl mx-auto relative z-10">
+        <h1 class="text-6xl sm:text-7xl font-display font-black text-retro-blue tracking-tighter leading-[0.85] mb-4">
+          UPLOAD<br/>PAGE
+        </h1>
+        <div class="w-24 h-2 bg-retro-yellow mb-6"></div>
+        <h2 id="form-title" class="text-2xl sm:text-3xl font-bold text-gray-700 tracking-wide">
+          <!-- JS填入 -->
+        </h2>
+        <p class="text-gray-500 mt-2 font-medium">協助建立更友善的無障礙環境數據</p>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow px-4 pb-12">
+      <div id="form-container" class="max-w-3xl mx-auto space-y-12">
+        <!-- JS動態生成 -->
+      </div>
+    </main>
+
+    <!-- footer -->
+    <div id="footer-container"></div>
+    
+    <script type="module">
+      import { createFooter, createSun } from '/layout/front.js';
+      document.getElementById('footer-container').innerHTML = createFooter();
+      document.getElementById('Sunburst').innerHTML = createSun();
+
+      
+    </script>
+
+    <!-- Controller -->
+    <script type="module" src="js/uploadPage.js"></script>
+  </body>
+</html>

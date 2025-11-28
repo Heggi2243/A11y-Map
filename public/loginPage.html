@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <!-- ========== 新增 1/4：Firestore SDK ========== -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- ============================================= -->
+     <script src="/js/firebase-config.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200..900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'retro-blue': '#1e40af', 
+              'retro-blue-light': '#3b5cc9',
+              'retro-yellow': '#fcc44e', 
+              'paper': '#f8f8f5',
+            },
+            fontFamily: {
+              display: ['Chiron GoRound TC', 'Fredoka', 'cursive'],
+              body: ['Chiron GoRound TC', 'Quicksand', 'sans-serif'],
+              footer: ['Chiron GoRound TC', 'sans-serif']
+            },
+            backgroundImage: {
+              'noise': "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZjhmOGY1Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNjY2MiIG9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')",
+            },
+            keyframes: {
+              shimmer: {
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(100%)' }
+              }
+            },
+            animation: {
+              shimmer: 'shimmer 2s linear infinite',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Custom Paper Texture Effect */
+      .bg-paper {
+        background-color: #fdfbf7;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+      }
+      
+      .font-titan { font-family: 'Titan One', cursive; }
+      .font-fredoka { font-family: 'Fredoka', sans-serif; }
+
+      /* Animations */
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .animate-spin-slow {
+        animation: spin 20s linear infinite;
+      }
+
+      @keyframes wiggle {
+        0%, 100% { transform: rotate(-3deg) scaleX(-1); }
+        50% { transform: rotate(3deg) scaleX(-1); }
+      }
+      .animate-wiggle {
+        animation: wiggle 2s ease-in-out infinite;
+      }
+
+      @keyframes bounce-slow {
+        0%, 100% { transform: translateY(0) rotate(-12deg); }
+        50% { transform: translateY(-10px) rotate(-12deg); }
+      }
+      .animate-bounce-slow {
+        animation: bounce-slow 3s ease-in-out infinite;
+      }
+
+
+      /* Error Message */
+      .error-message, .info-message {
+        padding: 12px;
+        border-radius: 8px;
+        font-family: 'Fredoka', sans-serif;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+      .error-message {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 2px solid #dc2626;
+        display: none;
+      }
+      .info-message {
+        background: #dbeafe;
+        color: #1e40af;
+        border: 2px solid #3b82f6;
+        display: none;
+      }
+      .error-message.show, .info-message.show {
+        display: block;
+      }
+      .hidden { display: none !important; }
+    </style>
+  </head>
+  <body class="min-h-screen w-full bg-paper relative overflow-hidden flex flex-col items-center justify-center selection:bg-[#fcd34d] selection:text-[#1e40af]">
+
+    <!-- Background Sunburst -->
+    <div class="absolute -right-20 top-20 w-64 h-64 md:w-96 md:h-96 text-amber-300 opacity-80 z-0 pointer-events-none">
+      <svg viewBox="0 0 200 200" class="w-full h-full animate-spin-slow" style="color: #fcd34d;">
+        <defs>
+          <mask id="circle-mask">
+            <circle cx="100" cy="100" r="100" fill="white" />
+          </mask>
+        </defs>
+        <g mask="url(#circle-mask)">
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(0 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(30 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(60 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(90 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(120 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(150 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(180 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(210 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(240 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(270 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(300 100 100)" />
+          <path d="M100 100 L200 80 L200 120 Z" fill="currentColor" transform="rotate(330 100 100)" />
+        </g>
+      </svg>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <main class="relative z-10 w-full max-w-2xl flex flex-col items-center mb-20">
+      
+      <!-- Cat Decoration -->
+      <div class="text-center mb-2 relative">
+           <!-- Cat Decoration -->
+          <div class="absolute -top-16 -left-4 md:-left-16 w-36 h-36 md:w-42 md:h-42 z-20 animate-bounce-slow">
+          <img 
+            src="img/cat.png" 
+            id="knarfCat"
+            alt="Black Cat Decoration" 
+            class="w-full h-full object-contain drop-shadow-xl transform -rotate-12"
+          />
+        </div>
+
+        <h1 class="font-titan text-[#1e40af] text-[5rem] md:text-[8rem] leading-[0.8] tracking-tighter drop-shadow-sm select-none">
+          <div>LOGIN</div>
+          <div>PAGE</div>
+        </h1>
+      </div>
+
+      <!-- Form Section -->
+      <form 
+        id="loginForm"
+        class="relative w-full max-w-md flex flex-col gap-6 p-8 z-10"
+      >
+        <!-- Error & Info Message -->
+        <div id="errorMessage" class="error-message"></div>
+
+        <div class="flex flex-col gap-4">
+          <div>
+            <!-- Email Input -->
+            <label for="email" class="sr-only">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="EMAIL"
+              required
+              class="w-full h-14 px-4 rounded-xl border-4 border-[#1e40af] bg-white font-fredoka font-bold text-[#1e40af] text-lg placeholder-[#1e40af]/50 focus:outline-none focus:ring-4 focus:ring-[#fcd34d] transition-all shadow-[4px_4px_0px_0px_#1e40af]"
+            />
+          </div>
+          
+          <div>
+            <label for="password" class="sr-only">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="PASSWORD"
+              required
+              class="w-full h-14 px-4 rounded-xl border-4 border-[#1e40af] bg-white font-fredoka font-bold text-[#1e40af] text-lg placeholder-[#1e40af]/50 focus:outline-none focus:ring-4 focus:ring-[#fcd34d] transition-all shadow-[4px_4px_0px_0px_#1e40af]"
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          id="submitBtn"
+          class="w-full h-16 mt-2 rounded-full bg-[#1e40af] text-white font-titan text-2xl tracking-wide hover:bg-[#1e3a8a] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[4px_4px_0px_0px_#000000] border-2 border-transparent flex items-center justify-center cursor-pointer"
+        >
+          ENTER
+        </button>
+        
+      </form>
+      
+    </main>
+
+    <div class="absolute bottom-0 w-full">
+      <div class="absolute bottom-20 right-10 md:right-1/4 w-48 h-48 md:w-56 md:h-56 z-20 animate-wiggle">
+          <img 
+             src="img/dog.png" 
+             alt="Running Dog Decoration" 
+             class="w-full h-full object-contain drop-shadow-xl transform scale-x-[-1]"
+           />
+      </div>
+
+<footer class="relative mt-auto">
+      <!-- Checkerboard Pattern -->
+      <div class="w-full h-16 sm:h-24 flex flex-col overflow-hidden mt-12 border-t-4 border-retro-blue relative">
+        <!-- Row 1 -->
+        <div class="flex w-full h-1/2 overflow-hidden">
+          <!-- 生成足夠多的方格以覆蓋寬螢幕 -->
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+        </div>
+        
+        <!-- Row 2 (Staggered) -->
+        <div class="flex w-full h-1/2 overflow-hidden">
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-white"></div>
+          <div class="h-full flex-shrink-0 w-12 sm:w-16 bg-retro-blue"></div>
+        </div>
+        
+        <!-- Texture Overlay -->
+        <div class="w-full h-full absolute top-0 left-0 pointer-events-none opacity-20" 
+             style="background-image: url('https://www.transparenttextures.com/patterns/canvas-orange.png')">
+        </div>
+      </div>
+      
+      <!-- Footer Text -->
+      <div class="bg-retro-blue text-white text-center py-4 font-display text-sm tracking-wider">
+        暢行無阻 A11y-Map © 2025
+      </div>
+    </footer>
+    </div>
+
+    <script>
+
+
+      firebase.initializeApp(FIREBASE_CONFIG);
+      
+      // ========== 新增 2/4：初始化 Firestore ========== //
+      const db = firebase.firestore();
+      // ============================================== //
+
+      document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const btn = document.getElementById('submitBtn');
+        const errorMsg = document.getElementById('errorMessage');
+        const originalText = btn.innerText;
+
+        errorMsg.classList.remove('show');
+
+        btn.disabled = true;
+        btn.innerText = 'LOADING...';
+        btn.classList.add('opacity-80', 'cursor-not-allowed');
+
+        try {
+          const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+          
+          console.log('登入成功:', userCredential.user.email);
+          
+          // ========== 新增 3/4：呼叫記錄 Session 函式 ========== //
+          await recordLoginSession(userCredential.user);
+          // ==================================================== //
+          
+          window.location.href = '/session.html';
+          
+        } catch (error) {
+          console.error('登入錯誤:', error);
+          
+          let errorMessage = '登入失敗，請檢查您的帳號密碼';
+          
+          if (error.code === 'auth/user-not-found') {
+            errorMessage = '找不到此帳號';
+          } else if (error.code === 'auth/wrong-password') {
+            errorMessage = '密碼錯誤';
+          } else if (error.code === 'auth/invalid-email') {
+            errorMessage = 'Email 格式不正確';
+          } else if (error.code === 'auth/user-disabled') {
+            errorMessage = '此帳號已被停用';
+          } else if (error.code === 'auth/too-many-requests') {
+            errorMessage = '嘗試次數過多，請稍後再試';
+          }
+          
+          errorMsg.textContent = errorMessage;
+          errorMsg.classList.add('show');
+          
+          btn.disabled = false;
+          btn.innerText = originalText;
+          btn.classList.remove('opacity-80', 'cursor-not-allowed');
+        }
+      });
+
+      // ==================== 新增 4/4：Session 記錄函式 ==================== //
+      
+      /**
+       * 記錄登入 Session
+       * 包含：日期時間、管理員(email+UID)、IP、裝置(OS)、瀏覽器、狀態
+       */
+      async function recordLoginSession(user) {
+        try {
+          // 1. 更新上次未結束的 session 為 browser_closed
+          const previousSessions = await db.collection('login_sessions')
+            .where('uid', '==', user.uid)
+            .where('status', '==', 'active')
+            .get();
+          
+          if (!previousSessions.empty) {
+            const batch = db.batch();
+            previousSessions.forEach(doc => {
+              batch.update(doc.ref, { 
+                status: 'browser_closed',
+                endTime: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            });
+            await batch.commit();
+          }
+          
+          // 2. 解析瀏覽器和作業系統
+          const ua = navigator.userAgent;
+          let browser = 'Unknown';
+          let os = 'Unknown';
+          
+          if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+          else if (ua.includes('Firefox')) browser = 'Firefox';
+          else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+          else if (ua.includes('Edg')) browser = 'Edge';
+          
+          if (ua.includes('Windows')) os = 'Windows';
+          else if (ua.includes('Mac')) os = 'macOS';
+          else if (ua.includes('Linux')) os = 'Linux';
+          else if (ua.includes('Android')) os = 'Android';
+          else if (ua.includes('iOS')) os = 'iOS';
+
+          // 3. 取得 IP 位址
+          let ipAddress = 'unknown';
+          try {
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipResponse.json();
+            ipAddress = ipData.ip;
+                console.log('🔄 開始記錄 Session...');
+              console.log('User UID:', user.uid);
+              console.log('User Email:', user.email);
+          } catch (e) {
+            console.warn('無法取得 IP');
+          }
+
+          // 4. 建立 session 記錄
+          const sessionData = {
+            uid: user.uid,
+            email: user.email,
+            loginTime: firebase.firestore.FieldValue.serverTimestamp(),
+            ipAddress: ipAddress,
+            browser: browser,
+            os: os,
+            status: 'active',
+            endTime: null
+          };
+
+          const sessionRef = await db.collection('login_sessions').add(sessionData);
+          sessionStorage.setItem('currentSessionId', sessionRef.id);
+          
+          console.log('✅ Session 記錄成功:', sessionRef.id);
+          
+        } catch (error) {
+          console.error('❌ Session 記錄失敗:', error);
+        }
+      }
+      
+      // ================================================================== //
+    </script>
+  </body>
+</html>
