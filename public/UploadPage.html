@@ -16,11 +16,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200..900&display=swap" rel="stylesheet">
     <!-- tailwindCSS -->
     <link rel="stylesheet" href="/output.css">
+    <link rel="stylesheet" href="./css/generic.css">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
   </head>
   
-  <body class="min-h-screen flex flex-col font-body text-gray-800"> 
+  <body class="min-h-screen flex flex-col font-body text-gray-800 bg-bodyBg"> 
     <!-- Header -->
     <header class="pt-12 pb-8 px-4 relative overflow-hidden">
       <!-- Sunburst Decoration -->
@@ -54,11 +55,16 @@
     </main>
 
     <!-- footer -->
-    <div id="footer-container"></div>
+    <footer class="w-full mt-auto">
+      <div class="w-full h-16 md:h-24 flex flex-wrap overflow-hidden border-t-4 border-blue-900 checkerboard-pattern"></div>
+      <div class="copyright-bar">
+          暢行無阻 A11y-Map © 2025
+      </div>
+    </footer>
+  
     
     <script type="module">
-      import { createFooter, createSun } from '/layout/front.js';
-      document.getElementById('footer-container').innerHTML = createFooter();
+      import { createSun } from '/layout/backend.js';
       document.getElementById('Sunburst').innerHTML = createSun();
     </script>
 

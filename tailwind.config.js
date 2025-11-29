@@ -12,27 +12,45 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'retro-blue': '#1e40af',
-        'retro-blue-light': '#3b82f6',
+        'retro-blue': '#1e3a8a',
+        'retro-blue-light': '#002fafff',
         'retro-yellow': '#fbbf24',
-        'paper': '#f8f8f5',
+        'retro-paper': '#f8f8f5',
+        'bodyBg': '#fdfbf7',
+        // ✅ 正確:brand 要放在 colors 裡面
+        brand: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          500: '#22c55e',
+          600: '#16a34a',
+          700: '#15803d',
+          800: '#166534',
+          900: '#14532d',
+        },
       },
       fontFamily: {
         display: ['Chiron GoRound TC', 'Fredoka', 'cursive'],
         body: ['Chiron GoRound TC', 'Quicksand', 'sans-serif'],
         footer: ['Chiron GoRound TC', 'sans-serif']
       },
-      backgroundImage: {
-        'noise': "url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZjhmOGY1Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNjY2MiIG9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')",
-      },
       keyframes: {
         shimmer: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(100%)' }
-        }
+        },
+        // ✅ 也把 fadeIn 移到 keyframes 裡面
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      backgroundSize: {
+        'checker': '20px 20px',
       },
       animation: {
         shimmer: 'shimmer 2s linear infinite',
+        fadeIn: 'fadeIn 0.3s ease-out',
       }
     },
   },

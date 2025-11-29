@@ -4,8 +4,11 @@
 
 // 通用小工具
 import { generateDocumentId } from '../utils/generator.js';
-// 表單渲染/檔案上傳
-import { renderForm, formData } from '../config/formSchema.js';
+// 表單配置&渲染
+import { formData } from '../config/formSchema.js';
+import { renderForm } from '../config/formRender.js';
+
+import { validateForm, showValidationErrors } from '../config/formValidator.js';
 
 
 /**
@@ -53,11 +56,20 @@ async function handleSubmit(buttonElement) {
   try {
     console.log('🚀 開始上傳表單資料:', formData);
     
-    // ========== 驗證必填欄位 ========== 
-    if (!formData['到訪日期']) {
-      alert('❌ 請填寫「到訪日期」');
-      return;
+    // // ========== 驗證必填欄位 ========== 
+    // if (!formData['到訪日期']) {
+    //   alert('❌ 請填寫「到訪日期」');
+    //   return;
+    // }
+
+     // ========== 表單驗證 ========== 
+    const validation = validateForm(formData);
+    
+    if (!validation.isValid) {
+      showValidationErrors(validation.errors);
+      return;  // ← 驗證失敗,中斷上傳
     }
+    
     
     // 顯示載入狀態
     buttonElement.disabled = true;
@@ -167,10 +179,9 @@ async function handleSubmit(buttonElement) {
 // ============================================
 
 function init() {
-  // 初始化 Firebase
-  const firebaseReady = initFirebase();
+
   
-  if (!firebaseReady) {
+  if (!initFirebase()) {
     console.error('❌ Firebase 初始化失敗，無法使用上傳功能');
     alert('系統初始化失敗，請重新整理頁面或聯絡管理員。');
     return;

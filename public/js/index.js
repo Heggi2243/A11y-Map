@@ -163,9 +163,10 @@ const MOCK_SHOPS = [
   }
 ];
 
+// 預設距離、輪椅
 const DEFAULT_USER_SETTINGS = {
   wheelchairWidthCm: 70,
-  maxDistanceMin: 30,
+  maxDistanceMin: 10,
   allowedRampStatuses: Object.values(RampStatus),
   allowedStepStatuses: Object.values(StepStatus),
   allowedRestroomStatuses: Object.values(RestroomStatus),
@@ -180,7 +181,6 @@ const DEFAULT_USER_SETTINGS = {
 
 const state = {
   userSettings: { ...DEFAULT_USER_SETTINGS },
-  favorites: JSON.parse(localStorage.getItem('accessMapFavorites') || '[]'),
   searchQuery: '',
   selectedShopId: null,
 };
@@ -267,18 +267,6 @@ function getFilteredShops() {
 }
 
 /**
- * 切換收藏狀態
- */
-function toggleFavorite(id) {
-  if (state.favorites.includes(id)) {
-    state.favorites = state.favorites.filter(fid => fid !== id);
-  } else {
-    state.favorites.push(id);
-  }
-  localStorage.setItem('accessMapFavorites', JSON.stringify(state.favorites));
-}
-
-/**
  * 重置所有篩選條件
  */
 function resetFilters() {
@@ -359,7 +347,6 @@ function renderShopList() {
 
   // 渲染每個商店卡片
   filtered.forEach(shop => {
-    const isFav = state.favorites.includes(shop.id);
     const fitsDoor = shop.specs.doorWidthCm >= state.userSettings.wheelchairWidthCm;
     const restroomOK = !state.userSettings.needsAccessibleRestroom || 
                        shop.specs.restroom === RestroomStatus.ACCESSIBLE;
@@ -382,9 +369,6 @@ function renderShopList() {
       <div class="shop-card group bg-white rounded-3xl border-2 border-retro-blue/10 overflow-hidden flex flex-col md:flex-row relative transition-all duration-300 hover:shadow-xl hover:shadow-retro-blue/10 hover:border-retro-blue/30 hover:-translate-y-1 cursor-pointer ${!isCompatible ? 'opacity-75 grayscale-[0.5]' : ''}" data-id="${shop.id}">
         <div class="h-48 md:h-auto md:w-48 flex-shrink-0 relative overflow-hidden">
           <img src="${shop.imageUrl}" alt="${shop.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-          <button class="fav-btn absolute top-3 right-3 p-2.5 rounded-full bg-white shadow-lg border-2 border-retro-blue/10 hover:border-retro-blue transition-all hover:scale-110 active:scale-95 z-10" data-id="${shop.id}">
-            <i data-lucide="heart" size="20" class="${isFav ? 'fill-red-500 text-red-500' : 'text-slate-300'}" stroke-width="3"></i>
-          </button>
           ${!isCompatible ? '<div class="absolute inset-0 bg-retro-blue/80 flex items-center justify-center pointer-events-none backdrop-blur-sm"><span class="text-white font-display font-bold border-2 border-white px-4 py-2 rounded-xl transform -rotate-3">不符合需求</span></div>' : ''}
         </div>
         <div class="p-5 flex-1 flex flex-col justify-between">
@@ -435,18 +419,8 @@ function renderShopList() {
  */
 function attachShopCardListeners() {
   document.querySelectorAll('.shop-card').forEach(el => {
-    el.addEventListener('click', (e) => {
-      if(!e.target.closest('.fav-btn')) {
-        openDetail(el.dataset.id);
-      }
-    });
-  });
-  
-  document.querySelectorAll('.fav-btn').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleFavorite(el.dataset.id);
-      renderShopList(); // 重新渲染以更新愛心圖標
+    el.addEventListener('click', () => {
+      openDetail(el.dataset.id);
     });
   });
 }
@@ -459,7 +433,6 @@ function openDetail(id) {
   const shop = MOCK_SHOPS.find(s => s.id === id);
   if(!shop) return;
   
-  const isFav = state.favorites.includes(shop.id);
   const warningList = [];
   
   if (shop.specs.doorWidthCm < state.userSettings.wheelchairWidthCm) {
@@ -522,9 +495,6 @@ function openDetail(id) {
       <div class="absolute inset-0 bg-gradient-to-t from-retro-blue/90 via-retro-blue/30 to-transparent"></div>
       <button id="back-btn" class="absolute top-6 left-6 bg-white p-3 rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 transition-all z-20">
         <i data-lucide="arrow-left" size="24" class="text-retro-blue" stroke-width="3"></i>
-      </button>
-      <button id="detail-fav-btn" class="absolute top-6 right-6 bg-white p-3 rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 transition-all z-20">
-        <i data-lucide="heart" size="24" class="${isFav ? 'fill-red-500 text-red-500' : 'text-slate-300'}" stroke-width="3"></i>
       </button>
       <div class="absolute bottom-8 left-6 right-6 text-white">
         <h1 class="text-3xl font-display font-black leading-none mb-2 drop-shadow-md">${shop.name}</h1>
@@ -615,22 +585,17 @@ function openDetail(id) {
   lucide.createIcons();
 
   // 綁定詳情頁事件
-  attachDetailListeners(id);
+  attachDetailListeners();
 }
 
 /**
  * 綁定詳情頁事件監聽器
  */
-function attachDetailListeners(id) {
+function attachDetailListeners() {
   document.getElementById('back-btn').addEventListener('click', () => {
     document.getElementById('detail-view').classList.add('hidden');
     document.getElementById('list-view').classList.remove('hidden');
     renderShopList();
-  });
-  
-  document.getElementById('detail-fav-btn').addEventListener('click', () => {
-    toggleFavorite(id);
-    openDetail(id); // 重新渲染詳情頁
   });
 }
 
@@ -686,7 +651,7 @@ function renderFilterPanel() {
 
     <!-- Distance -->
     <section>
-      <label class="flex items-center text-base font-black text-retro-blue mb-4"><i data-lucide="map-pin" class="mr-2 text-retro-blue/50" size="18"></i> 距離 (步行分鐘)</label>
+      <label class="flex items-center text-base font-black text-retro-blue mb-4"><i data-lucide="map-pin" class="mr-2 text-retro-blue/50" size="18"></i> 距離</label>
       <div class="flex items-center space-x-4 bg-white p-4 rounded-2xl border-2 border-retro-blue/5">
         <span class="text-xs text-retro-blue/40 font-bold">1分</span>
         <input type="range" min="1" max="30" value="${state.userSettings.maxDistanceMin}" id="filter-dist" class="flex-1 h-3 bg-retro-blue/10 rounded-full appearance-none cursor-pointer accent-retro-blue">
@@ -740,7 +705,7 @@ function attachFilterListeners() {
   });
 
   document.getElementById('filter-dist').addEventListener('input', e => {
-    document.getElementById('disp-dist').textContent = e.target.value + ' 分內';
+    document.getElementById('disp-dist').textContent = e.target.value + ' 公尺內';
   });
 }
 

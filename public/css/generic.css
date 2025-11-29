@@ -1,19 +1,4 @@
 
-body {
-    background-color: #fdfbf7;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-}
-
-/* ========footer的方塊裝飾======== */
-.checker-strip {
-    background-color: transparent;
-    background-image: linear-gradient(45deg, #3b82f6 25%, transparent 25%),
-                    linear-gradient(-45deg, #3b82f6 25%, transparent 25%),
-                    linear-gradient(45deg, transparent 75%, #3b82f6 75%),
-                    linear-gradient(-45deg, transparent 75%, #3b82f6 75%);
-    background-size: 20px 20px;
-    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-}
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -23,6 +8,25 @@ body {
     scrollbar-width: none;
 }
 
+body {
+    background-color: #fdfbf7;
+}
+
+/* ========前端footer的方塊裝飾======== */
+.checker-strip {
+    background-color: transparent;
+    background-image: linear-gradient(45deg, #1e3a8a 25%, transparent 25%),
+                    linear-gradient(-45deg, #1e3a8a 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, #1e3a8a 75%),
+                    linear-gradient(-45deg, transparent 75%, #1e3a8a 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+
+
+
+
 /* Hide arrows in number input */
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
@@ -30,12 +34,64 @@ input[type=number]::-webkit-outer-spin-button {
     margin: 0; 
 }
 
-input[type=number] {
-    -moz-appearance: textfield;
+/*網頁軸*/
+::-webkit-scrollbar {
+    width: 12px;
 }
+::-webkit-scrollbar-track {
+    background: #fdfbf7;
+    border-left: 2px solid #1e3a8a;
+}
+::-webkit-scrollbar-thumb {
+    background: #1e3a8a;
+    border: 2px solid #fdfbf7;
+}
+
+/* Loading Overlay */
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(253, 251, 247, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+#loading-overlay.hidden {
+    display: none;
+}
+
 
 /* Utility for JS toggling */
 .hidden { display: none !important; }
+
+/* footer */
+.checkerboard-pattern {
+    background-image: 
+        linear-gradient(45deg, #1e3a8a 25%, transparent 25%), 
+        linear-gradient(-45deg, #1e3a8a 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #1e3a8a 75%), 
+        linear-gradient(-45deg, transparent 75%, #1e3a8a 75%);
+    background-size: 40px 40px;
+    background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+
+}
+
+/* footer下方用於版權文字的藍色條紋 */
+.copyright-bar {
+    background-color: #1e3a8a; 
+    height: 35px; 
+    display: flex;
+    justify-content: center; 
+    align-items: center;   
+    color: white;
+    font-size: 0.875rem; 
+    font-weight: 500;
+}
     
 /* ======================================================================= */
 
