@@ -230,7 +230,7 @@ function renderFootprintsHtml(status, size = 16) {
   for(let i=0; i<count; i++) {
     const margin = i > 0 ? '-ml-1.5' : '';
     html += `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline-block ${margin}">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke="#1e3a8a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline-block ${margin}">
        <g transform="translate(5, 2)">
           <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 2.25-6 6.04-6 .26-.01.52-.01.78 0 2.76.18 4.96 2.57 5.02 5.6.03 2.5-1.03 3.5-1.03 5.62V16h-6.81z" />
        </g>
@@ -397,7 +397,7 @@ function renderShopList() {
                 <div class="mr-2">${footprints}</div> 
                 ${shop.specs.circulation}
               </div>
-              <div class="flex items-center"><i data-lucide="bath" size="16" class="mr-1" stroke-width="2.5"></i> ${shop.specs.restroom === RestroomStatus.ACCESSIBLE ? 'OK' : 'NO'}</div>
+              <div class="flex items-center"><i data-lucide="accessibility" size="16" class="mr-1" stroke="#1e3a8a" stroke-width="2.5"></i> ${shop.specs.restroom === RestroomStatus.ACCESSIBLE ? 'OK' : 'NO'}</div>
             </div>
             <span class="text-retro-blue group-hover:translate-x-1 transition-transform">查看詳情 →</span>
           </div>
@@ -570,7 +570,7 @@ function openDetail(id) {
           </div>
         </section>
         <section>
-          <h2 class="text-2xl font-display font-black text-retro-blue mb-4">使用者評論</h2>
+          <h2 class="text-2xl font-display font-black text-retro-blue mb-4">走訪心得</h2>
           <div class="space-y-4">${reviewsHtml}</div>
         </section>
       </div>
@@ -678,7 +678,7 @@ function renderFilterPanel() {
     <section class="space-y-4">
       ${renderToggle('需要無障礙停車位', 'truck', 'blue', state.userSettings.needsAccessibleParking, 'parking')}
       ${renderToggle('需要電梯 (若非一樓)', 'arrow-up-circle', 'orange', state.userSettings.needsElevator, 'elevator')}
-      ${renderToggle('需要無障礙廁所', 'bath', 'teal', state.userSettings.needsAccessibleRestroom, 'restroomReq')}
+      ${renderToggle('需要無障礙廁所', 'accessibility', 'teal', state.userSettings.needsAccessibleRestroom, 'restroomReq')}
     </section>
   `;
   

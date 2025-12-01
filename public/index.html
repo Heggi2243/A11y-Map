@@ -13,13 +13,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200..900&display=swap" rel="stylesheet">
-    
     <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- Tailwind CSS -->
     <link rel="stylesheet" href="/output.css">
-    <link rel="stylesheet" href="./css/generic.css">
   </head>
 
   <body class="text-slate-900 antialiased font-body min-h-screen flex flex-col">
@@ -64,7 +62,7 @@
         <!-- Main Content -->
         <main class="flex-1 px-4 py-4 space-y-6 pb-24">
           <div class="flex justify-between items-end px-1">
-            <h2 id="recommend-title" class="font-display text-xl text-retro-blue/80">為您推薦</h2>
+            <h2 id="recommend-title" class="font-display font-bold text-retro-blue">為您推薦</h2>
             <div class="flex flex-col items-end text-xs font-bold text-retro-blue/50">
                <span id="status-width">輪椅: 70cm</span>
                <span id="status-dist">距離 &lt; 30分</span>
@@ -81,7 +79,7 @@
   
         <!-- Chevron Button -->
         <div class="absolute left-1/2 -translate-x-1/2 -top-5 z-50">
-            <button id="footer-toggle-btn" class="bg-white border border-blue-100 shadow-md rounded-full w-10 h-10 flex items-center justify-center text-blue-500 hover:bg-blue-50 transition-transform duration-300 focus:outline-none group">
+            <button id="footer-toggle-btn" class="bg-white border border-blue-100 shadow-md rounded-full w-10 h-10 flex items-center justify-center text-retro-blue hover:bg-blue-50 transition-transform duration-300 focus:outline-none group">
                 <svg id="footer-chevron" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="18 15 12 9 6 15"></polyline>
                 </svg>
@@ -94,11 +92,11 @@
             <!-- Expandable Content (Links) -->
             <div id="footer-links" class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
                 <div class="py-8 flex flex-col sm:flex-row items-center justify-center gap-6">
-                    <a href="info.html?view=privacy" target="_blank" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 hover:border-blue-200 transition-all text-sm font-medium group">
+                    <a href="info.html?view=privacy" target="_blank" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-50 text-retro-blue hover:bg-blue-50 hover:retro-blue-light border border-slate-200 hover:border-blue-200 transition-all text-sm font-medium group">
                         <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                         隱私權政策與服務條款
                     </a>
-                    <a href="info.html?view=about" target="_blank" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 hover:border-blue-200 transition-all text-sm font-medium group">
+                    <a href="info.html?view=about" target="_blank" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-50 text-retro-blue hover:bg-blue-50 hover:retro-blue-light border border-slate-200 hover:border-blue-200 transition-all text-sm font-medium group">
                         <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                         關於我們
                     </a>
