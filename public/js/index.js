@@ -609,7 +609,7 @@ function renderDetailItem(label, value, iconOrHtml) {
 
   return `
     <div class="flex items-center p-4 bg-white border-2 border-retro-blue/10 rounded-2xl shadow-sm hover:border-retro-blue/30 transition-colors">
-      <div class="text-retro-blue/40 mr-4 bg-retro-blue/5 p-2 rounded-xl flex items-center justify-center min-w-[2.5rem]">${iconContent}</div>
+      <div class="text-retro-blue mr-4 bg-retro-blue/5 p-2 rounded-xl flex items-center justify-center min-w-[2.5rem]">${iconContent}</div>
       <div>
         <span class="block text-xs font-bold text-retro-blue/40 mb-0.5">${label}</span>
         <span class="block text-base font-bold text-retro-blue">${value}</span>

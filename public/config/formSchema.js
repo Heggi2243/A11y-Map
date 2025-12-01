@@ -35,6 +35,19 @@ export const FORM_SCHEMA = {
       "fields": [
         { "itemId": "store_cover", "label": "店家封面", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
         { "itemId": "店家名稱", "label": "店家名稱", "type": "text_input", "required": true},
+        {
+          "itemId": "類別",
+          "label": "類別",
+          "type": "checkbox_group", 
+          "selectionType": "multiple",   
+          "required": true,
+          "options": [
+            {"value": "餐飲", "label": "餐飲"},
+            {"value": "景點", "label": "景點"},
+            {"value": "購物", "label": "購物"},
+            {"value": "住宿", "label": "住宿"}
+          ]
+        },
         { "itemId": "店家地址", "label": "店家地址", "type": "text_input", "required": true},
         { "itemId": "一人平均消費", "label": "一人平均消費(元)", "type": "number_input", "required": true},
         { "itemId": "到訪日期", "label": "到訪日期", "type": "date_input", "required": true},
@@ -54,7 +67,7 @@ export const FORM_SCHEMA = {
           "label": "動線/便利度評分",
           "type": "select_rating", 
           "required": true,
-          "options": ["5", "4", "3", "2", "1", "0"], 
+          "options": ["5","4.5", "4","3.5", "3", "2", "1", "0"], 
         },
         {
           "itemId": "食物評分",
@@ -98,7 +111,17 @@ export const FORM_SCHEMA = {
             {"value": "微小門檻 (無需翹輪椅)", "label": "微小門檻 (無需翹輪椅)"}
           ]
         },
-        { "itemId": "門寬", "label": "門寬(cm)", "type": "number_input", "placeholder": "請輸入門的寬度 (e.g., 80cm)" },
+        { "itemId": "門寬",
+          "label": "門寬", 
+          "type": "radio_group", 
+          "selectionType": "single",
+          "required": true,
+          "options": [
+            {"value": "寬敞(90cm以上)", "label": "寬敞(90cm以上)"},
+            {"value": "普通(80~90cm)", "label": "普通(80~90cm)"},
+            {"value": "狹窄(70-80cm)", "label": "狹窄(70-80cm)"},
+            ]
+           },
         {
           "itemId": "廁所",
           "label": "廁所",
@@ -109,7 +132,8 @@ export const FORM_SCHEMA = {
             {"value": "一般廁所 (同層)", "label": "一般廁所 (同層)"},
             {"value": "一般廁所 (不同層)", "label": "一般廁所 (不同層)"},
             {"value": "無障礙廁所 (同層)", "label": "無障礙廁所 (同層)"},
-            {"value": "無障礙廁所 (不同層)", "label": "無障礙廁所 (不同層)"}
+            {"value": "無障礙廁所 (不同層)", "label": "無障礙廁所 (不同層)"},
+            {"value": "無提供廁所", "label": "無提供廁所"},
           ],
           "conditionalFields": [
             {
