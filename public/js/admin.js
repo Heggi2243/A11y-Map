@@ -2,6 +2,7 @@
 // session Controller
 // ============================================
 
+import { handleLogout } from '../utils/basic.js';
 
 /**
  * 更新:集中管理變數
@@ -10,7 +11,7 @@ const elements = {
   adminSelect: document.getElementById('admin-select'),
   timeSelect: document.getElementById('time-select'),
   filterBtn: document.getElementById('filter-btn'),
-  tableBody: document.getElementById('session-table-body'),
+  tableBody: document.getElementById('table-body'),
   logoutBtn: document.getElementById('logout-btn'),
   currentUserEmail: document.getElementById('current-user-email'),
   loadingOverlay: document.getElementById('loading-overlay')
@@ -24,7 +25,6 @@ const auth = firebase.auth();
 // 分頁相關變數
 const ITEMS_PER_PAGE = 20;
 let currentPage = 1;
-let totalSessions = [];
 let filteredSessions = [];
 
 // ============================================
@@ -34,11 +34,12 @@ let filteredSessions = [];
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
     console.log('未登入，重導向到登入頁');
+    alert('❌ 您尚未登入，將跳轉到登入頁');
     window.location.href = '/loginPage.html';
     return;
   }
 
-  console.log('已登入:', user.email);
+  console.log('已登入:', user.uid);
   elements.currentUserEmail.textContent = user.email;
   elements.loadingOverlay.classList.add('hidden');
   
@@ -50,25 +51,7 @@ auth.onAuthStateChanged(async (user) => {
 // 登出功能
 // ============================================
 
-elements.logoutBtn.addEventListener('click', async () => {
-  try {
-    const sessionId = sessionStorage.getItem('currentSessionId');
-    if (sessionId) {
-      await db.collection('login_sessions').doc(sessionId).update({
-        status: 'logged_out',
-        endTime: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      sessionStorage.removeItem('currentSessionId');
-    }
-    
-    await auth.signOut();
-    console.log('登出成功');
-    window.location.href = '/loginPage.html';
-  } catch (error) {
-    console.error('登出失敗:', error);
-    alert('登出失敗: ' + error.message);
-  }
-});
+elements.logoutBtn.addEventListener('click', () => handleLogout(db));
 
 // ============================================
 // 工具函數
@@ -168,7 +151,6 @@ function renderCurrentPage() {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const sessionsToShow = filteredSessions.slice(startIndex, endIndex);
-  
   renderTable(sessionsToShow);
   renderPagination();
   
@@ -182,6 +164,7 @@ function renderCurrentPage() {
 
 function renderTable(sessions) {
   elements.tableBody.innerHTML = '';
+  // console.log(sessions);
   
   if (sessions.length === 0) {
     elements.tableBody.innerHTML = `
@@ -233,9 +216,11 @@ function renderTable(sessions) {
 
 async function loadAdminList() {
   try {
+    // js串聯寫法(Method Chaining)
     const snapshot = await db.collection('login_sessions')
       .orderBy('loginTime', 'desc')
-      .limit(200)
+      //最多抓100筆就好
+      .limit(100)
       .get();
 
     const emails = new Set();
@@ -299,16 +284,26 @@ async function applyFilters() {
 
     // 排序並限制數量
     query = query.orderBy('loginTime', 'desc').limit(200);
-
-    const snapshot = await query.get();
-    filteredSessions = [];
     
+
+    /**
+     * ...doc.data()展開運算子
+     {
+      id: doc.id,
+      email: doc.data().email,
+      loginTime: doc.data().loginTime,
+      status: doc.data().status
+      }
+     */
+    const snapshot = await query.get();
+    console.log(snapshot);
     snapshot.forEach(doc => {
       filteredSessions.push({
         id: doc.id,
         ...doc.data()
       });
     });
+    // console.log(filteredSessions);
 
     console.log(`找到 ${filteredSessions.length} 筆 Session 記錄`);
     

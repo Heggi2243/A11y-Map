@@ -45,17 +45,29 @@ function renderTextInput(field) {
   input.id = field.itemId;
 
   if (field.placeholder) input.placeholder = field.placeholder;
+  
+  // 編輯模式
+  if (formData[field.itemId] !== undefined) {
+    input.value = formData[field.itemId];
+  }
+  
   // 綁定，當用戶輸入時->更新formData
   input.oninput = (e) => setFormData(field.itemId, e.target.value);
   
   return input;
 }
-
+// ===== 12/2 更新:支援編輯模式 =====
 function renderTextarea(field) {
   const textarea = createEl('textarea', commonClasses);
   textarea.id = field.itemId;
   textarea.rows = 4;
   if (field.placeholder) textarea.placeholder = field.placeholder;
+  
+  // 編輯模式
+  if (formData[field.itemId] !== undefined) {
+    textarea.value = formData[field.itemId];
+  }
+  
   textarea.oninput = (e) => setFormData(field.itemId, e.target.value);
   
   return textarea;
@@ -74,6 +86,12 @@ function renderSelectRating(field) {
   field.options.forEach(optionValue => {
     const optionEl = createEl('option', '', optionValue + ' 顆星');
     optionEl.value = optionValue;
+
+    // 編輯模式
+     if (formData[field.itemId] == optionValue) {
+      optionEl.selected = true;
+    }
+
     select.appendChild(optionEl);
   });
 
@@ -105,24 +123,75 @@ function renderFileUpload(field) {
   let files = [];
   let previews = [];
 
+  // ========== 新增：編輯模式載入現有圖片 ========== //
+  if (formData[field.itemId] && Array.isArray(formData[field.itemId])) {
+    const existingUrls = formData[field.itemId];
+    console.log(`🖼️ 載入現有圖片 (${field.itemId}):`, existingUrls);
+    
+    existingUrls.forEach(url => {
+      // 標記為現有圖片（不是新上傳的 File）
+      previews.push({ 
+        url: url, 
+        isExisting: true  // <-標記這是從資料庫來的
+      });
+    });
+    
+    // 渲染現有圖片
+    renderPreviews();
+  }
+
   dropzone.onclick = () => input.click();
 
   input.onchange = (e) => {
-    // 取得檔案
+    // 取得新上傳的檔案
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
+      
       // 加到現有檔案
       files = [...files, ...newFiles];
-      setFormData(field.itemId, files); //更新
-
-      // 幫每個檔案建立連結，顯示縮圖用
+      
+      // 建立新檔案的預覽
       newFiles.forEach(file => {
         const url = URL.createObjectURL(file);
-        previews.push({ url, file });
+        previews.push({ 
+          url, 
+          file,
+          isExisting: false  // <-標記這是新上傳的
+        });
       });
+      
+      // 合併現有URL和新檔案
+      updateFormData();
+      
       renderPreviews();
     }
   };
+
+  // ========== 12/2新增：更新formData ========== //
+  function updateFormData() {
+    // 分離現有圖片 URL 和新上傳的 File
+    const existingUrls = previews
+      .filter(p => p.isExisting)
+      .map(p => p.url);
+    
+    const newFiles = previews
+      .filter(p => !p.isExisting && p.file)
+      .map(p => p.file);
+    
+    // 如果有新檔案，傳 File 陣列
+    // 如果只有現有圖片，傳 URL 陣列
+    if (newFiles.length > 0) {
+      setFormData(field.itemId, newFiles);
+    } else {
+      setFormData(field.itemId, existingUrls);
+    }
+    
+    console.log('📝 更新 formData:', {
+      field: field.itemId,
+      existingUrls: existingUrls.length,
+      newFiles: newFiles.length
+    });
+  }
 
   //渲染預覽
   function renderPreviews() {
@@ -131,21 +200,55 @@ function renderFileUpload(field) {
     previews.forEach((item) => {
       // 圖片預覽框框
       const wrapper = createEl('div', 'relative group aspect-square bg-gray-100 rounded-md overflow-hidden border border-gray-200 shadow-sm');
-      wrapper.innerHTML = `<img src="${item.url}" alt="Preview" class="w-full h-full object-cover" />`;
+      
+     // ======= 支援現有圖片和新上傳圖片 ======= //
+      const imgTag = `<img src="${item.url}" alt="Preview" class="w-full h-full object-cover" />`;
+      
+      // 如果是現有圖片 加上標記
+      if (item.isExisting) {
+        wrapper.innerHTML = `
+          ${imgTag}
+          <div class="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-0.5 rounded">
+            已上傳
+          </div>
+        `;
+      } else {
+        wrapper.innerHTML = imgTag;
+      }
+      // ================================================= //      
+      
+      // wrapper.innerHTML = `<img src="${item.url}" alt="Preview" class="w-full h-full object-cover" />`;
       // 右上角刪除按鈕
       const removeBtn = createEl('button', 'absolute top-1 right-1 bg-white/90 text-red-500 rounded-full p-1 shadow-md hover:bg-red-500 hover:text-white transition-all');
       removeBtn.innerHTML = '<i data-lucide="x" style="width:14px;height:14px"></i>';
       
       removeBtn.onclick = (ev) => {
         ev.stopPropagation(); // 阻止冒泡
-        // 移除檔案
-        files = files.filter(f => f !== item.file);
-        previews = previews.filter(p => p !== item);
-        // 更新
-        setFormData(field.itemId, files);
-        // 釋放記憶體
-        URL.revokeObjectURL(item.url);
-        renderPreviews(); //重新渲染
+
+
+      // ========== 修改：處理刪除邏輯 ========== //
+        if (item.isExisting) {
+          // 刪除現有圖片：從 previews 移除
+          console.log('🗑️ 刪除現有圖片:', item.url);
+          previews = previews.filter(p => p !== item);
+        } else {
+          // 刪除新上傳的圖片：從 files 和 previews 移除
+          console.log('🗑️ 刪除新上傳圖片:', item.file?.name);
+          files = files.filter(f => f !== item.file);
+          previews = previews.filter(p => p !== item);
+          
+          // 釋放記憶體
+          if (item.url) {
+            URL.revokeObjectURL(item.url);
+          }
+        }
+        // ======================================= //
+        
+        // 更新 formData
+        updateFormData();
+        
+        // 重新渲染
+        renderPreviews();
         
         if (typeof lucide !== 'undefined') lucide.createIcons();
       };
@@ -213,6 +316,15 @@ function renderRadioGroup(field) {
     // 抓取input
     const radio = labelEl.querySelector('input');
     
+    // 編輯模式
+    if (formData[field.itemId] === opt.value) {
+      radio.checked = true;
+      // 顯示對應的條件欄位
+      if (conditionalElsMap[opt.value]) {
+        conditionalElsMap[opt.value].classList.remove('hidden');
+      }
+    }
+
     //更新formData
     radio.onchange = () => {
       setFormData(field.itemId, opt.value);
@@ -259,6 +371,9 @@ function renderCheckboxGroup(field) {
     }
   });
 
+    // ===== 編輯模式 =====
+  const prefilledValues = formData[field.itemId] || [];
+  // ================================
   field.options.forEach(opt => {
     const labelEl = createEl('label', 'flex items-center space-x-3 cursor-pointer group p-2 hover:bg-blue-50 rounded transition-colors');
     labelEl.innerHTML = `
@@ -269,6 +384,16 @@ function renderCheckboxGroup(field) {
       <span class="text-gray-700 font-medium">${opt.label}</span>
     `;
     const checkbox = labelEl.querySelector('input');
+    
+    // ===== 編輯模式 =====
+    if (prefilledValues.includes(opt.value)) {
+      checkbox.checked = true;
+      // 顯示對應的條件欄位
+      if (conditionalEls[opt.value]) {
+        conditionalEls[opt.value].classList.remove('hidden');
+      }
+    }
+    
     checkbox.onchange = (e) => {
       const current = formData[field.itemId] || [];
       let next;

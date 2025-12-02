@@ -22,6 +22,39 @@ export function setFormData(key, value) {
   console.log('FormData updated:', formData);
 }
 
+
+// ====== 12/2新增: 編輯模式 ====== //
+/**
+ * 初始化表單資料
+ * @param {Object} data - 從資料庫取得的資料
+ */
+export function initFormData(data) {
+  console.log('🔄 初始化 formData，輸入資料:', data);
+  
+  // 清空現有資料
+  Object.keys(formData).forEach(key => {
+    delete formData[key];
+  });
+  
+  // 填入新資料
+  Object.keys(data).forEach(key => {
+    formData[key] = data[key];
+  });
+  
+  console.log('formData已初始化:', formData);
+}
+
+
+/**
+ * 清空表單資料（用於重置）
+ */
+export function clearFormData() {
+  Object.keys(formData).forEach(key => {
+    delete formData[key];
+  });
+  // console.log('表單資料已清空');
+}
+
 // ============================================
 //  表單項目
 // ============================================

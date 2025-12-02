@@ -3,9 +3,9 @@
 // ============================================
 
 // 通用小工具
-import { generateDocumentId } from '../utils/generator.js';
+import { generateDocumentId } from '../utils/basic.js';
 // 表單配置&渲染
-import { formData } from '../config/formSchema.js';
+import { formData, initFormData, clearFormData } from '../config/formSchema.js';
 import { renderForm } from '../config/formRender.js';
 
 import { validateForm, showValidationErrors } from '../config/formValidator.js';
@@ -31,12 +31,10 @@ function initFirebase() {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         console.log('✅ 當前登入用戶UID:', user.uid);
-        console.log('   是否為管理員:', [
-          "TKJqrWGdmoPtaZuDmSLOUtTAzqK2",
-          "bwYPuwjyX9VTDSVYw5THhFW7xAg2"
-        ].includes(user.uid));
       } else {
-        console.log('❌ 未登入');
+          alert('❌ 您尚未登入，將跳轉到登入頁');
+          window.location.href = '/loginPage.html';
+          return;
       }
     });
     
@@ -47,44 +45,120 @@ function initFirebase() {
   }
 }
 
+// ========== 12/2新增：模式判斷 ========== 
+/**
+ * 判斷是新增還是編輯
+ * @returns {Object} { isEditMode, storeId }
+ */
+function getPageMode() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const storeId = urlParams.get('id');
+  
+  return {
+    isEditMode: !!storeId,
+    storeId: storeId
+  };
+}
 
+// ========== 新增：載入店家資料（編輯模式） ========== 
+/**
+ * 載入店家資料並預填表單
+ * @param {string} storeId - 店家文件 ID
+ */
+async function loadStoreData(storeId) {
+  try {
+    console.log('📥 載入店家資料:', storeId);
+    
+    const doc = await db.collection('stores').doc(storeId).get();
+    
+    if (!doc.exists) {
+      alert('❌ 找不到此店家資料');
+      window.location.href = '/admin.html'; 
+      return false;
+    }
+    
+    const storeData = doc.data();
+    console.log('✅ 店家資料已載入:', storeData);
+    
+    // 初始化表單資料（預填）
+    initFormData(storeData);
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ 載入店家資料失敗:', error);
+    alert('載入資料失敗: ' + error.message);
+    return false;
+  }
+}
 
+// ========== 新增：更新頁面標題（根據模式） ========== 
+/**
+ * 根據模式更新頁面標題和按鈕文字
+ * @param {boolean} isEditMode - 是否為編輯模式
+ */
+function updatePageUI(isEditMode) {
+  // 更新頁面標題
+  const pageTitle = document.querySelector('title');
+  if (pageTitle) {
+    pageTitle.textContent = isEditMode ? '編輯店家資訊' : '新增店家資訊';
+  }
+  
+  // 更新表單標題
+  const formTitle = document.getElementById('form-title');
+  if (formTitle) {
+    formTitle.textContent = isEditMode ? '編輯店家資訊' : '無障礙店家資訊上傳表單';
+  }
+  
+  // 更新提交按鈕文字
+  const submitBtn = document.getElementById('submit-btn');
+  if (submitBtn) {
+    const btnText = submitBtn.querySelector('.font-display');
+    if (btnText) {
+      btnText.textContent = isEditMode ? '更新資料' : '提交表單';
+    }
+  }
+}
 
+// ========== 修改：提交處理（支援新增和編輯） ========== 
 async function handleSubmit(buttonElement) {
-    const originalHTML = buttonElement.innerHTML;
+  const originalHTML = buttonElement.innerHTML;
+  const { isEditMode, storeId } = getPageMode();
   
   try {
-    console.log('🚀 開始上傳表單資料:', formData);
+    console.log(`開始${isEditMode ? '更新' : '上傳'}表單資料:`, formData);
     
-    // // ========== 驗證必填欄位 ========== 
-    // if (!formData['到訪日期']) {
-    //   alert('❌ 請填寫「到訪日期」');
-    //   return;
-    // }
-
-     // ========== 表單驗證 ========== 
+    // ========== 表單驗證 ========== 
     const validation = validateForm(formData);
     
     if (!validation.isValid) {
       showValidationErrors(validation.errors);
-      return;  // ← 驗證失敗,中斷上傳
+      return;
     }
-    
     
     // 顯示載入狀態
     buttonElement.disabled = true;
-    buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">上傳中...</span>`;
+    buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">${isEditMode ? '更新中...' : '上傳中...'}</span>`;
 
-    // ========== 1. 生成文件ID ========== 
-    const docId = await generateDocumentId(formData['到訪日期'],'stores',db);
-    console.log(`📋 生成文件ID: ${docId}`);
+    // ========== 1.新增或使用現有文件ID ========== 
+    let docId;
+    
+    if (isEditMode) {
+      // 編輯模式：使用現有的 ID
+      docId = storeId;
+      console.log(`📋 使用現有文件ID: ${docId}`);
+    } else {
+      // 新增模式：生成新的 ID
+      docId = await generateDocumentId(formData['到訪日期'], 'stores', db);
+      console.log(`📋 生成新文件ID: ${docId}`);
+    }
 
     // ========== 2. 處理圖片上傳 ========== 
     const uploadedData = {};
-    let globalImageCounter = 1; // 全域圖片計數器
+    let globalImageCounter = 1;
     
     for (const [key, value] of Object.entries(formData)) {
-      // 檢查是否為檔案陣列
+      // 檢查是否為檔案陣列（新上傳的圖片）
       if (Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
         console.log(`📤 上傳圖片到資料夾: ${key}, 共 ${value.length} 張`);
         
@@ -92,33 +166,28 @@ async function handleSubmit(buttonElement) {
         
         for (let i = 0; i < value.length; i++) {
           const file = value[i];
-          
-          // 取得檔案副檔名
           const fileExtension = file.name.split('.').pop();
-          
-          // 生成圖片名稱: docId_01, docId_02... (使用全域計數器)
           const imageNumber = String(globalImageCounter).padStart(2, '0');
-          
-          // 路徑結構: stores/{itemId}/{docId_序號}.副檔名
           const fileName = `stores/${key}/${docId}_${imageNumber}.${fileExtension}`;
           
           console.log(`   ↳ 上傳到: ${fileName}`);
           
-          // 上傳到 Firebase Storage
           const storageRef = storage.ref(fileName);
           await storageRef.put(file);
-          
-          // 取得下載 URL
           const downloadURL = await storageRef.getDownloadURL();
           uploadedUrls.push(downloadURL);
           
           console.log(`   ✅ 圖片 ${i + 1}/${value.length} 上傳成功`);
-          
-          globalImageCounter++; // 遞增全域計數器
+          globalImageCounter++;
         }
         
-        // 將檔案陣列替換成 URL 陣列
         uploadedData[key] = uploadedUrls;
+        
+      } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string' && value[0].startsWith('http')) {
+        // 編輯模式：保留現有的圖片 URL
+        console.log(`🔗 保留現有圖片: ${key}, 共 ${value.length} 張`);
+        uploadedData[key] = value;
+        
       } else {
         // 非檔案資料直接複製
         uploadedData[key] = value;
@@ -130,37 +199,49 @@ async function handleSubmit(buttonElement) {
     // ========== 3. 準備要寫入 Firestore 的資料 ========== 
     const docData = {
       ...uploadedData,
-      documentId: docId, // 加入文件ID欄位方便查詢
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      createdBy: firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'anonymous',
-      status: 'pending'
+      documentId: docId,
     };
+    
+    if (isEditMode) {
+      // 編輯模式：加入更新時間
+      docData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+      docData.updatedBy = firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'anonymous';
+    } else {
+      // 新增模式：加入建立時間
+      docData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      docData.createdBy = firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'anonymous';
+      docData.status = 'pending';
+    }
 
-    // ========== 4. 使用自訂ID寫入 Firestore ========== 
-    await db.collection('stores').doc(docId).set(docData);
+    // ========== 4. 寫入 Firestore ========== 
+    if (isEditMode) {
+      // 編輯模式：更新文件
+      await db.collection('stores').doc(docId).update(docData);
+      console.log('✅ 資料更新成功! Document ID:', docId);
+      alert(`✅ 店家資料更新成功！\n文件 ID: ${docId}`);
+    } else {
+      // 新增模式：建立文件
+      await db.collection('stores').doc(docId).set(docData);
+      console.log('✅ 資料上傳成功! Document ID:', docId);
+      alert(`✅ 店家資料上傳成功！\n文件 ID: ${docId}`);
+    }
     
-    console.log('✅ 資料上傳成功! Document ID:', docId);
-    
-    // 顯示成功訊息
-    alert(`✅ 店家資料上傳成功！\n文件 ID: ${docId}`);
-    
-    // 重置表單
-    location.reload();
+    // 跳轉回列表頁
+    window.location.href = '/admin.html'; 
     
   } catch (error) {
-    console.error('❌ 上傳失敗:', error);
+    console.error('❌ 操作失敗:', error);
     console.error('錯誤代碼:', error.code);
     console.error('錯誤訊息:', error.message);
     
-    let errorMsg = '上傳失敗,請稍後再試。';
+    let errorMsg = `${isEditMode ? '更新' : '上傳'}失敗，請稍後再試。`;
     
-    // 根據錯誤類型提供更清楚的訊息
     if (error.code === 'permission-denied') {
-      errorMsg = '權限不足,請檢查 Firestore 規則設定。';
+      errorMsg = '權限不足，請檢查 Firestore 規則設定。';
     } else if (error.code === 'unavailable') {
-      errorMsg = '無法連接到資料庫,請檢查網路連線。';
-    } else if (error.code === 'already-exists') {
-      errorMsg = '文件ID已存在,請稍後再試或聯絡管理員。';
+      errorMsg = '無法連接到資料庫，請檢查網路連線。';
+    } else if (error.code === 'not-found') {
+      errorMsg = '找不到要更新的文件。';
     } else if (error.message) {
       errorMsg = error.message;
     }
@@ -173,23 +254,35 @@ async function handleSubmit(buttonElement) {
   }
 }
 
-
-// ============================================
-// 8. Initialization
-// ============================================
-
-function init() {
-
-  
+// ========== 修改：初始化 ========== 
+async function init() {
   if (!initFirebase()) {
     console.error('❌ Firebase 初始化失敗，無法使用上傳功能');
     alert('系統初始化失敗，請重新整理頁面或聯絡管理員。');
     return;
   }
 
-  // 渲染表單（會在內部初始化圖標）
+  // 判斷模式
+  const { isEditMode, storeId } = getPageMode();
+  
+  console.log(`頁面模式: ${isEditMode ? '編輯' : '新增'}`);
+  
+  // 更新 UI
+  updatePageUI(isEditMode);
+  
+  // 編輯模式：載入資料
+  if (isEditMode) {
+    const loaded = await loadStoreData(storeId);
+    if (!loaded) return; // 載入失敗，中止
+  } else {
+    // 新增模式：清空 formData（確保乾淨）
+    clearFormData();
+  }
+  
+  // 渲染表單（會自動預填 formData）
   renderForm();
 
+  // 綁定提交按鈕
   const submitBtn = document.getElementById('submit-btn');
   if (submitBtn) {
     submitBtn.onclick = () => handleSubmit(submitBtn);

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商店資料管理</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200..900&display=swap" rel="stylesheet">
+    <!-- tailwindCSS -->
+    <link rel="stylesheet" href="/output.css">
+    <link rel="stylesheet" href="./css/generic.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="flex flex-col min-h-screen relative overflow-x-hidden text-blue-900">
+    <div id="Sunburst"></div>
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-12 z-10 relative max-w-6xl">
+        <header class="mb-6 relative flex justify-between items-start">
+          <div>
+            <h1 class="text-6xl sm:text-7xl font-display font-black text-retro-blue tracking-tighter leading-[0.85] mb-4">
+              STORE<br />
+              MANAGE
+            </h1>
+            <div class="w-24 h-4 bg-amber-400 mt-4"></div>
+          </div>
+          
+          <!-- Logout Button -->
+          <button id="logout-btn" class="bg-red-600 text-white border-2 border-red-800 py-2 px-4 font-bold uppercase tracking-wide hover:bg-red-700 transition-all shadow-[4px_4px_0px_0px_rgba(153,27,27,1)] active:translate-y-1">
+            LOGOUT
+          </button>
+        </header>
+    
+
+    <section class="mb-12 border-4 border-blue-900 bg-white shadow-[8px_8px_0px_0px_rgba(30,58,138,1)] relative z-10 overflow-hidden">
+            <div class="overflow-x-auto">
+              
+                <table class="min-w-full text-left">
+                    <thead class="bg-blue-900 text-white">
+                        <!-- <tr>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">封面</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">類別</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">商家資訊</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">到訪日期</th>
+                        <th class="px-6 py-4 text-sm font-bold uppercase tracking-wider border-b-4 border-blue-800">操作</th>
+                        </tr> -->
+                        
+                    </thead>
+                    <tbody id="table-body" class="divide-y-2 divide-blue-100">
+
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+     
+
+    <footer class="w-full mt-auto">
+      <div class="w-full h-16 md:h-24 flex flex-wrap overflow-hidden border-t-4 border-blue-900 checkerboard-pattern"></div>
+      <div class="copyright-bar">
+          暢行無阻 A11y-Map © 2025
+      </div>
+    </footer>
+    
+    <script type="module">
+      import { createSun } from '/layout/backend.js';
+      document.getElementById('Sunburst').innerHTML = createSun();
+    </script>
+    <script type="module" src="js/storePage.js"></script>
+</body>
+</html>

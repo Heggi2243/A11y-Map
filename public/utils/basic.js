@@ -43,4 +43,30 @@ export async function generateDocumentId(visitDate,collectionName,db) {
   return docId;
 }
 
-
+/**
+ * 登出功能
+ * @param {firebase.firestore.Firestore} db - 避免沒有載入firebase-config.js報錯undefined
+ */
+export async function handleLogout(db) {
+  try {
+    const sessionId = sessionStorage.getItem('currentSessionId');
+    
+    if (sessionId && db) {
+      await db.collection('login_sessions').doc(sessionId).update({
+        status: 'logged_out',
+        endTime: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      sessionStorage.removeItem('currentSessionId');
+      console.log('✅ Session 已更新為 logged_out');
+    }
+    
+    await firebase.auth().signOut();
+    console.log('✅ 登出成功');
+    window.location.href = '/loginPage.html';
+    
+  } catch (error) {
+    console.error('❌ 登出失敗:', error);
+    alert('登出失敗: ' + error.message);
+    throw error;
+  }
+}

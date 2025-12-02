@@ -9,7 +9,6 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <!-- ========== 新增 1/4：Firestore SDK ========== -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <!-- ============================================= -->
      <script src="/js/firebase-config.js"></script>
@@ -24,33 +23,7 @@
     <style>
       /* Custom Paper Texture Effect */
       
-      
-
-      /* Animations */
-      /* @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      } */
-      /* .animate-spin-slow {
-        animation: spin 20s linear infinite;
-      } */
-
-      /* @keyframes wiggle {
-        0%, 100% { transform: rotate(-3deg) scaleX(-1); }
-        50% { transform: rotate(3deg) scaleX(-1); }
-      } */
-      /* .animate-wiggle {
-        animation: wiggle 2s ease-in-out infinite;
-      } */
-
-      /* @keyframes bounce-slow {
-        0%, 100% { transform: translateY(0) rotate(-12deg); }
-        50% { transform: translateY(-10px) rotate(-12deg); }
-      } */
-      /* .animate-bounce-slow {
-        animation: bounce-slow 3s ease-in-out infinite;
-      } */
-
+    
 
       /* Error Message */
       .error-message, .info-message {
@@ -177,10 +150,37 @@
 
 
       firebase.initializeApp(FIREBASE_CONFIG);
+
+      // ========== 新增：初始化 reCAPTCHA ========== //
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  console.log('🔧 本地開發模式：啟用 App Verification 繞過');
+  
+  // 使用測試模式的 reCAPTCHA
+  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('submitBtn', {
+    'size': 'invisible',
+    'callback': (response) => {
+      console.log('✅ reCAPTCHA 驗證完成');
+    },
+    'error-callback': (error) => {
+      console.error('❌ reCAPTCHA 錯誤:', error);
+    }
+  });
+  
+  // 關鍵：設定 App Verification Disabled（僅限開發環境）
+  firebase.auth().settings.appVerificationDisabledForTesting = true;
+  
+} else {
+  // 正式環境的 reCAPTCHA 設定
+  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('submitBtn', {
+    'size': 'invisible',
+    'callback': (response) => {
+      console.log('✅ reCAPTCHA 驗證完成');
+    }
+  });
+}
+    // =========================================== //
       
-      // ========== 新增 2/4：初始化 Firestore ========== //
       const db = firebase.firestore();
-      // ============================================== //
 
       document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -209,7 +209,68 @@
           window.location.href = '/admin.html';
           
         } catch (error) {
-          console.error('登入錯誤:', error);
+         console.error('登入錯誤:', error);
+  
+  if (error.code === 'auth/multi-factor-auth-required') {
+    console.log('🔐 需要 MFA 驗證');
+    
+    try {
+      const resolver = error.resolver;
+      
+      if (!resolver.hints || resolver.hints.length === 0) {
+        throw new Error('找不到可用的 MFA 驗證方式');
+      }
+      
+      const phoneInfoOptions = {
+        multiFactorHint: resolver.hints[0],
+        session: resolver.session
+      };
+      
+      const phoneAuthProvider = new firebase.auth.PhoneAuthProvider();
+      
+      console.log('📱 發送驗證碼到:', resolver.hints[0].phoneNumber);
+      
+      // 發送驗證碼
+      const verificationId = await phoneAuthProvider.verifyPhoneNumber(
+        phoneInfoOptions,
+        window.recaptchaVerifier
+      );
+      
+      console.log('✅ 驗證碼已發送，verificationId:', verificationId);
+      
+      // 儲存資訊供後續驗證使用
+      window.mfaResolver = resolver;
+      window.mfaVerificationId = verificationId;
+      
+      // 提示用戶輸入驗證碼
+      const code = prompt('請輸入簡訊驗證碼（6位數字）:');
+      
+      if (code) {
+        // 建立驗證憑證
+        const cred = firebase.auth.PhoneAuthProvider.credential(verificationId, code);
+        const multiFactorAssertion = firebase.auth.PhoneMultiFactorGenerator.assertion(cred);
+        
+        // 完成 MFA 驗證
+        const userCredential = await resolver.resolveSignIn(multiFactorAssertion);
+        
+        console.log('✅ MFA 驗證成功:', userCredential.user.email);
+        
+        await recordLoginSession(userCredential.user);
+        window.location.href = '/admin.html';
+      }
+      
+    } catch (mfaError) {
+      console.error('❌ MFA 處理失敗:', mfaError);
+      errorMsg.textContent = '驗證失敗: ' + (mfaError.message || '請稍後再試');
+      errorMsg.classList.add('show');
+    }
+    
+    btn.disabled = false;
+    btn.innerText = originalText;
+    btn.classList.remove('opacity-80', 'cursor-not-allowed');
+    return;
+  }
+  // ================================= //
           
           let errorMessage = '登入失敗，請檢查您的帳號密碼';
           
