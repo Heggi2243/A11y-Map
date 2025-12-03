@@ -127,7 +127,7 @@ export const FORM_SCHEMA = {
           "options": [
             {"value": "有坡道 (平緩)", "label": "有坡道 (平緩)"},
             {"value": "有坡道 (陡峭)", "label": "有坡道 (陡峭)"},
-            {"value": "無坡道", "label": "無坡道"}
+            {"value": "無坡道 (順行)", "label": "無坡道 (順行)"}
           ]
         },
         {
@@ -192,7 +192,7 @@ export const FORM_SCHEMA = {
             {"value": "需協助開門", "label": "需協助開門"},
             {"value": "需協助進門", "label": "需協助進門"},
             {"value": "需協助入座", "label": "需協助入座"},
-            {"value": "無須協助", "label": "無須協助，環境友善"},
+            {"value": "無須協助", "label": "完全不需要"},
             {"value": "其他", "label": "其他"}
           ],
           "conditionalField": {

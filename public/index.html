@@ -3,16 +3,27 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>暢行無阻:無障礙旅遊地圖</title>
+    <title>暢行無阻 A11y-Map | 無障礙旅遊地圖</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="暢行無阻 A11y-Map 提供全台無障礙友善店家資訊，包含坡道、門寬、廁所等詳細設施資訊，讓輪椅使用者輕鬆規劃行程。">
+    <meta name="keywords" content="無障礙,輪椅友善,無障礙地圖,無障礙餐廳,無障礙景點,A11y">
+    
+    <!-- Favicon (可選) -->
+    <!-- <link rel="icon" href="/favicon.ico"> -->
+    
     <link rel="stylesheet" href="css/generic.css">
 
     <!-- Firebase SDK (compat 版本) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200..900&display=swap" rel="stylesheet">
+    
     <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -33,29 +44,30 @@
               暢行無阻-A11Y MAP
               <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-retro-yellow ml-2 animate-pulse-slow flex-shrink-0"></div>
             </h1>
-            <button id="filter-btn" class="relative p-3 bg-white border-2 border-retro-blue rounded-full text-retro-blue hover:bg-retro-blue hover:text-white transition-all shadow-[2px_2px_0px_0px_rgba(30,58,138,1)] active:translate-y-[2px] active:shadow-none flex-shrink-0 ml-2">
+            <button id="filter-btn" class="relative p-3 bg-white border-2 border-retro-blue rounded-full text-retro-blue hover:bg-retro-blue hover:text-white transition-all shadow-[2px_2px_0px_0px_rgba(30,58,138,1)] active:translate-y-[2px] active:shadow-none flex-shrink-0 ml-2" aria-label="開啟篩選面板">
               <i data-lucide="sliders" size="20" stroke-width="2.5"></i>
-              <span id="filter-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-retro-yellow rounded-full border-2 border-retro-blue hidden"></span>
+              <span id="filter-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-retro-yellow rounded-full border-2 border-retro-blue hidden" aria-hidden="true"></span>
             </button>
           </div>
           
           <div class="relative mb-4">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-retro-blue/50" size="20" stroke-width="3"></i>
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-retro-blue pointer-events-none" size="20" stroke-width="3" aria-hidden="true"></i>
             <input 
               type="text"
               id="search-input"
               placeholder="搜尋餐廳、景點..."
-              class="w-full bg-white border-2 border-retro-blue/20 pl-12 pr-4 py-3 rounded-2xl text-base font-bold text-retro-blue placeholder:text-retro-blue/30 focus:outline-none focus:border-retro-blue focus:ring-4 focus:ring-retro-blue/10 transition-all"
+              aria-label="搜尋店家"
+              class="w-full bg-white border-2 border-retro-blue pl-12 pr-4 py-3 rounded-2xl text-base font-bold text-retro-blue placeholder:text-retro-blue/30 focus:outline-none focus:border-retro-blue focus:ring-4 focus:ring-retro-blue/10 transition-all"
             />
           </div>
           
-          <!-- Tags -->
-          <div class="flex space-x-3 overflow-x-auto no-scrollbar pb-2">
-            <button class="flex-shrink-0 px-5 py-2 bg-retro-blue text-white text-sm font-display rounded-full shadow-md">全部</button>
-            <button class="flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors">餐飲</button>
-            <button class="flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors">景點</button>
-            <button class="flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors">購物</button>
-            <button class="flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors">住宿</button>
+          <!-- ✅ 改進：類別標籤改為功能性按鈕 -->
+          <div class="flex space-x-3 overflow-x-auto no-scrollbar pb-2" id="category-tabs">
+            <button data-category="全部" class="category-tab active flex-shrink-0 px-5 py-2 bg-retro-blue text-white text-sm font-display rounded-full shadow-md transition-all" aria-pressed="true">全部</button>
+            <button data-category="餐飲" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors" aria-pressed="false">餐飲</button>
+            <button data-category="景點" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors" aria-pressed="false">景點</button>
+            <button data-category="購物" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors" aria-pressed="false">購物</button>
+            <button data-category="住宿" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors" aria-pressed="false">住宿</button>
           </div>
         </header>
 
@@ -79,8 +91,8 @@
   
         <!-- Chevron Button -->
         <div class="absolute left-1/2 -translate-x-1/2 -top-5 z-50">
-            <button id="footer-toggle-btn" class="bg-white border border-blue-100 shadow-md rounded-full w-10 h-10 flex items-center justify-center text-retro-blue hover:bg-blue-50 transition-transform duration-300 focus:outline-none group">
-                <svg id="footer-chevron" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button id="footer-toggle-btn" class="bg-white border border-blue-100 shadow-md rounded-full w-10 h-10 flex items-center justify-center text-retro-blue hover:bg-blue-50 transition-transform duration-300 focus:outline-none group" aria-label="展開/收合頁尾" aria-expanded="false">
+                <svg id="footer-chevron" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <polyline points="18 15 12 9 6 15"></polyline>
                 </svg>
             </button>
@@ -92,12 +104,12 @@
             <!-- Expandable Content (Links) -->
             <div id="footer-links" class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
                 <div class="py-8 flex flex-col sm:flex-row items-center justify-center gap-6">
-                    <a href="info.html?view=privacy" target="_blank" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-50 text-retro-blue hover:bg-blue-50 hover:retro-blue-light border border-slate-200 hover:border-blue-200 transition-all text-sm font-medium group">
-                        <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <a href="info.html?view=privacy" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-50 text-retro-blue hover:bg-blue-50 hover:retro-blue-light border border-slate-200 hover:border-blue-200 transition-all text-sm font-medium group">
+                        <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                         隱私權政策與服務條款
                     </a>
-                    <a href="info.html?view=about" target="_blank" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-50 text-retro-blue hover:bg-blue-50 hover:retro-blue-light border border-slate-200 hover:border-blue-200 transition-all text-sm font-medium group">
-                        <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <a href="info.html?view=about" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-50 text-retro-blue hover:bg-blue-50 hover:retro-blue-light border border-slate-200 hover:border-blue-200 transition-all text-sm font-medium group">
+                        <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                         關於我們
                     </a>
                 </div>
@@ -111,27 +123,27 @@
             </div>
 
             <!-- Checker Strip -->
-            <div class="w-full h-4 checker-strip opacity-90 pointer-events-none"></div>
+            <div class="w-full h-4 checker-strip opacity-90 pointer-events-none" aria-hidden="true"></div>
         </div>
 
       </footer>
 
       <!-- DETAIL VIEW (Initially Hidden) -->
-      <div id="detail-view" class="hidden min-h-screen pb-20 bg-retro-paper absolute inset-0 z-40 overflow-y-auto">
+      <div id="detail-view" class="hidden min-h-screen pb-20 bg-retro-paper absolute inset-0 z-40 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="detail-shop-name">
         <!-- Content injected here -->
       </div>
 
       <!-- FILTER PANEL (Modal) -->
-      <div id="filter-modal" class="fixed inset-0 z-50 flex justify-end hidden">
-        <div id="filter-backdrop" class="absolute inset-0 bg-retro-blue/40 backdrop-blur-sm"></div>
+      <div id="filter-modal" class="fixed inset-0 z-50 flex justify-end hidden" role="dialog" aria-modal="true" aria-labelledby="filter-title">
+        <div id="filter-backdrop" class="absolute inset-0 bg-retro-blue/40 backdrop-blur-sm" aria-hidden="true"></div>
         <div class="relative w-full max-w-md bg-retro-paper h-full shadow-2xl flex flex-col animate-slide-in-right border-l-4 border-retro-blue">
           <div class="px-6 py-6 border-b-2 border-retro-blue/10 flex justify-between items-center bg-white z-10">
-            <h2 class="text-2xl font-display font-black text-retro-blue flex items-center">
-              <i data-lucide="settings" class="mr-3" stroke-width="3"></i>
+            <h2 id="filter-title" class="text-2xl font-display font-black text-retro-blue flex items-center">
+              <i data-lucide="settings" class="mr-3" stroke-width="3" aria-hidden="true"></i>
               個人化篩選
             </h2>
-            <button id="close-filter" class="p-2 hover:bg-retro-blue/10 rounded-full transition-colors text-retro-blue">
-              <i data-lucide="x" size="28" stroke-width="3"></i>
+            <button id="close-filter" class="p-2 hover:bg-retro-blue/10 rounded-full transition-colors text-retro-blue" aria-label="關閉篩選面板">
+              <i data-lucide="x" size="28" stroke-width="3" aria-hidden="true"></i>
             </button>
           </div>
 
