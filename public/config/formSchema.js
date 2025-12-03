@@ -67,9 +67,9 @@ export const FORM_SCHEMA = {
       "sectionTitle": "基本店家資訊",
       "fields": [
         { "itemId": "store_cover", "label": "店家封面", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
-        { "itemId": "店家名稱", "label": "店家名稱", "type": "text_input", "required": true},
+        { "itemId": "name", "label": "店家名稱", "type": "text_input", "required": true},
         {
-          "itemId": "類別",
+          "itemId": "category",
           "label": "類別",
           "type": "checkbox_group", 
           "selectionType": "multiple",   
@@ -81,10 +81,10 @@ export const FORM_SCHEMA = {
             {"value": "住宿", "label": "住宿"}
           ]
         },
-        { "itemId": "店家地址", "label": "店家地址", "type": "text_input", "required": true},
-        { "itemId": "一人平均消費", "label": "一人平均消費(元)", "type": "number_input", "required": true},
-        { "itemId": "到訪日期", "label": "到訪日期", "type": "date_input", "required": true},
-        { "itemId": "地圖網址", 
+        { "itemId": "address", "label": "店家地址", "type": "text_input", "required": true},
+        { "itemId": "avgCost", "label": "一人平均消費(元)", "type": "number_input", "required": true},
+        { "itemId": "visitDate", "label": "到訪日期", "type": "date_input", "required": true},
+        { "itemId": "mapUrl", 
           "label": "地圖網址", 
           "type": "textarea",
           "required": true, 
@@ -96,21 +96,21 @@ export const FORM_SCHEMA = {
         { "itemId": "entrance_photo", "label": "門口/階梯狀況", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
         { "itemId": "interior_photo", "label": "餐飲/店內環境", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
         {
-          "itemId": "動線和便利度評分",
+          "itemId": "circulation",
           "label": "動線/便利度評分",
           "type": "select_rating", 
           "required": true,
           "options": ["5","4.5", "4","3.5", "3", "2", "1", "0"], 
         },
         {
-          "itemId": "食物評分",
+          "itemId": "food",
           "label": "食物評分",
           "type": "select_rating",
           "required": true,
           "options": ["5", "4", "3", "2", "1", "0"]
         },
         {
-          "itemId": "服務評分",
+          "itemId": "service",
           "label": "服務評分",
           "type": "select_rating",
           "required": true,
@@ -123,7 +123,7 @@ export const FORM_SCHEMA = {
       "sectionTitle": "空間與設施",
       "fields": [
         {
-          "itemId": "出入口坡道", "label": "出入口坡道", "type": "radio_group", "required": true, "selectionType": "single",
+          "itemId": "ramp", "label": "出入口坡道", "type": "radio_group", "required": true, "selectionType": "single",
           "options": [
             {"value": "有坡道 (平緩)", "label": "有坡道 (平緩)"},
             {"value": "有坡道 (陡峭)", "label": "有坡道 (陡峭)"},
@@ -131,7 +131,7 @@ export const FORM_SCHEMA = {
           ]
         },
         {
-          "itemId": "階梯狀況",
+          "itemId": "steps",
           "label": "階梯狀況",
           "type": "checkbox_group", 
           "selectionType": "multiple",   
@@ -144,7 +144,7 @@ export const FORM_SCHEMA = {
             {"value": "微小門檻 (無需翹輪椅)", "label": "微小門檻 (無需翹輪椅)"}
           ]
         },
-        { "itemId": "門寬",
+        { "itemId": "doorWidthCm",
           "label": "門寬", 
           "type": "radio_group", 
           "selectionType": "single",
@@ -156,7 +156,7 @@ export const FORM_SCHEMA = {
             ]
            },
         {
-          "itemId": "廁所",
+          "itemId": "restroom",
           "label": "廁所",
           "type": "radio_group",
           "selectionType": "single",
@@ -171,7 +171,7 @@ export const FORM_SCHEMA = {
           "conditionalFields": [
             {
               "triggerValues": ["一般廁所 (不同層)", "無障礙廁所 (不同層)"],
-              "itemId": "廁所位在幾樓",
+              "itemId": "restroomFloor",
               "label": "請填寫廁所位在幾樓",
               "type": "number_input",
               // "required": true
@@ -179,7 +179,7 @@ export const FORM_SCHEMA = {
           ]
         },
         {
-          "itemId": "內部動線", "label": "內部動線", "type": "radio_group", "required": true, "selectionType": "single",
+          "itemId": "circulation", "label": "內部動線", "type": "radio_group", "required": true, "selectionType": "single",
           "options": [
             {"value": "普通", "label": "普通"},
             {"value": "寬敞", "label": "寬敞"},
@@ -187,7 +187,7 @@ export const FORM_SCHEMA = {
           ]
         },
         {
-          "itemId": "協助需求", "label": "協助需求", "type": "checkbox_group", "required": true, "selectionType": "multiple",
+          "itemId": "assistance", "label": "協助需求", "type": "checkbox_group", "required": true, "selectionType": "multiple",
           "options": [
             {"value": "需協助開門", "label": "需協助開門"},
             {"value": "需協助進門", "label": "需協助進門"},
@@ -196,7 +196,7 @@ export const FORM_SCHEMA = {
             {"value": "其他", "label": "其他"}
           ],
           "conditionalField": {
-            "triggerValue": "其他", "itemId": "其他協助需求補充", "label": "其他協助需求補充", "type": "text_input","required": true, "note": "當勾選「其他」時顯示此欄位"
+            "triggerValue": "其他", "itemId": "assistanceOther", "label": "其他協助需求補充", "type": "text_input","required": true, "note": "當勾選「其他」時顯示此欄位"
           }
         }
       ]
@@ -205,30 +205,30 @@ export const FORM_SCHEMA = {
       "sectionId": "transport_guidance",
       "sectionTitle": "交通指引",
       "fields": [
-        { "itemId": "最近無障礙車位", "label": "最近無障礙車位", "type": "textarea", "required": false },
+        { "itemId": "nearestParking", "label": "最近無障礙車位", "type": "textarea", "required": false },
         {
-          "itemId": "公車", "label": "捷運/公車", "type": "checkbox_group","required": false, "selectionType": "multiple",
+          "itemId": "nearestTransit", "label": "捷運/公車", "type": "checkbox_group","required": false, "selectionType": "multiple",
           "options": [
             {"value": "捷運", "label": "捷運"},
             {"value": "公車", "label": "公車"}
           ],
           "conditionalFields": [
             {
-              "triggerValue": "捷運", "itemId": "捷運補充說明", "label": "捷運補充說明", "type": "text_input","required": true, "note": "需填寫站別、電梯在幾號出口。", "placeholder": "例如：龍山寺捷運站2號出口，距離店家300公尺"
+              "triggerValue": "捷運", "itemId": "mrt", "label": "捷運補充說明", "type": "text_input","required": true, "note": "需填寫站別、電梯在幾號出口。", "placeholder": "例如：龍山寺捷運站2號出口，距離店家300公尺"
             },
             {
-              "triggerValue": "公車", "itemId": "公車補充說明", "label": "公車補充說明", "type": "textarea","required": true, "note": "補充說明公車路線、站牌等。"
+              "triggerValue": "公車", "itemId": "nus", "label": "公車補充說明", "type": "textarea","required": true, "note": "補充說明公車路線、站牌等。"
             }
           ]
         },
-        { "itemId": "推薦無障礙路線", "label": "推薦無障礙路線", "type": "textarea", "required": false, "note": "說明從最近交通點到店家的路線。" }
+        { "itemId": "recommendedRoute", "label": "推薦無障礙路線", "type": "textarea", "required": false, "note": "說明從最近交通點到店家的路線。" }
       ]
     },
     {
         "sectionId":"Thoughts",
         "sectionTitle": "走訪心得",
         "fields": [
-            { "itemId": "心得", "type": "textarea", "required": true, },
+            { "itemId": "description", "type": "textarea", "required": true, },
         ]
     }
   ]

@@ -61,7 +61,7 @@ function initSwiper(images) {
       keyboard: {
         enabled: true,
       },
-      loop: images.length > 1,
+      loop: images.length > 4,
     });
   }, 100);
 }
