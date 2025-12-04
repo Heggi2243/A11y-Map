@@ -96,7 +96,7 @@ export const FORM_SCHEMA = {
         { "itemId": "entrance_photo", "label": "門口/階梯狀況", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
         { "itemId": "interior_photo", "label": "餐飲/店內環境", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
         {
-          "itemId": "circulation",
+          "itemId": "convenience",
           "label": "動線/便利度評分",
           "type": "select_rating", 
           "required": true,

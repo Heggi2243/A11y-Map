@@ -10,6 +10,67 @@ import { renderForm } from '../config/formRender.js';
 
 import { validateForm, showValidationErrors } from '../config/formValidator.js';
 
+// ============================================
+// 圖片壓縮功能
+// ============================================
+
+/**
+ * 壓縮圖片（支援單張或多張）
+ * @param {File|File[]} files - 單張圖片或圖片陣列
+ * @returns {Promise<File|File[]>} 壓縮後的檔案
+ */
+async function compressImages(files) {
+  // 判斷是單張還是多張
+  const isArray = Array.isArray(files);
+  const fileList = isArray ? files : [files];
+  
+  console.log(`📦 開始壓縮 ${fileList.length} 張圖片...`);
+  
+  const compressedFiles = [];
+  
+  for (let i = 0; i < fileList.length; i++) {
+    const file = fileList[i];
+    
+    try {
+      const compressed = await new Promise((resolve, reject) => {
+        new Compressor(file, {
+          quality: 0.8,           // 品質設定
+          maxWidth: 1920,         // 最大寬度
+          maxHeight: 1920,        // 最大高度
+          mimeType: 'image/webp', // 輸出格式
+          convertSize: 1000000,
+          
+          success(result) {
+            const compressedFile = new File(
+              [result], 
+              file.name.replace(/\.\w+$/, '.webp'),
+              { type: 'image/webp' }
+            );
+            
+            console.log(`壓縮完成: ${file.name}`);
+            console.log(`   原始: ${(file.size / 1024 / 1024).toFixed(2)} MB → 壓縮後: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+            
+            resolve(compressedFile);
+          },
+          
+          error(err) {
+            reject(err);
+          },
+        });
+      });
+      
+      compressedFiles.push(compressed);
+      
+    } catch (error) {
+      console.warn(`圖片 ${file.name} 壓縮失敗，使用原檔案`);
+      compressedFiles.push(file);
+    }
+  }
+  
+  console.log(`批次壓縮完成！`);
+  
+  return isArray ? compressedFiles : compressedFiles[0];
+}
 
 /**
  * Firebase Initialization 
@@ -144,14 +205,23 @@ async function handleSubmit(buttonElement) {
     let docId;
     
     if (isEditMode) {
-      // 編輯模式：使用現有的 ID
       docId = storeId;
       console.log(`📋 使用現有文件ID: ${docId}`);
     } else {
-      // 新增模式：生成新的 ID
-      docId = await generateDocumentId(formData['到訪日期'], 'stores', db);
+      docId = await generateDocumentId(formData['visitDate'], 'stores', db);
       console.log(`📋 生成新文件ID: ${docId}`);
     }
+
+    // ========== 新增：編輯模式時，取得舊資料用於比對 ========== //
+    let oldData = {};
+    if (isEditMode) {
+      const oldDoc = await db.collection('stores').doc(docId).get();
+      if (oldDoc.exists) {
+        oldData = oldDoc.data();
+        console.log('📦 舊資料:', oldData);
+      }
+    }
+    // ========================================================= //
 
     // ========== 2. 處理圖片上傳 ========== 
     const uploadedData = {};
@@ -160,12 +230,15 @@ async function handleSubmit(buttonElement) {
     for (const [key, value] of Object.entries(formData)) {
       // 檢查是否為檔案陣列（新上傳的圖片）
       if (Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
-        console.log(`📤 上傳圖片到資料夾: ${key}, 共 ${value.length} 張`);
+        console.log(`上傳圖片到資料夾: ${key}, 共 ${value.length} 張`);
         
+        //壓縮圖片
+        const compressedFiles = await compressImages(value);
+
         const uploadedUrls = [];
         
-        for (let i = 0; i < value.length; i++) {
-          const file = value[i];
+        for (let i = 0; i < compressedFiles.length; i++) {
+          const file = compressedFiles[i];
           const fileExtension = file.name.split('.').pop();
           const imageNumber = String(globalImageCounter).padStart(2, '0');
           const fileName = `stores/${key}/${docId}_${imageNumber}.${fileExtension}`;
@@ -194,6 +267,36 @@ async function handleSubmit(buttonElement) {
       }
     }
 
+    // ========== 新增：刪除被移除的圖片 ========== //
+    if (isEditMode) {
+      const imageFields = ['store_cover', 'entrance_photo', 'interior_photo'];
+      
+      for (const field of imageFields) {
+        const oldUrls = oldData[field] || [];
+        const newUrls = uploadedData[field] || [];
+        
+        // 找出被刪除的圖片
+        const deletedUrls = oldUrls.filter(url => !newUrls.includes(url));
+        
+        if (deletedUrls.length > 0) {
+          console.log(`🗑️ 準備刪除 ${field} 的圖片:`, deletedUrls);
+          
+          for (const url of deletedUrls) {
+            try {
+              // 從 URL 取得 Storage 路徑
+              const storageRef = storage.refFromURL(url);
+              await storageRef.delete();
+              console.log(`   ✅ 已刪除: ${storageRef.fullPath}`);
+            } catch (error) {
+              console.warn(`   ⚠️ 刪除失敗 (${url}):`, error.message);
+              // 繼續處理其他圖片，不中斷流程
+            }
+          }
+        }
+      }
+    }
+    // ========================================== //
+
     console.log('📝 準備寫入的資料:', uploadedData);
 
     // ========== 3. 準備要寫入 Firestore 的資料 ========== 
@@ -206,28 +309,23 @@ async function handleSubmit(buttonElement) {
       // 編輯模式：加入更新時間
       docData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
       docData.updatedBy = firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'anonymous';
+      
+      await db.collection('stores').doc(docId).update(docData);
+      console.log('✅ 資料更新成功! Document ID:', docId);
+      alert(`✅ 店家資料更新成功！\n文件 ID: ${docId}`);
     } else {
       // 新增模式：加入建立時間
       docData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
       docData.createdBy = firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'anonymous';
       docData.status = 'pending';
-    }
-
-    // ========== 4. 寫入 Firestore ========== 
-    if (isEditMode) {
-      // 編輯模式：更新文件
-      await db.collection('stores').doc(docId).update(docData);
-      console.log('✅ 資料更新成功! Document ID:', docId);
-      alert(`✅ 店家資料更新成功！\n文件 ID: ${docId}`);
-    } else {
-      // 新增模式：建立文件
+      
       await db.collection('stores').doc(docId).set(docData);
       console.log('✅ 資料上傳成功! Document ID:', docId);
       alert(`✅ 店家資料上傳成功！\n文件 ID: ${docId}`);
     }
-    
+
     // 跳轉回列表頁
-    window.location.href = '/admin.html'; 
+    window.location.href = '/storePage.html'; 
     
   } catch (error) {
     console.error('❌ 操作失敗:', error);
@@ -246,7 +344,7 @@ async function handleSubmit(buttonElement) {
       errorMsg = error.message;
     }
     
-    alert(`❌ ${errorMsg}\n\n詳細資訊請查看 Console`);
+    alert(`❌ ${errorMsg}\n\n詳細資訊請查看console`);
     
     // 恢復按鈕
     buttonElement.disabled = false;
@@ -279,7 +377,7 @@ async function init() {
     clearFormData();
   }
   
-  // 渲染表單（會自動預填 formData）
+  // 渲染表單(自動預填formData)
   renderForm();
 
   // 綁定提交按鈕

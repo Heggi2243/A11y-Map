@@ -19,6 +19,7 @@ const elements = {
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
+const storage = firebase.storage(); // <-刪除Storage圖片
 
 // ============================================
 // 身份驗證
@@ -107,18 +108,18 @@ function renderTable(allStore){
       : store.store_cover;
     
     // 可能是陣列的類別
-    const category = Array.isArray(store.類別)
-      ? store.類別.join(', ')
-      : store.類別;
+    const category = Array.isArray(store.category)
+      ? store.category.join(', ')
+      : store.category;
 
     row.innerHTML = `
     <td class="px-3 py-2 whitespace-nowrap">
-      <img src="${coverImage || '../img/763732019.jpg'}" alt="${store.店家名稱|| 'Unknown'}" class="w-full h-32 object-cover transition-transform duration-500 group-hover:scale-110 rounded-lg">
+      <img src="${coverImage || '../img/763732019.jpg'}" alt="${store.name|| 'Unknown'}" class="w-full h-32 object-cover transition-transform duration-500 group-hover:scale-110 rounded-lg">
     </td>
     <td class="px-3 py-2 whitespace-nowrap">
       <div class="flex items-center gap-2 mb-1">
         <span class="bg-retro-yellow text-retro-blue text-xs font-black px-1.5 p-1 rounded border border-retro-blue"> ${category || 'Unknown'}</span>
-        <h3 class="text-xl font-black text-retro-blue truncate tracking-tight">${store.店家名稱}</h3>
+        <h3 class="text-xl font-black text-retro-blue truncate tracking-tight">${store.name}</h3>
       </div>
       <div class="flex items-center text-retro-blue/80 text-sm font-bold truncate">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin w-3 h-3 mr-1 flex-shrink-0" aria-hidden="true">
@@ -126,10 +127,10 @@ function renderTable(allStore){
             </path>
         <circle cx="12" cy="10" r="3"></circle>
         </svg>
-        <span class="truncate">${store.店家地址|| 'Unknown'}</span>
+        <span class="truncate">${store.address|| 'Unknown'}</span>
       </div>
       <div class="flex items-center text-retro-blue text-sm font-bold truncate">
-      ${store.到訪日期|| 'Unknown'}
+      ${store.visitDate|| 'Unknown'}
       </div>
     </td>
     <td class="px-3 py-2 whitespace-nowrap">
@@ -143,7 +144,17 @@ function renderTable(allStore){
               <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
             </svg>
           </button>
-
+                    <button 
+            onclick="deleteStore('${store.id}')" 
+            class="p-3 rounded-full bg-retro-blue text-white border-2 border-retro-blue hover:bg-retro-blue/90 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-retro-blue" 
+            aria-label="刪除店家"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 text-white" aria-hidden="true">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+            </svg>
+          </button>
         </div>
       </td>
     `
@@ -166,7 +177,7 @@ window.editStore = function(storeId) {
  * 刪除店家
  */
 window.deleteStore = async function(storeId) {
-  if (!confirm('確定要刪除此店家嗎？此操作無法復原。')) {
+  if (!confirm('⚠️ 確定要刪除此店家嗎？\n\n此操作將會：\n1. 刪除所有店家圖片\n2. 刪除店家資料\n\n此操作無法復原！')) {
     console.log('❌ 用戶取消刪除');
     return;
   }
@@ -174,32 +185,84 @@ window.deleteStore = async function(storeId) {
   try {
     console.log('🗑️ 正在刪除店家:', storeId);
     
-    await db.collection('allStore').doc(storeId).delete();
+    // ========== Step 1: 取得店家資料 ========== //
+    const doc = await db.collection('stores').doc(storeId).get();
     
-    console.log('✅ 刪除成功');
-    alert('✅ 刪除成功');
+    if (!doc.exists) {
+      alert('❌ 找不到此店家');
+      return;
+    }
     
-    // 重新載入列表（只執行一次）
+    const storeData = doc.data();
+    console.log('📦 店家資料:', storeData);
+    
+    // ========== Step 2: 收集所有圖片 URL ========== //
+    const allImageUrls = [];
+    
+    // 店家封面
+    if (Array.isArray(storeData.store_cover)) {
+      allImageUrls.push(...storeData.store_cover);
+    } else if (storeData.store_cover) {
+      allImageUrls.push(storeData.store_cover);
+    }
+    
+    // 門口照片
+    if (Array.isArray(storeData.entrance_photo)) {
+      allImageUrls.push(...storeData.entrance_photo);
+    } else if (storeData.entrance_photo) {
+      allImageUrls.push(storeData.entrance_photo);
+    }
+    
+    // 內部照片
+    if (Array.isArray(storeData.interior_photo)) {
+      allImageUrls.push(...storeData.interior_photo);
+    } else if (storeData.interior_photo) {
+      allImageUrls.push(storeData.interior_photo);
+    }
+    
+    // 過濾掉空值
+    const validUrls = allImageUrls.filter(url => url && typeof url === 'string');
+    
+    console.log(`🖼️ 找到 ${validUrls.length} 張圖片需要刪除`);
+    
+    // ========== Step 3: 刪除所有圖片 ========== //
+    const deletePromises = validUrls.map(async (url) => {
+      try {
+        // 從 URL 取得 Storage Reference
+        const imageRef = storage.refFromURL(url);
+        await imageRef.delete();
+        console.log('✅ 刪除圖片成功:', url);
+      } catch (error) {
+        // 圖片可能已經不存在，忽略錯誤
+        if (error.code === 'storage/object-not-found') {
+          console.warn('⚠️ 圖片不存在（可能已被刪除）:', url);
+        } else {
+          console.error('❌ 刪除圖片失敗:', url, error);
+        }
+      }
+    });
+    
+    // 等待所有圖片刪除完成
+    await Promise.all(deletePromises);
+    
+    // ========== Step 4: 刪除 Firestore 文件 ========== //
+    await db.collection('stores').doc(storeId).delete();
+    
+    console.log('✅ 刪除完成');
+    alert('✅ 刪除成功！\n已刪除所有圖片和店家資料。');
+    
+    // 重新載入列表
     await loadStoreList();
     
   } catch (error) {
     console.error('❌ 刪除失敗:', error);
-    alert('刪除失敗: ' + error.message);
+    console.error('錯誤代碼:', error.code);
+    console.error('錯誤訊息:', error.message);
+
+    if (error.code === 'permission-denied') {
+      alert('❌ 權限不足\n\n可能原因：\n1. 您不是管理員\n2. 登入狀態已過期\n\n請重新登入後再試');
+    } else {
+      alert('❌ 刪除失敗: ' + error.message);
+    }
   }
 };
-
-
-/**
- * 刪除功能   
-          <button 
-            onclick="deleteStore('${store.id}')" 
-            class="p-3 rounded-full bg-retro-blue text-white border-2 border-retro-blue hover:bg-retro-blue/90 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-retro-blue" 
-            aria-label="刪除店家"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 text-white" aria-hidden="true">
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-            </svg>
-          </button>
- */

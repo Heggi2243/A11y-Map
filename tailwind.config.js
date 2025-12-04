@@ -9,6 +9,19 @@ module.exports = {
     "./**/*.js",
     "!./node_modules/**/*"
   ],
+  safelist: [
+    // org 顏色相關
+    'bg-org-50',
+    'bg-org-200',
+    'border-org-200',
+    'text-org-600',
+    'text-org-800',
+
+    'bg-red-50',
+    'text-red-800',
+
+    'border-blue-200'
+  ],
   theme: {
     extend: {
       colors: {
@@ -30,6 +43,19 @@ module.exports = {
           800: '#166534',
           900: '#14532d',
         },
+        org: {
+          50: '#FEF7F2',
+          200: '#f6b283',
+          600: '#dc6d26',
+          800:'#f15c18',
+        },
+        red: {
+          50: '#f5efef',
+          800: '#b40707',
+        },
+        blue:{
+          200: '#286deb',
+        }
 
       },
       fontFamily: {
