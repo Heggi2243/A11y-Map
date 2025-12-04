@@ -185,7 +185,7 @@ function renderShopDetail(shop) {
   }else if (shop.convenience >= 3 && count >= 1) {
     colorAry = ['blue-50','blue-200','heart-handshake','blue-600','blue-800'];
     content = ['尚可接受','需要陪伴者提供一點協助'];
-  }else if (shop.convenience >= 2 && count > 1){
+  }else if (shop.convenience >= 2 && count >= 1){
     colorAry = ['org-50','org-200','hand-helping','org-600','org-800'];
     content = ['有點難度','需要陪伴者與店家共同協助'];
   }else {
@@ -434,3 +434,27 @@ function renderDetailItem(label, value, iconOrHtml, isHtml = false) {
       </div>
     </div>`;
 }
+
+  const footerToggleBtn = document.getElementById('footer-toggle-btn');
+  const footerLabel = document.getElementById('footer-label');
+  const footerLinks = document.getElementById('footer-links');
+  const footerChevron = document.getElementById('footer-chevron');
+  
+  let isFooterExpanded = false;
+
+  function toggleFooter() {
+    isFooterExpanded = !isFooterExpanded;
+    if (isFooterExpanded) {
+      footerLinks.style.maxHeight = footerLinks.scrollHeight + "px";
+      footerChevron.style.transform = "rotate(180deg)";
+    } else {
+      footerLinks.style.maxHeight = "0px";
+      footerChevron.style.transform = "rotate(0deg)";
+    }
+  }
+
+  if (footerToggleBtn && footerLabel) {
+    footerToggleBtn.addEventListener('click', toggleFooter);
+    footerLabel.addEventListener('click', toggleFooter);
+  }
+
