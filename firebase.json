@@ -28,10 +28,6 @@
     ],
     "rewrites": [
       {
-        "source": "**",
-        "destination": "/index.html"
-      },
-      {
         "source": "/login",
         "destination": "/loginPage.html"
       }
