@@ -8,10 +8,10 @@ const db = firebase.firestore();
 // ========== State Management ========== //
 
 const DEFAULT_USER_SETTINGS = {
-  wheelchairWidthCm: 70,
+  wheelchairSize: 'small', // 新增：'small' 或 'large'
   maxDistanceMin: 30,
   allowedCategories: ['餐飲', '景點', '購物', '住宿'],
-  needsElevator: false,
+  needsFriendlyEnvironment: false, // 改名：原本的 needsElevator
   needsAccessibleRestroom: false,
 };
 
@@ -113,23 +113,27 @@ function getFilteredShops() {
       shop.categoryArray.includes(cat)
     );
     
-    // 門寬匹配
-    const fitsDoor = shop.doorWidthCm >= state.userSettings.wheelchairWidthCm;
+    // 門寬匹配（根據輪椅尺寸）
+    const requiredWidth = state.userSettings.wheelchairSize === 'small' ? 75 : 75;
+    const fitsDoor = state.userSettings.wheelchairSize === 'small' 
+      ? shop.doorWidthCm < 75 || shop.doorWidthCm >= 75  // 小型：所有門都可以
+      : shop.doorWidthCm >= 75;  // 大型：只能通過 75cm 以上的門
 
     
     // 距離匹配
     const matchesDistance = shop.distanceMin <= state.userSettings.maxDistanceMin;
   
     
-    // 電梯匹配（暫時略過，因為資料庫沒有此欄位）
-    const matchesElevator = !state.userSettings.needsElevator;
+    // 環境友善匹配(便利度 >= 4)
+    const matchesFriendly = !state.userSettings.needsFriendlyEnvironment || 
+                           (shop.convenience && shop.convenience >= 4);
     
     // 無障礙廁所匹配
     const matchesRestroom = !state.userSettings.needsAccessibleRestroom || 
                            (shop.restroom && shop.restroom.includes('無障礙'));
 
     return matchesSearch && matchesCategory && fitsDoor && matchesDistance && 
-          matchesElevator && matchesRestroom;
+            matchesFriendly && matchesRestroom;
   });
 }
 
@@ -141,15 +145,17 @@ function resetFilters() {
 }
 
 function applyFilters() {
-  const typedWidth = parseInt(document.getElementById('input-width').value);
-  state.userSettings.wheelchairWidthCm = isNaN(typedWidth) ? 
-    parseInt(document.getElementById('filter-width').value) : typedWidth;
-  
-  state.userSettings.maxDistanceMin = parseInt(document.getElementById('filter-dist').value);
+  // 讀取輪椅尺寸選項
+  const sizeRadios = document.querySelectorAll('input[name="wheelchair-size"]');
+  sizeRadios.forEach(radio => {
+    if (radio.checked) {
+      state.userSettings.wheelchairSize = radio.value;
+    }
+  });
 
   const toggles = document.querySelectorAll('.filter-toggle');
   toggles.forEach(t => {
-    if(t.dataset.id === 'elevator') state.userSettings.needsElevator = t.checked;
+    if(t.dataset.id === 'friendly') state.userSettings.needsFriendlyEnvironment = t.checked;
     if(t.dataset.id === 'restroomReq') state.userSettings.needsAccessibleRestroom = t.checked;
   });
 
@@ -157,7 +163,7 @@ function applyFilters() {
   renderShopList();
 }
 
-// ========== 渲染函式 ========== //
+// ========== 渲染 ========== //
 
 function renderShopList() {
   const container = document.getElementById('shop-list-container');
@@ -175,7 +181,10 @@ function renderShopList() {
   const filtered = getFilteredShops();
 
   document.getElementById('recommend-title').textContent = `為您推薦 (${filtered.length})`;
-  document.getElementById('status-width').textContent = `輪椅: ${state.userSettings.wheelchairWidthCm}cm`;
+
+  // 更新狀態顯示
+  const sizeText = state.userSettings.wheelchairSize === 'small' ? '中小型' : '中大型';
+  document.getElementById('status-width').textContent = `輪椅: ${sizeText}`;
   document.getElementById('status-dist').textContent = `距離 < ${state.userSettings.maxDistanceMin}分`;
 
   if (filtered.length === 0) {
@@ -190,7 +199,11 @@ function renderShopList() {
   }
 
   filtered.forEach(shop => {
-    const fitsDoor = shop.doorWidthCm >= state.userSettings.wheelchairWidthCm;
+    const requiredWidth = state.userSettings.wheelchairSize === 'small' ? 75 : 75;
+    const fitsDoor = state.userSettings.wheelchairSize === 'small' 
+      ? true  // 小型輪椅所有門都可以
+      : shop.doorWidthCm >= 75;
+      
     const restroomOK = !state.userSettings.needsAccessibleRestroom || 
                       (shop.restroom && shop.restroom.includes('無障礙'));
     const isCompatible = fitsDoor && restroomOK;
@@ -264,15 +277,27 @@ function renderFilterPanel() {
 
   content.innerHTML = `
     <section class="bg-white p-5 rounded-3xl border-2 border-retro-blue/10 shadow-sm">
-      <label class="flex items-center text-lg font-black text-retro-blue mb-2"><i data-lucide="ruler" class="mr-2" size="20"></i> 輪椅尺寸相容模式</label>
-      <p class="text-xs font-bold text-retro-blue/50 mb-5">輸入您的輪椅總寬度,系統將自動過濾窄門店家。</p>
-      <div class="flex items-center space-x-4">
-        <input type="range" min="50" max="120" value="${state.userSettings.wheelchairWidthCm}" id="filter-width" class="flex-1 h-4 bg-retro-blue/10 rounded-full appearance-none cursor-pointer accent-retro-blue">
-        <div class="flex flex-col items-center min-w-[5rem] bg-retro-blue px-2 py-1 rounded-xl shadow-sm relative">
-          <input type="number" id="input-width" min="50" max="120" value="${state.userSettings.wheelchairWidthCm}" 
-                 class="w-full bg-transparent text-xl font-black text-white text-center focus:outline-none appearance-none font-display leading-none p-0 m-0 border-b-2 border-transparent focus:border-retro-yellow transition-colors">
-          <span class="text-[10px] text-retro-yellow font-black mt-1">CM</span>
-        </div>
+      <label class="flex items-center text-lg font-black text-retro-blue mb-2">
+        <i data-lucide="ruler" class="mr-2" size="20"></i> 輪椅尺寸
+      </label>
+      <p class="text-xs font-bold text-retro-blue/50 mb-5">選擇您的輪椅尺寸，系統將自動過濾不適合的店家。</p>
+      
+      <div class="space-y-3">
+        <label class="flex items-center cursor-pointer p-4 border-2 rounded-2xl transition-all ${state.userSettings.wheelchairSize === 'small' ? 'border-retro-blue bg-retro-blue/5' : 'border-retro-blue/10 bg-white hover:border-retro-blue/30'}">
+          <input type="radio" name="wheelchair-size" value="small" ${state.userSettings.wheelchairSize === 'small' ? 'checked' : ''} class="mr-3 w-5 h-5 accent-retro-blue">
+          <div>
+            <span class="font-bold text-retro-blue">中小型輪椅</span>
+            <span class="text-xs text-retro-blue/50 ml-2">(低於 75 公分)</span>
+          </div>
+        </label>
+        
+        <label class="flex items-center cursor-pointer p-4 border-2 rounded-2xl transition-all ${state.userSettings.wheelchairSize === 'large' ? 'border-retro-blue bg-retro-blue/5' : 'border-retro-blue/10 bg-white hover:border-retro-blue/30'}">
+          <input type="radio" name="wheelchair-size" value="large" ${state.userSettings.wheelchairSize === 'large' ? 'checked' : ''} class="mr-3 w-5 h-5 accent-retro-blue">
+          <div>
+            <span class="font-bold text-retro-blue">中大型輪椅</span>
+            <span class="text-xs text-retro-blue/50 ml-2">(75 公分或以上)</span>
+          </div>
+        </label>
       </div>
     </section>
     
@@ -288,7 +313,7 @@ function renderFilterPanel() {
     </section>
 
     <section class="space-y-4">
-      ${renderToggle('需要電梯 (若非一樓)', 'arrow-up-circle', 'orange', state.userSettings.needsElevator, 'elevator')}
+      ${renderToggle('環境友善', 'heart', 'green', state.userSettings.needsFriendlyEnvironment, 'friendly', '便利度 4 星以上，不需要太多協助')}
       ${renderToggle('需要無障礙廁所', 'accessibility', 'teal', state.userSettings.needsAccessibleRestroom, 'restroomReq')}
     </section>
   `;
@@ -297,24 +322,33 @@ function renderFilterPanel() {
   attachFilterListeners();
 }
 
-function renderToggle(label, icon, color, checked, id) {
+function renderToggle(label, icon, color, checked, id, description = '') {
   const bgClass = checked ? 
     (color === 'blue' ? 'bg-blue-500 border-blue-500' : 
+     color === 'green' ? 'bg-green-500 border-green-500' : 
      color === 'orange' ? 'bg-orange-500 border-orange-500' : 
      'bg-teal-500 border-teal-500') : 
     'bg-slate-100 border-slate-300';
   
+    //新增blue
   const textClass = color === 'blue' ? 'text-blue-500' : 
+                   color === 'green' ? 'text-green-500' :
                    color === 'orange' ? 'text-orange-500' : 
                    'text-teal-500';
 
+  const descriptionHtml = description ? 
+    `<p class="text-xs text-retro-blue/50 font-bold mt-1">${description}</p>` : '';
+
   return `
     <label class="flex items-center justify-between cursor-pointer p-4 border-2 border-retro-blue/10 rounded-2xl bg-white hover:border-retro-blue/30 transition-all shadow-sm">
-      <div class="flex items-center">
-        <i data-lucide="${icon}" class="mr-3 ${textClass}" size="20"></i>
-        <span class="text-sm font-bold text-retro-blue">${label}</span>
+      <div class="flex items-start flex-1">
+        <i data-lucide="${icon}" class="mr-3 mt-0.5 ${textClass}" size="20"></i>
+        <div class="flex-1">
+          <span class="text-sm font-bold text-retro-blue block">${label}</span>
+          ${descriptionHtml}
+        </div>
       </div>
-      <div class="w-12 h-7 rounded-full p-1 transition-colors border-2 ${bgClass}">
+      <div class="w-12 h-7 rounded-full p-1 transition-colors border-2 ${bgClass} ml-3 flex-shrink-0">
         <div class="w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${checked ? 'translate-x-5' : ''}"></div>
       </div>
       <input type="checkbox" class="hidden filter-toggle" data-id="${id}" ${checked ? 'checked' : ''}>
@@ -381,20 +415,7 @@ function renderFootprintsHtml(circulation, size = 16) {
 // ========== Event Listeners ========== //
 
 function attachFilterListeners() {
-  const widthSlider = document.getElementById('filter-width');
-  const widthInput = document.getElementById('input-width');
-  
-  widthSlider.addEventListener('input', e => {
-    widthInput.value = e.target.value;
-  });
-  
-  widthInput.addEventListener('input', e => {
-    let val = parseInt(e.target.value);
-    if(val >= 50 && val <= 120) {
-      widthSlider.value = val;
-    }
-  });
-
+  // 距離滑桿
   document.getElementById('filter-dist').addEventListener('input', e => {
     document.getElementById('disp-dist').textContent = e.target.value + ' 分內';
   });
