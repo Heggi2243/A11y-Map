@@ -8,16 +8,16 @@ const db = firebase.firestore();
 // ========== State Management ========== //
 
 const DEFAULT_USER_SETTINGS = {
-  wheelchairSize: 'small', // 新增：'small' 或 'large'
+  wheelchairSize: 'small', //預設中小型輪椅
   maxDistanceMin: 30,
-  allowedCategories: ['餐飲', '景點', '購物', '住宿'],
-  needsFriendlyEnvironment: false, // 改名：原本的 needsElevator
+  needsFriendlyEnvironment: false,
   needsAccessibleRestroom: false,
 };
 
 const state = {
   userSettings: { ...DEFAULT_USER_SETTINGS },
   searchQuery: '',
+  selectedCategory: '全部',
   allShops: [],
   isLoading: true,
 };
@@ -99,26 +99,21 @@ function parseDoorWidth(doorWidthStr) {
   return match ? parseInt(match[1]) : 80;
 }
 
-// ========== 篩選功能 ========== //
+// ========== 篩選&搜尋功能 ========== //
 
 function getFilteredShops() {
   return state.allShops.filter(shop => {
     // 搜尋匹配
     const matchesSearch = shop.name.includes(state.searchQuery) || 
-                         shop.address.includes(state.searchQuery) || 
-                         (Array.isArray(shop.category) ? shop.category.join('').includes(state.searchQuery) : shop.category.includes(state.searchQuery));
+                         shop.address.includes(state.searchQuery) ;
     
-    // 類別匹配
-    const matchesCategory = state.userSettings.allowedCategories.some(cat => 
-      shop.categoryArray.includes(cat)
-    );
+    const matchesCategory = state.selectedCategory === '全部' || 
+                           shop.categoryArray.includes(state.selectedCategory);
     
-    // 門寬匹配（根據輪椅尺寸）
-    const requiredWidth = state.userSettings.wheelchairSize === 'small' ? 75 : 75;
+                           // 門寬匹配（根據輪椅尺寸）
     const fitsDoor = state.userSettings.wheelchairSize === 'small' 
-      ? shop.doorWidthCm < 75 || shop.doorWidthCm >= 75  // 小型：所有門都可以
-      : shop.doorWidthCm >= 75;  // 大型：只能通過 75cm 以上的門
-
+      ? true  // 小型輪椅：所有門都可以通過
+      : shop.doorWidthCm >= 75;  // 大型輪椅：只能通過 75cm 以上的門
     
     // 距離匹配
     const matchesDistance = shop.distanceMin <= state.userSettings.maxDistanceMin;
@@ -137,10 +132,13 @@ function getFilteredShops() {
   });
 }
 
+// 重置
 function resetFilters() {
   state.userSettings = { ...DEFAULT_USER_SETTINGS };
   state.searchQuery = '';
+  state.selectedCategory = '全部';
   document.getElementById('search-input').value = '';
+   updateCategoryTabs(); //更新Category
   renderShopList();
 }
 
@@ -160,6 +158,38 @@ function applyFilters() {
   });
 
   document.getElementById('filter-badge').classList.remove('hidden');
+  renderShopList();
+}
+
+/**
+ * 更新類別按鈕的視覺狀態
+ */
+function updateCategoryTabs() {
+  const tabs = document.querySelectorAll('.category-tab');
+  
+  tabs.forEach(tab => {
+    const category = tab.dataset.category;
+    
+    if (category === state.selectedCategory) {
+      // 選中狀態
+      tab.classList.remove('bg-white', 'border-2', 'border-retro-blue/10', 'text-retro-blue');
+      tab.classList.add('bg-retro-blue', 'text-white');
+      tab.setAttribute('aria-pressed', 'true');
+    } else {
+      // 未選中狀態
+      tab.classList.remove('bg-retro-blue', 'text-white');
+      tab.classList.add('bg-white', 'border-2', 'border-retro-blue/10', 'text-retro-blue');
+      tab.setAttribute('aria-pressed', 'false');
+    }
+  });
+}
+
+/**
+ * 切換類別
+ */
+function switchCategory(category) {
+  state.selectedCategory = category;
+  updateCategoryTabs();
   renderShopList();
 }
 
@@ -199,7 +229,6 @@ function renderShopList() {
   }
 
   filtered.forEach(shop => {
-    const requiredWidth = state.userSettings.wheelchairSize === 'small' ? 75 : 75;
     const fitsDoor = state.userSettings.wheelchairSize === 'small' 
       ? true  // 小型輪椅所有門都可以
       : shop.doorWidthCm >= 75;
@@ -313,8 +342,8 @@ function renderFilterPanel() {
     </section>
 
     <section class="space-y-4">
-      ${renderToggle('環境友善', 'heart', 'green', state.userSettings.needsFriendlyEnvironment, 'friendly', '便利度 4 星以上，不需要太多協助')}
-      ${renderToggle('需要無障礙廁所', 'accessibility', 'teal', state.userSettings.needsAccessibleRestroom, 'restroomReq')}
+      ${renderToggle('環境友善', 'heart', state.userSettings.needsFriendlyEnvironment, 'friendly', '便利度 4 星以上，不需要太多協助')}
+      ${renderToggle('需要無障礙廁所', 'accessibility', state.userSettings.needsAccessibleRestroom, 'restroomReq')}
     </section>
   `;
   
@@ -322,27 +351,17 @@ function renderFilterPanel() {
   attachFilterListeners();
 }
 
-function renderToggle(label, icon, color, checked, id, description = '') {
-  const bgClass = checked ? 
-    (color === 'blue' ? 'bg-blue-500 border-blue-500' : 
-     color === 'green' ? 'bg-green-500 border-green-500' : 
-     color === 'orange' ? 'bg-orange-500 border-orange-500' : 
-     'bg-teal-500 border-teal-500') : 
-    'bg-slate-100 border-slate-300';
-  
-    //新增blue
-  const textClass = color === 'blue' ? 'text-blue-500' : 
-                   color === 'green' ? 'text-green-500' :
-                   color === 'orange' ? 'text-orange-500' : 
-                   'text-teal-500';
+function renderToggle(label, icon, checked, id, description = '') {
 
+  const bgClass = checked ? 'bg-retro-blue border-retro-blue' : 'bg-slate-100 border-slate-300';
+  
   const descriptionHtml = description ? 
     `<p class="text-xs text-retro-blue/50 font-bold mt-1">${description}</p>` : '';
 
   return `
     <label class="flex items-center justify-between cursor-pointer p-4 border-2 border-retro-blue/10 rounded-2xl bg-white hover:border-retro-blue/30 transition-all shadow-sm">
       <div class="flex items-start flex-1">
-        <i data-lucide="${icon}" class="mr-3 mt-0.5 ${textClass}" size="20"></i>
+        <i data-lucide="${icon}" class="mr-3 mt-0.5 text-retro-blue" size="20"></i>
         <div class="flex-1">
           <span class="text-sm font-bold text-retro-blue block">${label}</span>
           ${descriptionHtml}
@@ -412,19 +431,55 @@ function renderFootprintsHtml(circulation, size = 16) {
   return `<div class="flex items-center text-retro-blue" title="${circulation}">${html}</div>`;
 }
 
-// ========== Event Listeners ========== //
+// ========== 點擊類事件監聽 ========== //
 
 function attachFilterListeners() {
-  // 距離滑桿
+  // 距離滑桿(記得改)
   document.getElementById('filter-dist').addEventListener('input', e => {
     document.getElementById('disp-dist').textContent = e.target.value + ' 分內';
   });
+   const toggleLabels = document.querySelectorAll('label:has(.filter-toggle)');
+  
+  toggleLabels.forEach(label => {
+    label.addEventListener('click', (e) => {
+      const checkbox = label.querySelector('.filter-toggle');
+      const toggleSwitch = label.querySelector('.w-12.h-7 > div');
+      const toggleBg = label.querySelector('.w-12.h-7');
+      
+      // 切換checkbox狀態
+      checkbox.checked = !checkbox.checked;
+      
+      // 即時更新視覺效果
+      if (checkbox.checked) {
+        toggleSwitch.classList.add('translate-x-5');
+        toggleBg.classList.remove('bg-slate-100', 'border-slate-300');
+        toggleBg.classList.add('bg-retro-blue', 'border-retro-blue');
+      } else {
+        toggleSwitch.classList.remove('translate-x-5');
+        toggleBg.classList.remove('bg-retro-blue', 'border-retro-blue');
+        toggleBg.classList.add('bg-slate-100', 'border-slate-300');
+      }
+      
+      e.preventDefault();
+    });
+  });
+  
 }
 
+// 初始事件監聽
 function initEventListeners() {
   document.getElementById('search-input').addEventListener('input', (e) => {
     state.searchQuery = e.target.value;
     renderShopList();
+  });
+
+   // ========= 類別按鈕事件 ========== //
+  const categoryTabs = document.querySelectorAll('.category-tab');
+  categoryTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const category = tab.dataset.category;
+      switchCategory(category);
+    });
   });
 
   const modal = document.getElementById('filter-modal');
@@ -473,7 +528,7 @@ function initEventListeners() {
 // ========== 初始化 ========== //
 
 async function init() {
-  console.log('🚀 應用程式啟動');
+  console.log('接收到初始化命令');
   
   renderShopList();
   await loadShopsFromFirestore();
@@ -481,7 +536,7 @@ async function init() {
   initEventListeners();
   lucide.createIcons();
   
-  console.log('✅ 應用程式準備就緒');
+  console.log('準備好了');
 }
 
 if (document.readyState === 'loading') {
