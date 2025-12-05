@@ -16,7 +16,7 @@ body {
 
 /* ========前端footer的方塊裝飾======== */
 .checker-strip {
-    background-color: transparent;
+    background-color: #FFFFFF;
     background-image: linear-gradient(45deg, #1e3a8a 25%, transparent 25%),
                     linear-gradient(-45deg, #1e3a8a 25%, transparent 25%),
                     linear-gradient(45deg, transparent 75%, #1e3a8a 75%),

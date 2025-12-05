@@ -11,7 +11,6 @@ const DEFAULT_USER_SETTINGS = {
   wheelchairWidthCm: 70,
   maxDistanceMin: 30,
   allowedCategories: ['餐飲', '景點', '購物', '住宿'],
-  needsAccessibleParking: false,
   needsElevator: false,
   needsAccessibleRestroom: false,
 };
@@ -48,11 +47,13 @@ async function loadShopsFromFirestore() {
         doorWidthCm: parseDoorWidth(doc.data().doorWidthCm),
         distanceMin: 5,
         imageUrl: doc.data().store_cover?.[0] || `https://picsum.photos/800/600?random=${doc.id}`,
-        tags: generateTags(doc.data()),
       };
       
+      
       state.allShops.push(shop);
+      console.log(shop);
     });
+
     
     console.log(`✅ 載入完成，共 ${state.allShops.length} 筆商店資料`);
     state.isLoading = false;
@@ -98,23 +99,6 @@ function parseDoorWidth(doorWidthStr) {
   return match ? parseInt(match[1]) : 80;
 }
 
-function generateTags(data) {
-  const tags = [];
-  
-  if (data.ramp?.includes('平緩') || data.ramp?.includes('順行')) tags.push('坡道友善');
-  if (data.ramp?.includes('陡峭')) tags.push('坡道較陡');
-  if (data.restroom?.includes('無障礙')) tags.push('無障礙廁所');
-  
-  const doorWidth = parseDoorWidth(data.doorWidthCm);
-  if (doorWidth >= 90) tags.push('門寬寬敞');
-  if (data.circulation === '寬敞') tags.push('動線寬敞');
-  if (Array.isArray(data.assistance) && data.assistance.includes('無須協助')) {
-    tags.push('完全無障礙');
-  }
-  
-  return tags;
-}
-
 // ========== 篩選功能 ========== //
 
 function getFilteredShops() {
@@ -131,12 +115,11 @@ function getFilteredShops() {
     
     // 門寬匹配
     const fitsDoor = shop.doorWidthCm >= state.userSettings.wheelchairWidthCm;
+
     
     // 距離匹配
     const matchesDistance = shop.distanceMin <= state.userSettings.maxDistanceMin;
-    
-    // 停車位匹配
-    const matchesParking = !state.userSettings.needsAccessibleParking || shop.nearestParking;
+  
     
     // 電梯匹配（暫時略過，因為資料庫沒有此欄位）
     const matchesElevator = !state.userSettings.needsElevator;
@@ -146,7 +129,7 @@ function getFilteredShops() {
                            (shop.restroom && shop.restroom.includes('無障礙'));
 
     return matchesSearch && matchesCategory && fitsDoor && matchesDistance && 
-           matchesParking && matchesElevator && matchesRestroom;
+          matchesElevator && matchesRestroom;
   });
 }
 
@@ -166,7 +149,6 @@ function applyFilters() {
 
   const toggles = document.querySelectorAll('.filter-toggle');
   toggles.forEach(t => {
-    if(t.dataset.id === 'parking') state.userSettings.needsAccessibleParking = t.checked;
     if(t.dataset.id === 'elevator') state.userSettings.needsElevator = t.checked;
     if(t.dataset.id === 'restroomReq') state.userSettings.needsAccessibleRestroom = t.checked;
   });
@@ -225,8 +207,8 @@ function renderShopList() {
       renderBadge('good', '無障礙廁所') : 
       renderBadge('warning', shop.restroom?.split(' ')[0] || '未提供');
     
-    // 門寬徽章
-    const doorBadge = renderBadge(fitsDoor ? 'good' : 'bad', `門寬 ${shop.doorWidthCm}cm`);
+    // 門寬徽章，用回範圍標示比較無疑義
+    const doorBadge = renderBadge(fitsDoor ? 'good' : 'bad', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`);
     
     // 動線圖示
     const footprints = renderFootprintsHtml(shop.circulation, 16);
@@ -262,9 +244,8 @@ function renderShopList() {
             <div class="flex gap-4">
               <div class="flex items-center text-retro-blue">
                 <div class="mr-2">${footprints}</div> 
-                ${shop.circulation || '未提供'}
+                內部空間：${shop.circulation || '未提供'}
               </div>
-              <div class="flex items-center text-retro-blue"><i data-lucide="accessibility" size="16" class="mr-1" stroke="#1e3a8a" stroke-width="2.5"></i> ${shop.restroom?.includes('無障礙') ? 'OK' : 'NO'}</div>
             </div>
             <span class="text-retro-blue group-hover:translate-x-1 transition-transform">查看詳情 →</span>
           </div>
@@ -307,7 +288,6 @@ function renderFilterPanel() {
     </section>
 
     <section class="space-y-4">
-      ${renderToggle('需要無障礙停車位', 'truck', 'blue', state.userSettings.needsAccessibleParking, 'parking')}
       ${renderToggle('需要電梯 (若非一樓)', 'arrow-up-circle', 'orange', state.userSettings.needsElevator, 'elevator')}
       ${renderToggle('需要無障礙廁所', 'accessibility', 'teal', state.userSettings.needsAccessibleRestroom, 'restroomReq')}
     </section>
