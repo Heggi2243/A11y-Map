@@ -12,6 +12,16 @@ body {
     background-color: #fdfbf7;
 }
 
+/*類別*/
+
+.category-tab{
+    font-weight: 700;
+}
+.category-tab:not(.bg-retro-blue):hover {
+  background-color: rgba(30, 58, 138, 0.05);
+  border-color: #1e3a8a;
+}
+
 
 
 /* ========前端footer的方塊裝飾======== */

@@ -64,10 +64,10 @@
           <!-- ✅ 改進：類別標籤改為功能性按鈕 -->
           <div class="flex space-x-3 overflow-x-auto no-scrollbar pb-2" id="category-tabs">
             <button data-category="全部" class="category-tab active flex-shrink-0 px-5 py-2 bg-retro-blue text-white text-sm font-display rounded-full shadow-md transition-all" aria-pressed="true">全部</button>
-            <button data-category="餐飲" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors" aria-pressed="false">餐飲</button>
-            <button data-category="景點" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors" aria-pressed="false">景點</button>
-            <button data-category="購物" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors" aria-pressed="false">購物</button>
-            <button data-category="住宿" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full hover:bg-retro-blue/5 transition-colors" aria-pressed="false">住宿</button>
+            <button data-category="餐飲" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full transition-colors" aria-pressed="false">餐飲</button>
+            <button data-category="景點" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full transition-colors" aria-pressed="false">景點</button>
+            <button data-category="購物" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full transition-colors" aria-pressed="false">購物</button>
+            <button data-category="住宿" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full transition-colors" aria-pressed="false">住宿</button>
           </div>
         </header>
 
@@ -160,7 +160,32 @@
         </div>
       </div>
     </div>
-
+    <!-- 定位權限提示 Modal -->
+    <div id="location-permission-modal" class="fixed inset-0 bg-retro-dark/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-white rounded-3xl border-4 border-retro-blue shadow-2xl max-w-md w-full p-8 transform transition-all">
+        <div class="text-center mb-6">
+          <div class="w-20 h-20 bg-retro-blue/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="map-pin" size="40" class="text-retro-blue"></i>
+          </div>
+          <h2 class="text-2xl font-display font-black text-retro-blue mb-3">開啟定位功能？</h2>
+          <p class="text-retro-blue/70 font-bold">為您提供附近 2 公里內的無障礙店家資訊</p>
+        </div>
+        
+        <div class="space-y-3">
+          <button id="allow-location-btn" class="w-full px-6 py-4 bg-retro-blue text-white font-display font-bold rounded-2xl shadow-md hover:bg-retro-blue/90 transition-all">
+            允許定位
+          </button>
+          <button id="deny-location-btn" class="w-full px-6 py-4 bg-white border-2 border-retro-blue/20 text-retro-blue font-display font-bold rounded-2xl hover:bg-retro-blue/5 transition-all">
+            暫不使用
+          </button>
+        </div>
+        
+        <p class="text-xs text-retro-blue/40 text-center mt-4">
+          <i data-lucide="shield-check" size="12" class="inline"></i>
+          我們不會儲存您的位置資訊
+        </p>
+      </div>
+    </div>
     <!-- Controller Script -->
     <script type="module" src="js/index.js"></script>
   </body>

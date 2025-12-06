@@ -295,33 +295,43 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
         }
       });
 
-      // ==================== 新增 4/4：Session 記錄函式 ==================== //
-      /**
-     * 生成裝置指紋
-     * 結合多種瀏覽器特徵來產生唯一識別碼
+    // ==================== Session記錄 ==================== //
+
+    
+    /**
+     * 1. 生成裝置指紋，結合多種瀏覽器特徵來產生唯一識別碼
+     * 2. 同一個ip無法區分"同一個人用不同裝置"或是"不同人用同一個網路"
+     * 3. 指紋裝置：ip改變時仍能識別同一裝置，判斷登入異常、或從使用者習慣判斷是否異常
+     * 4. 雖然防不了遠端桌面，但通常情況裝置指紋難以被偽造，可以多一個判斷
+     * 5. 符合使用者隱私：不蒐集個人資訊，只蒐集裝置，無法反向推論管理員身分
      */
     function generateDeviceFingerprint() {
       // 收集裝置特徵
       const features = [
-        navigator.userAgent,
-        navigator.language,
-        screen.width + 'x' + screen.height,
-        screen.colorDepth,
-        new Date().getTimezoneOffset(),
-        navigator.hardwareConcurrency || 0,
-        navigator.platform
+        navigator.userAgent, //瀏覽器
+        navigator.language,  //語言設定
+        screen.width + 'x' + screen.height, // 螢幕解析度(EX:1920x1080)，換螢幕機率低
+        screen.colorDepth,  //色彩深度
+        new Date().getTimezoneOffset(),  //時區偏移
+        navigator.hardwareConcurrency || 0, //CPU(除非換電腦)
+        navigator.platform //作業系統(EX:Win32)
       ];
+
+      /**
+       * 組合成字串：
+       * fingerprint = "Mozilla/5.0...|zh-TW|1920x1080|24|-480|8|Win32"
+      */
       
-      // 簡單的 Hash 函數
+      // 縮成短的hash值
       const fingerprint = features.join('|');
       let hash = 0;
       for (let i = 0; i < fingerprint.length; i++) {
-        const char = fingerprint.charCodeAt(i);
+        const char = fingerprint.charCodeAt(i); //ASCII碼
         hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // 轉換為 32 位元整數
+        hash = hash & hash; // 轉換為32位元整數
       }
       
-      return Math.abs(hash).toString(36); // 轉為 36 進位字串
+      return Math.abs(hash).toString(36); // 轉為36進位字串
     }
 
       /**

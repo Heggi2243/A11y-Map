@@ -276,7 +276,7 @@ function renderShopList() {
               <span class="flex text-xs text-white tracking-tight ml-2 bg-retro-blue/10 px-2 py-0.5 rounded-md">${renderPriceLevel(shop.priceLevel)}</span>
               <span class="mx-2 text-retro-blue/20">•</span>
               <i data-lucide="map-pin" size="16" class="mr-1 text-retro-blue"></i>
-              <span>${shop.distanceMin} min</span>
+              <span>${shop.distanceMin !== undefined ? shop.distanceMin + ' min' : '無定位資訊'}</span>
             </div>
             <div class="flex flex-wrap gap-2 mb-4">
               ${rampBadge} ${restroomBadge} ${doorBadge}
