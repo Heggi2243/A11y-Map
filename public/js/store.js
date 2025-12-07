@@ -315,9 +315,21 @@ function renderShopDetail(shop) {
             ${renderDetailItem('出入口坡道', shop.ramp || '未提供', 'arrow-up-circle')}
             ${renderDetailItem('階梯狀況', Array.isArray(shop.steps) ? shop.steps.join(', ') : shop.steps || '未提供', 'accessibility')}
             ${renderDetailItem('門寬', shop.doorWidthCm , 'door-open')}
-            ${renderDetailItem('廁所', shop.restroom || '未提供', 'users')}
             ${renderDetailItem('內部動線', shop.circulation || '未提供', renderFootprintsHtml(shop.circulation, 20))}
-            ${renderDetailItem('協助需求', Array.isArray(shop.assistance) ? shop.assistance.join(', ') : shop.assistance || '未提供', 'help-circle')}
+            ${renderDetailItem(
+              '廁所', 
+              (shop.restroom || '未提供') +
+              (shop.restroomFloor ? `<div class="mt-2 inline-block bg-brand-100 text-brand-800 text-xs font-bold px-3 py-1 mx-2 rounded-full border border-brand-200"> ${escapeHtml(shop.restroomFloor)}樓</div>` : ''),
+              'users', 
+              true 
+            )}
+            ${renderDetailItem(
+              '協助需求',
+              (Array.isArray(shop.assistance) ? shop.assistance.join(', ') : shop.assistance || '未提供') + 
+              (shop.assistanceOther ? `<div class="mt-2 inline-block bg-brand-100 text-brand-800 text-xs font-bold px-3 py-1 rounded-full border border-brand-200">其他: ${escapeHtml(shop.assistanceOther)}</div>` : ''),
+              'help-circle',
+              true
+            )}
           </div>
         </section>
         
