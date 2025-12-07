@@ -29,7 +29,6 @@ export function setFormData(key, value) {
  * @param {Object} data - 從資料庫取得的資料
  */
 export function initFormData(data) {
-  console.log('🔄 初始化 formData，輸入資料:', data);
   
   // 清空現有資料
   Object.keys(formData).forEach(key => {
@@ -41,7 +40,7 @@ export function initFormData(data) {
     formData[key] = data[key];
   });
   
-  console.log('formData已初始化:', formData);
+  // console.log('formData已初始化:', formData);
 }
 
 

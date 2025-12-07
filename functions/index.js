@@ -3,6 +3,16 @@
  */
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const axios = require('axios');
+
+
+// 用process.env讀取環境變數
+const { defineString } = require('firebase-functions/params');
+const GOOGLE_MAPS_API_KEY = defineString('GOOGLE_MAPS_API_KEY');
+/*
+ *  (舊)const apiKey = functions.config().google.maps_api_key;
+ *  ↑本來要在try裡面使用，但這個方法2026.03要被棄用了QQ
+*/
 
 admin.initializeApp();
 
@@ -130,7 +140,7 @@ async function checkIfNewDevice(uid, fingerprint, currentSessionId) {
         .where('deviceFingerprint', '==', fingerprint)
         .get();
 
-    // 如果只有 1 筆（就是剛剛新增的），表示是新裝置
+    // 如果只有1筆就是剛剛新增的，表示是新裝置
     let count = 0;
     snapshot.forEach(doc => {
         if (doc.id !== currentSessionId) {
@@ -140,3 +150,127 @@ async function checkIfNewDevice(uid, fingerprint, currentSessionId) {
 
     return count === 0;
 }
+
+/**
+ * Geocoding Cloud Function(限管理員使用)
+ * 在uploadPage上傳資料時塞入經緯度
+ *  */ 
+
+exports.geocodeAddress = functions.region('asia-east1').https.onCall(async (data, context) => {
+
+  const userUID = context.auth.uid;
+  
+  if (!allowedUIDs.includes(userUID)) {
+    console.warn(`❌ 未授權的使用者嘗試呼叫 geocodeAddress: ${userUID}`);
+    throw new functions.https.HttpsError(
+      'permission-denied', 
+      '您沒有權限使用此功能（僅限管理員）'
+    );
+  }
+  
+  console.log(`✅ 管理員 ${userUID} 呼叫 geocodeAddress`);
+  
+  // 驗證地址參數
+  const { address } = data;
+  
+  if (!address || typeof address !== 'string' || address.trim().length === 0) {
+    throw new functions.https.HttpsError(
+      'invalid-argument', 
+      '地址不可為空'
+    );
+  }
+  
+  // 呼叫Google Geocoding API
+  try {
+    // 改用新的方式讀取API金鑰
+    const apiKey = GOOGLE_MAPS_API_KEY.value();
+    
+    if (!apiKey) {
+      throw new Error('Google Maps API金鑰未設定');
+    }
+    
+    console.log(`正在轉換地址: ${address}`);
+    
+    const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+      params: {
+        address: address.trim(),
+        region: 'TW',
+        key: apiKey,
+        language: 'zh-TW'
+      },
+      timeout: 10000 // 10秒逾時
+    });
+    
+    // 處理API回應
+    if (response.data.status === 'OK' && response.data.results[0]) {
+      const location = response.data.results[0].geometry.location;
+      const lat = location.lat;
+      const lng = location.lng;
+      const formattedAddress = response.data.results[0].formatted_address;
+      
+      // 檢查是否在台灣範圍內
+      if (lat >= 21.9 && lat <= 25.3 && lng >= 120.0 && lng <= 122.0) {
+        console.log(`✅ 座標取得成功: (${lat}, ${lng})`);
+        
+        return {
+          success: true,
+          latitude: lat,
+          longitude: lng,
+          formattedAddress: formattedAddress
+        };
+      } else {
+        console.warn(`⚠️ 地址不在台灣範圍內: (${lat}, ${lng})`);
+        throw new functions.https.HttpsError(
+          'out-of-range', 
+          '地址不在台灣範圍內'
+        );
+      }
+    } else {
+      // 處理各種Google API錯誤
+      let errorMessage = '無法取得座標';
+      
+      switch (response.data.status) {
+        case 'ZERO_RESULTS':
+          errorMessage = '找不到此地址，請確認地址是否正確';
+          break;
+        case 'OVER_QUERY_LIMIT':
+          errorMessage = 'API 使用量超過限制，請稍後再試';
+          break;
+        case 'REQUEST_DENIED':
+          errorMessage = 'API 請求被拒絕，請聯絡管理員';
+          break;
+        case 'INVALID_REQUEST':
+          errorMessage = '地址格式不正確';
+          break;
+        default:
+          errorMessage = `Geocoding失敗: ${response.data.status}`;
+      }
+      
+      console.error(`❌ Geocoding失敗: ${response.data.status}`);
+      throw new functions.https.HttpsError('not-found', errorMessage);
+    }
+    
+  } catch (error) {
+    console.error('❌ Geocoding錯誤:', error);
+    
+    // 如果是已經拋出的HttpsError，直接再拋出
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    // 處理網路錯誤
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      throw new functions.https.HttpsError(
+        'deadline-exceeded', 
+        '請求逾時，請稍後再試'
+      );
+    }
+    
+    // 其他未知錯誤
+    throw new functions.https.HttpsError(
+      'internal', 
+      `系統錯誤: ${error.message}`
+    );
+  }
+});
+

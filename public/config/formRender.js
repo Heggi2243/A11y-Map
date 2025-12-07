@@ -126,7 +126,7 @@ function renderFileUpload(field) {
   // ========== 新增：編輯模式載入現有圖片 ========== //
   if (formData[field.itemId] && Array.isArray(formData[field.itemId])) {
     const existingUrls = formData[field.itemId];
-    console.log(`🖼️ 載入現有圖片 (${field.itemId}):`, existingUrls);
+    // console.log(`載入現有圖片 (${field.itemId}):`, existingUrls);
     
     existingUrls.forEach(url => {
       // 標記為現有圖片（不是新上傳的 File）

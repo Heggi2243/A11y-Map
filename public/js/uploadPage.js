@@ -106,6 +106,63 @@ function initFirebase() {
   }
 }
 
+/**
+ * 使用 Firebase Cloud Function 將地址轉換為經緯度
+ * @param {string} address - 完整地址
+ * @returns {Promise<{lat: number, lng: number}>}
+ */
+async function geocodeAddress(address) {
+  try {
+    console.log('📍 呼叫 Cloud Function 轉換地址...');
+    
+    // 檢查使用者是否已登入
+    const currentUser = firebase.auth().currentUser;
+    if (!currentUser) {
+      throw new Error('請先登入');
+    }
+    
+    console.log(`👤 當前使用者: ${currentUser.uid}`);
+
+    //前端也指定連接區域
+    const functions = firebase.app().functions('asia-east1');
+    
+    // 呼叫 Cloud Function
+    const geocodeFunction = functions.httpsCallable('geocodeAddress');
+    console.log('準備呼叫 geocodeAddress function (asia-east1)...');
+    
+    const result = await geocodeFunction({ address: address });
+    
+    if (result.data.success) {
+      const lat = result.data.latitude;
+      const lng = result.data.longitude;
+      console.log(`✅ 地址轉換成功: ${address} → (${lat}, ${lng})`);
+      console.log(`📍 格式化地址: ${result.data.formattedAddress}`);
+      return { lat, lng };
+    } else {
+      throw new Error('轉換失敗');
+    }
+  } catch (error) {
+    console.error('❌ Geocoding 失敗:', error);
+    
+    // 處理不同類型的錯誤
+    if (error.code === 'unauthenticated') {
+      throw new Error('請先登入管理員帳號');
+    } else if (error.code === 'permission-denied') {
+      throw new Error('您沒有權限使用此功能（僅限管理員）');
+    } else if (error.code === 'invalid-argument') {
+      throw new Error('地址格式不正確');
+    } else if (error.code === 'out-of-range') {
+      throw new Error('地址不在台灣範圍內');
+    } else if (error.code === 'not-found') {
+      throw new Error(error.message || '找不到此地址');
+    } else if (error.code === 'deadline-exceeded') {
+      throw new Error('請求逾時，請稍後再試');
+    } else {
+      throw new Error(error.message || '無法取得座標');
+    }
+  }
+}
+
 // ========== 12/2新增：模式判斷 ========== 
 /**
  * 判斷是新增還是編輯
@@ -139,7 +196,7 @@ async function loadStoreData(storeId) {
     }
     
     const storeData = doc.data();
-    console.log('✅ 店家資料已載入:', storeData);
+    // console.log('✅ 店家資料已載入:', storeData);
     
     // 初始化表單資料（預填）
     initFormData(storeData);
@@ -183,7 +240,9 @@ function updatePageUI(isEditMode) {
 
 // ========== 修改：提交處理（支援新增和編輯） ========== 
 async function handleSubmit(buttonElement) {
+
   const originalHTML = buttonElement.innerHTML;
+  //判斷是新增還是編輯
   const { isEditMode, storeId } = getPageMode();
   
   try {
@@ -201,6 +260,59 @@ async function handleSubmit(buttonElement) {
     buttonElement.disabled = true;
     buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">${isEditMode ? '更新中...' : '上傳中...'}</span>`;
 
+    // ========== 編輯模式時，先取得舊資料 ========== 
+    let oldData = {};
+    if (isEditMode) {
+      const oldDoc = await db.collection('stores').doc(storeId).get();
+      if (oldDoc.exists) {
+        oldData = oldDoc.data();
+        console.log('舊資料:', oldData);
+      }
+    }
+    
+    // ========== 12/7新增:地址轉經緯度 ========== 
+    let latitude = null;
+    let longitude = null;
+
+    if (formData.address) {
+      // 新增模式 or (編輯模式&&地址改變)
+      const needsGeocoding = !isEditMode || (oldData.address !== formData.address);
+      
+      if (needsGeocoding) {
+        // 需要取得新座標
+        if (isEditMode) {
+          console.log(`地址改變: ${oldData.address} → ${formData.address}`);
+        } else {
+          console.log('新增模式：取得座標');
+        }
+        
+        try {
+          console.log('📍 正在將地址轉換為經緯度...');
+          buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">取得座標中...</span>`;
+          
+          const coords = await geocodeAddress(formData.address);
+          latitude = coords.lat;
+          longitude = coords.lng;
+          console.log(`✅ 座標: (${latitude}, ${longitude})`);
+        } catch (error) {
+          console.warn('⚠️ 座標取得失敗:', error.message);
+          if (!confirm(
+            `無法取得座標：${error.message}\n\n` +
+            `是否繼續上傳？(無座標將無法顯示距離)`
+          )) {
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = originalHTML;
+            return;
+          }
+        }
+      } else {
+        // 編輯模式且地址未改變 → 使用舊座標
+        latitude = oldData.latitude;
+        longitude = oldData.longitude;
+        console.log(`地址未改變，保留座標: (${latitude}, ${longitude})`);
+      }
+    }
+
     // ========== 1.新增或使用現有文件ID ========== 
     let docId;
     
@@ -211,17 +323,6 @@ async function handleSubmit(buttonElement) {
       docId = await generateDocumentId(formData['visitDate'], 'stores', db);
       console.log(`📋 生成新文件ID: ${docId}`);
     }
-
-    // ========== 新增：編輯模式時，取得舊資料用於比對 ========== //
-    let oldData = {};
-    if (isEditMode) {
-      const oldDoc = await db.collection('stores').doc(docId).get();
-      if (oldDoc.exists) {
-        oldData = oldDoc.data();
-        console.log('📦 舊資料:', oldData);
-      }
-    }
-    // ========================================================= //
 
     // ========== 2. 處理圖片上傳 ========== 
     const uploadedData = {};
@@ -299,10 +400,12 @@ async function handleSubmit(buttonElement) {
 
     console.log('📝 準備寫入的資料:', uploadedData);
 
-    // ========== 3. 準備要寫入 Firestore 的資料 ========== 
+    // ========== 3. 準備要寫入firestore的資料 ========== 
     const docData = {
       ...uploadedData,
       documentId: docId,
+      latitude: latitude,      //經度
+      longitude: longitude,    //緯度
     };
     
     if (isEditMode) {
@@ -312,7 +415,7 @@ async function handleSubmit(buttonElement) {
       
       await db.collection('stores').doc(docId).update(docData);
       console.log('✅ 資料更新成功! Document ID:', docId);
-      alert(`✅ 店家資料更新成功！\n文件 ID: ${docId}`);
+      alert(`✅ 店家資料更新成功！\n文件 ID: ${docId}\n座標: ${latitude ? `(${latitude}, ${longitude})` : '未取得'}`);
     } else {
       // 新增模式：加入建立時間
       docData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -321,7 +424,7 @@ async function handleSubmit(buttonElement) {
       
       await db.collection('stores').doc(docId).set(docData);
       console.log('✅ 資料上傳成功! Document ID:', docId);
-      alert(`✅ 店家資料上傳成功！\n文件 ID: ${docId}`);
+      alert(`✅ 店家資料上傳成功！\n文件 ID: ${docId}\n座標: ${latitude ? `(${latitude}, ${longitude})` : '未取得'}`);
     }
 
     // 跳轉回列表頁
