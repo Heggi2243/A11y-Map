@@ -9,9 +9,10 @@ const db = firebase.firestore();
 
 const DEFAULT_USER_SETTINGS = {
   wheelchairSize: 'small', //預設中小型輪椅
-  maxDistanceMin: 30,
+  maxDistanceMeters: 2000,
   needsFriendlyEnvironment: false,
-  needsAccessibleRestroom: false,
+  needsA11yWC: false,
+  nearbyMode: false, // 找附近模式
 };
 
 const state = {
@@ -20,7 +21,189 @@ const state = {
   selectedCategory: '全部',
   allShops: [],
   isLoading: true,
+  userLocation: null, // 使用者位置 { lat, lng }
+  locationPermission: null, // 'granted', 'denied', null
 };
+
+
+// ========== 地理位置功能 ========== //
+
+/**
+ * 計算兩點之間的距離（公尺）使用 Haversine 公式
+ */
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // 地球半徑（公尺）
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // 回傳公尺
+}
+
+/**
+ * 檢查座標是否在台灣範圍內
+ */
+function isInTaiwan(lat, lng) {
+  // 台灣本島範圍（約略）
+  return lat >= 21.9 && lat <= 25.3 && lng >= 120.0 && lng <= 122.0;
+}
+
+/**
+ * 請求使用者定位
+ */
+async function requestUserLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('瀏覽器不支援定位功能'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        // 檢查是否在台灣
+        if (!isInTaiwan(lat, lng)) {
+          reject(new Error('此服務僅限台灣地區使用'));
+          return;
+        }
+        
+        resolve({ lat, lng });
+      },
+      (error) => {
+        let message = '無法取得位置';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = '您拒絕了定位請求';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = '位置資訊無法取得';
+            break;
+          case error.TIMEOUT:
+            message = '定位請求逾時';
+            break;
+        }
+        reject(new Error(message));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 分鐘內的快取位置可接受
+      }
+    );
+  });
+}
+
+/**
+ * 顯示定位權限 Modal
+ */
+function showLocationPermissionModal() {
+  const modal = document.getElementById('location-permission-modal');
+  modal.classList.remove('hidden');
+  lucide.createIcons();
+}
+
+/**
+ * 隱藏定位權限 Modal
+ */
+function hideLocationPermissionModal() {
+  const modal = document.getElementById('location-permission-modal');
+  modal.classList.add('hidden');
+}
+
+/**
+ * 處理允許定位
+ */
+async function handleAllowLocation() {
+  hideLocationPermissionModal();
+  
+  try {
+    console.log('🌍 正在取得位置...');
+    const location = await requestUserLocation();
+    
+    state.userLocation = location;
+    state.locationPermission = 'granted';
+    
+    // 儲存到 localStorage
+    localStorage.setItem('locationPermission', 'granted');
+    localStorage.setItem('userLocation', JSON.stringify(location));
+    
+    console.log('✅ 位置取得成功:', location);
+    
+    // 計算所有商店的距離
+    updateShopsDistance();
+    
+    // 重新渲染
+    renderShopList();
+    
+  } catch (error) {
+    console.error('❌ 定位失敗:', error);
+    alert(error.message || '定位失敗，將顯示所有店家');
+    
+    state.locationPermission = 'denied';
+    localStorage.setItem('locationPermission', 'denied');
+    
+    // 顯示所有店家
+    renderShopList();
+  }
+}
+
+/**
+ * 處理拒絕定位
+ */
+function handleDenyLocation() {
+  hideLocationPermissionModal();
+  
+  state.locationPermission = 'denied';
+  localStorage.setItem('locationPermission', 'denied');
+  
+  console.log('❌ 使用者拒絕定位');
+  
+  // 顯示所有店家
+  renderShopList();
+}
+
+/**
+ * 更新所有商店的距離資訊
+ */
+function updateShopsDistance() {
+  if (!state.userLocation) {
+    // 沒有定位，設定預設距離
+    state.allShops.forEach(shop => {
+      shop.distanceMeters = 1000; // 預設1公里
+    });
+    console.log('⚠️ 無定位資訊，所有店家使用預設顯示');
+    return;
+  }
+  
+  state.allShops.forEach(shop => {
+    if (shop.latitude && shop.longitude) {
+      // 有座標：計算實際距離
+      shop.distanceMeters = Math.round(
+        calculateDistance(
+          state.userLocation.lat,
+          state.userLocation.lng,
+          shop.latitude,
+          shop.longitude
+        )
+      );
+    } else {
+      // 沒有座標：設為預設距離
+      shop.distanceMeters = 1500; // 設為1.5公里，稍微大一點但不會被過濾
+      console.warn(`⚠️ 店家 ${shop.name} 沒有座標資訊`);
+    }
+  });
+  
+  // 依距離排序
+  state.allShops.sort((a, b) => a.distanceMeters - b.distanceMeters);
+}
 
 // ========== 載入商店資料 ========== //
 
@@ -37,6 +220,7 @@ async function loadShopsFromFirestore() {
     state.allShops = [];
     
     snapshot.forEach(doc => {
+      const data = doc.data(); //先取得Data，避免無定位服務甚麼都看不到
       const shop = {
         id: doc.id,
         ...doc.data(),
@@ -45,15 +229,19 @@ async function loadShopsFromFirestore() {
         priceLevel: calculatePriceLevel(doc.data().avgCost),
         rating: calculateRating(doc.data()),
         doorWidthCm: parseDoorWidth(doc.data().doorWidthCm),
-        distanceMin: 5,
+        distanceMeters: 1000, // 預設距離
         imageUrl: doc.data().store_cover?.[0] || `https://picsum.photos/800/600?random=${doc.id}`,
+        //從Firestore讀取經緯度
+        latitude: data.latitude || null,
+        longitude: data.longitude || null,
       };
-      
       
       state.allShops.push(shop);
       console.log(shop);
     });
 
+     // 更新距離
+    updateShopsDistance();
     
     console.log(`✅ 載入完成，共 ${state.allShops.length} 筆商店資料`);
     state.isLoading = false;
@@ -64,6 +252,9 @@ async function loadShopsFromFirestore() {
     alert('載入資料失敗，請重新整理頁面');
   }
 }
+
+
+
 
 // ========== 輔助函式 ========== //
 
@@ -99,10 +290,45 @@ function parseDoorWidth(doorWidthStr) {
   return match ? parseInt(match[1]) : 80;
 }
 
+/**
+ * 格式化距離顯示
+ */
+function formatDistance(meters) {
+  if (meters < 1000) {
+    return `${meters} m`;
+  } else {
+    return `${(meters / 1000).toFixed(1)} km`;
+  }
+}
+
+/**
+ * 檢查是否有啟用任何篩選條件
+ */
+function hasActiveFilters() {
+  return (
+    state.userSettings.wheelchairSize !== DEFAULT_USER_SETTINGS.wheelchairSize ||
+    state.userSettings.nearbyModeEnabled !== DEFAULT_USER_SETTINGS.nearbyModeEnabled ||
+    state.userSettings.needsFriendlyEnvironment !== DEFAULT_USER_SETTINGS.needsFriendlyEnvironment ||
+    state.userSettings.needsAccessibleRestroom !== DEFAULT_USER_SETTINGS.needsAccessibleRestroom
+  );
+}
+
+/**
+ * 更新黃點點顯示狀態
+ */
+function updateFilterBadge() {
+  const badge = document.getElementById('filter-badge');
+  if (hasActiveFilters()) {
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
 // ========== 篩選&搜尋功能 ========== //
 
 function getFilteredShops() {
-  return state.allShops.filter(shop => {
+  let filtered = state.allShops.filter(shop => {
     // 搜尋匹配
     const matchesSearch = shop.name.includes(state.searchQuery) || 
                          shop.address.includes(state.searchQuery) ;
@@ -110,26 +336,33 @@ function getFilteredShops() {
     const matchesCategory = state.selectedCategory === '全部' || 
                            shop.categoryArray.includes(state.selectedCategory);
     
-                           // 門寬匹配（根據輪椅尺寸）
+    // 門寬匹配(根據輪椅尺寸)
     const fitsDoor = state.userSettings.wheelchairSize === 'small' 
       ? true  // 小型輪椅：所有門都可以通過
       : shop.doorWidthCm >= 75;  // 大型輪椅：只能通過 75cm 以上的門
-    
-    // 距離匹配
-    const matchesDistance = shop.distanceMin <= state.userSettings.maxDistanceMin;
-  
+
+    let matchesDistance = true;
+    if (state.userSettings.nearbyMode && state.locationPermission === 'granted' && state.userLocation) {
+      // 只有在「找附近模式啟用」&&「有定位」時才篩選距離
+      matchesDistance = shop.distanceMeters <= state.userSettings.maxDistanceMeters;
+    }
+    // 否則不篩選距離
     
     // 環境友善匹配(便利度 >= 4)
     const matchesFriendly = !state.userSettings.needsFriendlyEnvironment || 
                            (shop.convenience && shop.convenience >= 4);
     
     // 無障礙廁所匹配
-    const matchesRestroom = !state.userSettings.needsAccessibleRestroom || 
+    const matchesRestroom = !state.userSettings.needsA11yWC || 
                            (shop.restroom && shop.restroom.includes('無障礙'));
 
     return matchesSearch && matchesCategory && fitsDoor && matchesDistance && 
             matchesFriendly && matchesRestroom;
   });
+  
+  // 沒有定位：顯示所有符合條件的店家
+  return filtered;
+
 }
 
 // 重置
@@ -138,7 +371,8 @@ function resetFilters() {
   state.searchQuery = '';
   state.selectedCategory = '全部';
   document.getElementById('search-input').value = '';
-   updateCategoryTabs(); //更新Category
+  updateFilterBadge(); // 黃點點
+  updateCategoryTabs(); // 更新Category
   renderShopList();
 }
 
@@ -150,14 +384,24 @@ function applyFilters() {
       state.userSettings.wheelchairSize = radio.value;
     }
   });
+  
+  // 讀取滑桿
+  const distSlider = document.getElementById('filter-dist');
+  if (distSlider) {
+    state.userSettings.maxDistanceMeters = parseInt(distSlider.value);
+  }
 
   const toggles = document.querySelectorAll('.filter-toggle');
   toggles.forEach(t => {
+    if (t.dataset.id === 'nearbyMode') state.userSettings.nearbyMode = t.checked;
     if(t.dataset.id === 'friendly') state.userSettings.needsFriendlyEnvironment = t.checked;
-    if(t.dataset.id === 'restroomReq') state.userSettings.needsAccessibleRestroom = t.checked;
+    if(t.dataset.id === 'restroomReq') state.userSettings.needsA11yWC = t.checked;
   });
 
-  document.getElementById('filter-badge').classList.remove('hidden');
+  // 黃點點
+  updateFilterBadge();
+
+  // document.getElementById('filter-badge').classList.remove('hidden');
   renderShopList();
 }
 
@@ -165,7 +409,7 @@ function applyFilters() {
  * 更新類別按鈕的視覺狀態
  */
 function updateCategoryTabs() {
-  const tabs = document.querySelectorAll('.category-tab');
+   const tabs = document.querySelectorAll('.category-tab');
   
   tabs.forEach(tab => {
     const category = tab.dataset.category;
@@ -173,11 +417,11 @@ function updateCategoryTabs() {
     if (category === state.selectedCategory) {
       // 選中狀態
       tab.classList.remove('bg-white', 'border-2', 'border-retro-blue/10', 'text-retro-blue');
-      tab.classList.add('bg-retro-blue', 'text-white');
+      tab.classList.add('bg-retro-blue', 'text-white', 'shadow-md');
       tab.setAttribute('aria-pressed', 'true');
     } else {
       // 未選中狀態
-      tab.classList.remove('bg-retro-blue', 'text-white');
+      tab.classList.remove('bg-retro-blue', 'text-white', 'shadow-md');
       tab.classList.add('bg-white', 'border-2', 'border-retro-blue/10', 'text-retro-blue');
       tab.setAttribute('aria-pressed', 'false');
     }
@@ -215,7 +459,14 @@ function renderShopList() {
   // 更新狀態顯示
   const sizeText = state.userSettings.wheelchairSize === 'small' ? '中小型' : '中大型';
   document.getElementById('status-width').textContent = `輪椅: ${sizeText}`;
-  document.getElementById('status-dist').textContent = `距離 < ${state.userSettings.maxDistanceMin}分`;
+
+  // 只有在使用者主動設定距離篩選時才顯示距離限制
+  if (state.userSettings.nearbyMode && state.locationPermission === 'granted') {
+    document.getElementById('status-dist').textContent = `距離 < ${formatDistance(state.userSettings.maxDistanceMeters)}`;
+  } else {
+    document.getElementById('status-dist').textContent = state.locationPermission === 'granted' ? '顯示所有店家' : '無定位資訊';
+  }
+
 
   if (filtered.length === 0) {
     container.innerHTML = `
@@ -233,7 +484,7 @@ function renderShopList() {
       ? true  // 小型輪椅所有門都可以
       : shop.doorWidthCm >= 75;
       
-    const restroomOK = !state.userSettings.needsAccessibleRestroom || 
+    const restroomOK = !state.userSettings.needsA11yWC || 
                       (shop.restroom && shop.restroom.includes('無障礙'));
     const isCompatible = fitsDoor && restroomOK;
 
@@ -254,6 +505,14 @@ function renderShopList() {
     
     // 動線圖示
     const footprints = renderFootprintsHtml(shop.circulation, 16);
+
+    // ========== 修改：距離顯示 ========== 
+    let distanceDisplay;
+    if (state.locationPermission === 'granted' && state.userLocation) {
+      distanceDisplay = formatDistance(shop.distanceMeters);
+    } else {
+      distanceDisplay = '無定位';
+    }
 
     // 卡片 HTML
     const html = `
@@ -276,7 +535,7 @@ function renderShopList() {
               <span class="flex text-xs text-white tracking-tight ml-2 bg-retro-blue/10 px-2 py-0.5 rounded-md">${renderPriceLevel(shop.priceLevel)}</span>
               <span class="mx-2 text-retro-blue/20">•</span>
               <i data-lucide="map-pin" size="16" class="mr-1 text-retro-blue"></i>
-              <span>${shop.distanceMin !== undefined ? shop.distanceMin + ' min' : '無定位資訊'}</span>
+              <span>${distanceDisplay !== undefined ? distanceDisplay : '無定位資訊'}</span>
             </div>
             <div class="flex flex-wrap gap-2 mb-4">
               ${rampBadge} ${restroomBadge} ${doorBadge}
@@ -312,7 +571,7 @@ function renderFilterPanel() {
       <p class="text-xs font-bold text-retro-blue/50 mb-5">選擇您的輪椅尺寸，系統將自動過濾不適合的店家。</p>
       
       <div class="space-y-3">
-        <label class="flex items-center cursor-pointer p-4 border-2 rounded-2xl transition-all ${state.userSettings.wheelchairSize === 'small' ? 'border-retro-blue bg-retro-blue/5' : 'border-retro-blue/10 bg-white hover:border-retro-blue/30'}">
+        <label class="flex items-center cursor-pointer p-4 border-2 rounded-2xl transition-all border-retro-blue/10 bg-retro-blue/5 }">
           <input type="radio" name="wheelchair-size" value="small" ${state.userSettings.wheelchairSize === 'small' ? 'checked' : ''} class="mr-3 w-5 h-5 accent-retro-blue">
           <div>
             <span class="font-bold text-retro-blue">中小型輪椅</span>
@@ -320,7 +579,7 @@ function renderFilterPanel() {
           </div>
         </label>
         
-        <label class="flex items-center cursor-pointer p-4 border-2 rounded-2xl transition-all ${state.userSettings.wheelchairSize === 'large' ? 'border-retro-blue bg-retro-blue/5' : 'border-retro-blue/10 bg-white hover:border-retro-blue/30'}">
+        <label class="flex items-center cursor-pointer p-4 border-2 rounded-2xl transition-all border-retro-blue/10 bg-retro-blue/5 }">
           <input type="radio" name="wheelchair-size" value="large" ${state.userSettings.wheelchairSize === 'large' ? 'checked' : ''} class="mr-3 w-5 h-5 accent-retro-blue">
           <div>
             <span class="font-bold text-retro-blue">中大型輪椅</span>
@@ -331,19 +590,35 @@ function renderFilterPanel() {
     </section>
     
     <hr class="border-retro-blue/10 border-dashed border-t-2" />
+    
+    <!-- ========== 找附近模式開關，要改 ========== -->
+    <section class="space-y-4">
+      ${renderToggle('找附近模式', 'map-pin', state.userSettings.nearbyMode, 'nearbyMode', '只顯示指定距離內的店家（需啟用定位）')}
+    </section>
 
-    <section>
-      <label class="flex items-center text-base font-black text-retro-blue mb-4"><i data-lucide="map-pin" class="mr-2 text-retro-blue/50" size="18"></i> 距離</label>
+    <section id="distance-slider-section" class="${state.userSettings.nearbyMode ? '' : 'opacity-50 pointer-events-none'}">
+      <label class="flex items-center text-base font-black text-retro-blue mb-4">
+        <i data-lucide="map-pin" class="mr-2 text-retro-blue/50" size="18"></i> 距離範圍
+      </label>
       <div class="flex items-center space-x-4 bg-white p-4 rounded-2xl border-2 border-retro-blue/5">
-        <span class="text-xs text-retro-blue/40 font-bold">1分</span>
-        <input type="range" min="1" max="60" value="${state.userSettings.maxDistanceMin}" id="filter-dist" class="flex-1 h-3 bg-retro-blue/10 rounded-full appearance-none cursor-pointer accent-retro-blue">
-        <span class="text-sm font-black text-retro-blue w-14 text-right" id="disp-dist">${state.userSettings.maxDistanceMin} 分內</span>
+        <span class="text-xs text-retro-blue/40 font-bold">300m</span>
+        <input type="range" min="300" max="3000" step="300" value="${state.userSettings.maxDistanceMeters}" id="filter-dist" class="flex-1 h-3 bg-retro-blue/10 rounded-full appearance-none cursor-pointer accent-retro-blue" ${state.userSettings.nearbyMode ? '' : 'disabled'}>
+        <span class="text-sm font-black text-retro-blue w-20 text-right" id="disp-dist">${formatDistance(state.userSettings.maxDistanceMeters)}</span>
       </div>
     </section>
 
+    <hr class="border-retro-blue/10 border-dashed border-t-2" />
+
     <section class="space-y-4">
       ${renderToggle('環境友善', 'heart', state.userSettings.needsFriendlyEnvironment, 'friendly', '便利度 4 星以上，不需要太多協助')}
-      ${renderToggle('需要無障礙廁所', 'accessibility', state.userSettings.needsAccessibleRestroom, 'restroomReq')}
+      ${renderToggle('需要無障礙廁所', 'accessibility', state.userSettings.needsA11yWC, 'restroomReq')}
+    </section>
+
+    <section class="mt-6">
+      <button id="clear-filters-btn" class="w-full py-3 px-4 bg-white text-retro-blue font-display font-bold border-2 border-retro-blue/20 rounded-2xl hover:bg-retro-blue/5 transition-all flex items-center justify-center">
+        <i data-lucide="rotate-ccw" class="mr-2" size="18"></i>
+        清除所有篩選條件
+      </button>
     </section>
   `;
   
@@ -434,10 +709,14 @@ function renderFootprintsHtml(circulation, size = 16) {
 // ========== 點擊類事件監聽 ========== //
 
 function attachFilterListeners() {
-  // 距離滑桿(記得改)
-  document.getElementById('filter-dist').addEventListener('input', e => {
-    document.getElementById('disp-dist').textContent = e.target.value + ' 分內';
-  });
+  // 距離滑桿
+  const distSlider = document.getElementById('filter-dist');
+  if (distSlider) {
+    distSlider.addEventListener('input', e => {
+      document.getElementById('disp-dist').textContent = formatDistance(parseInt(e.target.value));
+    });
+  }
+
    const toggleLabels = document.querySelectorAll('label:has(.filter-toggle)');
   
   toggleLabels.forEach(label => {
@@ -459,10 +738,43 @@ function attachFilterListeners() {
         toggleBg.classList.remove('bg-retro-blue', 'border-retro-blue');
         toggleBg.classList.add('bg-slate-100', 'border-slate-300');
       }
-      
+
+       // ========== 找附近模式切換時，控制距離滑桿 ========== 
+      if (checkbox.dataset.id === 'nearbyMode') {
+        const distanceSection = document.getElementById('distance-slider-section');
+        const distSlider = document.getElementById('filter-dist');
+        
+        if (checkbox.checked) {
+          // 啟用距離滑桿
+          distanceSection.classList.remove('opacity-50', 'pointer-events-none');
+          distSlider.disabled = false;
+        } else {
+          // 停用距離滑桿
+          distanceSection.classList.add('opacity-50', 'pointer-events-none');
+          distSlider.disabled = true;
+        }
+      }
+
       e.preventDefault();
     });
   });
+
+  // ========== 清除條件按鈕 ========== 
+  const clearBtn = document.getElementById('clear-filters-btn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      // 重置所有設定為預設值
+      state.userSettings = { ...DEFAULT_USER_SETTINGS };
+
+      // 黃點點
+      updateFilterBadge();
+      
+      // 重新渲染篩選面板
+      renderFilterPanel();
+      
+      console.log('已清除所有篩選條件');
+    });
+  }
   
 }
 
@@ -501,6 +813,11 @@ function initEventListeners() {
     modal.classList.add('hidden');
   });
 
+  // 定位權限Modal事件
+  document.getElementById('allow-location-btn').addEventListener('click', handleAllowLocation);
+  document.getElementById('deny-location-btn').addEventListener('click', handleDenyLocation);
+
+
   const footerToggleBtn = document.getElementById('footer-toggle-btn');
   const footerLabel = document.getElementById('footer-label');
   const footerLinks = document.getElementById('footer-links');
@@ -529,6 +846,24 @@ function initEventListeners() {
 
 async function init() {
   console.log('接收到初始化命令');
+
+   // 檢查是否有儲存的定位權限
+  const savedPermission = localStorage.getItem('locationPermission');
+  const savedLocation = localStorage.getItem('userLocation');
+
+  if (savedPermission === 'granted' && savedLocation) {
+    // 使用之前儲存的位置
+    state.userLocation = JSON.parse(savedLocation);
+    state.locationPermission = 'granted';
+    console.log('✅ 使用已儲存的位置:', state.userLocation);
+  } else if (savedPermission === 'denied') {
+    // 之前拒絕過
+    state.locationPermission = 'denied';
+    console.log('❌ 使用者之前拒絕定位');
+  } else {
+    // 第一次使用，顯示定位權限 Modal
+    showLocationPermissionModal();
+  }
   
   renderShopList();
   await loadShopsFromFirestore();
