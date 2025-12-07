@@ -10,17 +10,33 @@ module.exports = {
     "!./node_modules/**/*"
   ],
   safelist: [
-    // org 顏色相關
-    'bg-org-50',
-    'bg-org-200',
-    'border-org-200',
-    'text-org-600',
-    'text-org-800',
-
-    'bg-red-50',
-    'text-red-800',
-
-    'border-blue-200'
+  // brand 顏色（綠色）
+  'bg-brand-50',
+  'border-brand-200',
+  'text-brand-600',
+  'fill-brand-600',
+  'text-brand-800',
+  
+  // blue 顏色（藍色）
+  'bg-blue-50',
+  'border-blue-200',
+  'text-blue-600',
+  'fill-blue-600',
+  'text-blue-800',
+  
+  // org 顏色（橘色）
+  'bg-org-50',
+  'border-org-200',
+  'text-org-600',
+  'fill-org-600',
+  'text-org-800',
+  
+  // red 顏色（紅色）
+  'bg-red-50',
+  'border-red-200',
+  'text-red-600',
+  'fill-red-600',
+  'text-red-800',
   ],
   theme: {
     extend: {
