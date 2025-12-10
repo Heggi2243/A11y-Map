@@ -591,19 +591,27 @@ function renderFilterPanel() {
     
     <hr class="border-retro-blue/10 border-dashed border-t-2" />
     
-    <!-- ========== 找附近模式開關，要改 ========== -->
-    <section class="space-y-4">
-      ${renderToggle('找附近模式', 'map-pin', state.userSettings.nearbyMode, 'nearbyMode', '只顯示指定距離內的店家（需啟用定位）')}
-    </section>
-
-    <section id="distance-slider-section" class="${state.userSettings.nearbyMode ? '' : 'opacity-50 pointer-events-none'}">
-      <label class="flex items-center text-base font-black text-retro-blue mb-4">
-        <i data-lucide="map-pin" class="mr-2 text-retro-blue/50" size="18"></i> 距離範圍
+    <section class="p-4 border-2 border-retro-blue/10 rounded-2xl bg-white hover:border-retro-blue/30 transition-all shadow-sm ${state.userSettings.nearbyMode ? '' : 'opacity-50'}">
+      <label class="flex items-center justify-between cursor-pointer" id="nearby-mode-label">
+        <div class="flex items-start flex-1">
+          <i data-lucide="map-pin" class="mr-3 mt-0.5 text-retro-blue" size="20"></i>
+          <div class="flex-1">
+            <span class="text-sm font-bold text-retro-blue block">找附近模式</span>
+            <p class="text-xs text-retro-blue/50 font-bold mt-1">只顯示指定距離內的店家（需啟用定位）</p>
+          </div>
+        </div>
+        <div class="w-12 h-7 rounded-full p-1 transition-colors border-2 ${state.userSettings.nearbyMode ? 'bg-retro-blue border-retro-blue' : 'bg-slate-100 border-slate-300'} ml-3 flex-shrink-0">
+          <div class="w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${state.userSettings.nearbyMode ? 'translate-x-5' : ''}"></div>
+        </div>
+        <input type="checkbox" class="hidden filter-toggle" data-id="nearbyMode" ${state.userSettings.nearbyMode ? 'checked' : ''}>
       </label>
-      <div class="flex items-center space-x-4 bg-white p-4 rounded-2xl border-2 border-retro-blue/5">
-        <span class="text-xs text-retro-blue/40 font-bold">300m</span>
-        <input type="range" min="300" max="3000" step="300" value="${state.userSettings.maxDistanceMeters}" id="filter-dist" class="flex-1 h-3 bg-retro-blue/10 rounded-full appearance-none cursor-pointer accent-retro-blue" ${state.userSettings.nearbyMode ? '' : 'disabled'}>
-        <span class="text-sm font-black text-retro-blue w-20 text-right" id="disp-dist">${formatDistance(state.userSettings.maxDistanceMeters)}</span>
+      
+      <div id="distance-slider-section" class="mt-4 pt-4 border-t border-retro-blue/10 ${state.userSettings.nearbyMode ? '' : 'pointer-events-none'}">
+        <div class="flex items-center space-x-4">
+          <span class="text-xs text-retro-blue/40 font-bold">300m</span>
+          <input type="range" min="300" max="3000" step="300" value="${state.userSettings.maxDistanceMeters}" id="filter-dist" class="flex-1 h-3 bg-retro-blue/10 rounded-full appearance-none cursor-pointer accent-retro-blue" ${state.userSettings.nearbyMode ? '' : 'disabled'}>
+          <span class="text-sm font-black text-retro-blue w-20 text-right" id="disp-dist">${formatDistance(state.userSettings.maxDistanceMeters)}</span>
+        </div>
       </div>
     </section>
 
