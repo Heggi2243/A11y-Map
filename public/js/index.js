@@ -293,12 +293,17 @@ function parseDoorWidth(doorWidthStr) {
 /**
  * 格式化距離顯示
  */
-function formatDistance(meters) {
-  if (meters < 1000) {
-    return `${meters} m`;
-  } else {
-    return `${(meters / 1000).toFixed(1)} km`;
+function formatDistance(meters, useColor = false) {
+  const distanceText = meters < 1000 
+    ? `${meters} m` 
+    : `${(meters / 1000).toFixed(1)} km`;
+  
+  if (useColor) {
+    const colorClass = state.userSettings.nearbyMode ? 'text-retro-blue' : 'text-retro-blue/40';
+    return `<span class="${colorClass} font-black">${distanceText}</span>`;
   }
+  
+  return distanceText;
 }
 
 /**
@@ -609,9 +614,9 @@ function renderFilterPanel() {
       <div id="distance-slider-section" class="mt-4 pt-4 border-t border-retro-blue/10 ${state.userSettings.nearbyMode ? '' : 'pointer-events-none'}">
         <div class="flex items-center space-x-4">
           <span class="text-xs text-retro-blue/40 font-bold">300m</span>
-          <input type="range" min="300" max="3000" step="300" value="${state.userSettings.maxDistanceMeters}" id="filter-dist" class="flex-1 h-3 bg-retro-blue/10 rounded-full appearance-none cursor-pointer accent-retro-blue" ${state.userSettings.nearbyMode ? '' : 'disabled'}>
-          <span class="text-sm font-black text-retro-blue w-20 text-right" id="disp-dist">${formatDistance(state.userSettings.maxDistanceMeters)}</span>
-        </div>
+          <input type="range" min="300" max="3000" step="300" value="${state.userSettings.maxDistanceMeters}" id="filter-dist" class="flex-1 h-3 bg-retro-blue/10 rounded-full appearance-none cursor-pointer ${state.userSettings.nearbyMode ? 'accent-retro-blue' : 'accent-slate-300'}" ${state.userSettings.nearbyMode ? '' : 'disabled'}>
+          <span class="text-sm w-20 text-right ${state.userSettings.nearbyMode ? 'text-retro-blue font-black' : 'text-retro-blue/40 font-bold'}" id="disp-dist">${formatDistance(state.userSettings.maxDistanceMeters)}</span>
+          </div>
       </div>
     </section>
 
@@ -719,9 +724,11 @@ function renderFootprintsHtml(circulation, size = 16) {
 function attachFilterListeners() {
   // 距離滑桿
   const distSlider = document.getElementById('filter-dist');
-  if (distSlider) {
+  const dispDist = document.getElementById('disp-dist');
+
+  if (distSlider && dispDist) {
     distSlider.addEventListener('input', e => {
-      document.getElementById('disp-dist').textContent = formatDistance(parseInt(e.target.value));
+      dispDist.textContent = formatDistance(parseInt(e.target.value));
     });
   }
 
@@ -751,15 +758,24 @@ function attachFilterListeners() {
       if (checkbox.dataset.id === 'nearbyMode') {
         const distanceSection = document.getElementById('distance-slider-section');
         const distSlider = document.getElementById('filter-dist');
-        
+        const dispDist = document.getElementById('disp-dist');
+
         if (checkbox.checked) {
           // 啟用距離滑桿
           distanceSection.classList.remove('opacity-50', 'pointer-events-none');
           distSlider.disabled = false;
+          distSlider.classList.remove('accent-slate-300');
+          distSlider.classList.add('accent-retro-blue');
+          dispDist.classList.remove('text-retro-blue/40', 'font-bold');
+          dispDist.classList.add('text-retro-blue', 'font-black');
         } else {
           // 停用距離滑桿
           distanceSection.classList.add('opacity-50', 'pointer-events-none');
           distSlider.disabled = true;
+          distSlider.classList.remove('accent-retro-blue');
+          distSlider.classList.add('accent-slate-300');
+          dispDist.classList.remove('text-retro-blue', 'font-black');
+          dispDist.classList.add('text-retro-blue/40', 'font-bold');
         }
       }
 
