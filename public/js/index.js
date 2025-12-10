@@ -497,7 +497,7 @@ function renderShopList() {
     const rampBadge = !shop.ramp || shop.ramp.includes('無坡道') || shop.ramp.includes('順行') ? 
       renderBadge('good', '無坡道') : 
       (shop.ramp.includes('陡峭') ? 
-        renderBadge('warning', '坡道陡') : 
+        renderBadge('bad', '坡道陡') : 
         renderBadge('good', '坡道平緩'));
     
     // 廁所徽章
@@ -506,8 +506,11 @@ function renderShopList() {
       renderBadge('warning', shop.restroom?.split(' ')[0] || '未提供');
     
     // 門寬徽章，用回範圍標示比較無疑義
-    const doorBadge = renderBadge(fitsDoor ? 'good' : 'bad', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`);
-    
+    // const doorBadge = renderBadge(fitsDoor ? 'good' : 'bad', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`);
+    const doorBadge = shop.doorWidthCm === 75 ? 
+      renderBadge('warning', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`) :
+      renderBadge('good', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`) ;
+
     // 動線圖示
     const footprints = renderFootprintsHtml(shop.circulation, 16);
 
