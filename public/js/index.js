@@ -519,7 +519,7 @@ function renderShopList() {
     if (state.locationPermission === 'granted' && state.userLocation) {
       distanceDisplay = formatDistance(shop.distanceMeters);
     } else {
-      distanceDisplay = '無定位';
+      distanceDisplay = '需啟用定位功能';
     }
 
     // 卡片 HTML
@@ -742,6 +742,17 @@ function attachFilterListeners() {
       const checkbox = label.querySelector('.filter-toggle');
       const toggleSwitch = label.querySelector('.w-12.h-7 > div');
       const toggleBg = label.querySelector('.w-12.h-7');
+
+       // 如果要開啟找附近模式，但沒有定位權限
+      if (checkbox.dataset.id === 'nearbyMode') {
+        if (!checkbox.checked && state.locationPermission !== 'granted') {
+          e.preventDefault();
+          
+          // 顯示定位權限Modal
+          showLocationPermissionModal();
+          return;
+        }
+      }
       
       // 切換checkbox狀態
       checkbox.checked = !checkbox.checked;
@@ -898,7 +909,6 @@ async function init() {
   initEventListeners();
   lucide.createIcons();
   
-  console.log('準備好了');
 }
 
 if (document.readyState === 'loading') {

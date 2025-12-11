@@ -153,16 +153,16 @@
 
       // ========== 新增：初始化 reCAPTCHA ========== //
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-  console.log('🔧 本地開發模式：啟用 App Verification 繞過');
+  console.log('本地開發模式：啟用 App Verification 繞過');
   
   // 使用測試模式的 reCAPTCHA
   window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('submitBtn', {
     'size': 'invisible',
     'callback': (response) => {
-      console.log('✅ reCAPTCHA 驗證完成');
+      console.log('reCAPTCHA 驗證完成');
     },
     'error-callback': (error) => {
-      console.error('❌ reCAPTCHA 錯誤:', error);
+      console.error('reCAPTCHA 錯誤:', error);
     }
   });
   
@@ -174,7 +174,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
   window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('submitBtn', {
     'size': 'invisible',
     'callback': (response) => {
-      console.log('✅ reCAPTCHA 驗證完成');
+      console.log('reCAPTCHA 驗證完成');
     }
   });
 }
@@ -212,7 +212,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
          console.error('登入錯誤:', error);
   
   if (error.code === 'auth/multi-factor-auth-required') {
-    console.log('🔐 需要 MFA 驗證');
+    console.log('需要MFA驗證');
     
     try {
       const resolver = error.resolver;
@@ -413,7 +413,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
         const sessionRef = await db.collection('login_sessions').add(sessionData);
         sessionStorage.setItem('currentSessionId', sessionRef.id);
         
-        console.log('✅ Session 記錄成功:', sessionRef.id);
+        console.log('Session 記錄成功:', sessionRef.id);
         
       } catch (error) {
         console.error('❌ Session 記錄失敗:', error);

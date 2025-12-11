@@ -77,7 +77,7 @@ exports.sendNewDeviceEmail = functions.firestore
             return null;
         }
 
-        console.log('⚠️ 偵測到新裝置登入，準備發送 Email');
+        console.log('偵測到新裝置登入，準備發送 Email');
 
         // 準備 Email 內容
         const platform = deviceInfo.platform || '未知';
@@ -118,9 +118,9 @@ exports.sendNewDeviceEmail = functions.firestore
                     html: emailContent.replace(/\n/g, '<br>')
                 }
             });
-            console.log('✅ Email 通知已加入佇列');
+            console.log('Email通知已加入佇列');
         } catch (error) {
-            console.error('❌ 發送 Email 失敗:', error);
+            console.error('發送Email失敗:', error);
         }
 
         return null;
