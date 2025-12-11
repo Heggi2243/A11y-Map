@@ -267,7 +267,7 @@ function renderShopDetail(shop) {
   const html = `
     <div class="relative h-72 w-full rounded-b-[3rem] overflow-hidden shadow-xl shadow-retro-blue/10">
       <img src="${imageUrl}" class="w-full h-full object-cover" onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'">
-      <div class="absolute inset-0 bg-gradient-to-t from-retro-blue/90 via-retro-blue/30 to-transparent"></div>
+      <div class="absolute inset-0 bg-gradient-to-t via-retro-blue/30 to-transparent"></div>
       <a href="/index.html" class="absolute top-6 left-6 bg-white p-3 rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 transition-all z-20">
         <i data-lucide="arrow-left" size="24" class="text-retro-blue" stroke-width="3"></i>
       </a>
