@@ -37,6 +37,10 @@ module.exports = {
   'text-red-600',
   'fill-red-600',
   'text-red-800',
+
+  'from-retro-dark/90',
+  'via-retro-dark/30',
+  'to-transparent',
   ],
   theme: {
     extend: {
