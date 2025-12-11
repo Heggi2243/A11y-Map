@@ -599,7 +599,7 @@ function renderFilterPanel() {
     
     <hr class="border-retro-blue/10 border-dashed border-t-2" />
     
-    <section class="p-4 border-2 border-retro-blue/10 rounded-2xl bg-white hover:border-retro-blue/30 transition-all shadow-sm ${state.userSettings.nearbyMode ? '' : 'opacity-50'}">
+    <section class="p-4 border-2 border-retro-blue/10 rounded-2xl bg-white hover:border-retro-blue/30 transition-all shadow-sm }">
       <label class="flex items-center justify-between cursor-pointer" id="nearby-mode-label">
         <div class="flex items-start flex-1">
           <i data-lucide="map-pin" class="mr-3 mt-0.5 text-retro-blue" size="20"></i>
