@@ -343,7 +343,6 @@ function renderShopDetail(shop) {
             <div>
               <span class="text-xs font-black text-retro-blue/50 uppercase block mb-1">捷運 / 公車</span>
               <p class="text-retro-blue font-bold text-lg">${escapeHtml(transitInfo)}</p>
-              ${shop.mrt ? `<div class="mt-2 inline-block bg-brand-100 text-brand-800 text-xs font-bold px-3 py-1 rounded-full border border-brand-200">捷運: ${escapeHtml(shop.mrt)}</div>` : ''}
             </div>
             ${shop.recommendedRoute ? `
             <hr class="border-retro-blue/10"/>
@@ -400,7 +399,7 @@ function buildTransitInfo(shop) {
   const transits = [];
   if (shop.mrt) transits.push(`捷運: ${shop.mrt}`);
   if (shop.bus) transits.push(`公車: ${shop.bus}`);
-  return transits.length > 0 ? transits.join(' / ') : '未提供';
+  return transits.length > 0 ? transits.join(' / ') : '(無)';
 }
 
 function renderPriceLevel(level) {

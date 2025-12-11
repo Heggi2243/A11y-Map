@@ -216,7 +216,7 @@ export const FORM_SCHEMA = {
               "triggerValue": "捷運", "itemId": "mrt", "label": "捷運補充說明", "type": "text_input","required": true, "note": "需填寫站別、電梯在幾號出口。", "placeholder": "例如：龍山寺捷運站2號出口，距離店家300公尺"
             },
             {
-              "triggerValue": "公車", "itemId": "nus", "label": "公車補充說明", "type": "textarea","required": true, "note": "補充說明公車路線、站牌等。"
+              "triggerValue": "公車", "itemId": "bus", "label": "公車補充說明", "type": "textarea","required": true, "note": "補充說明公車路線、站牌等。"
             }
           ]
         },

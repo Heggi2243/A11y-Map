@@ -328,45 +328,69 @@ async function handleSubmit(buttonElement) {
     const uploadedData = {};
     let globalImageCounter = 1;
     
-    for (const [key, value] of Object.entries(formData)) {
-      // 檢查是否為檔案陣列（新上傳的圖片）
-      if (Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
-        console.log(`上傳圖片到資料夾: ${key}, 共 ${value.length} 張`);
-        
-        //壓縮圖片
-        const compressedFiles = await compressImages(value);
-
-        const uploadedUrls = [];
-        
-        for (let i = 0; i < compressedFiles.length; i++) {
-          const file = compressedFiles[i];
-          const fileExtension = file.name.split('.').pop();
-          const imageNumber = String(globalImageCounter).padStart(2, '0');
-          const fileName = `stores/${key}/${docId}_${imageNumber}.${fileExtension}`;
-          
-          console.log(`   ↳ 上傳到: ${fileName}`);
-          
-          const storageRef = storage.ref(fileName);
-          await storageRef.put(file);
-          const downloadURL = await storageRef.getDownloadURL();
-          uploadedUrls.push(downloadURL);
-          
-          console.log(`   ✅ 圖片 ${i + 1}/${value.length} 上傳成功`);
-          globalImageCounter++;
+    // 12/11修正：從現有的圖片最大編號往上加(舊的檔案才不會被覆蓋)
+if (isEditMode && oldData) {
+  const imageFields = ['store_cover', 'entrance_photo', 'interior_photo'];
+  let maxNumber = 0;
+  
+  for (const field of imageFields) {
+    const urls = oldData[field] || [];
+    for (const url of urls) {
+      // 從 URL 提取編號，例如：20251209001_03.webp → 3
+      const match = url.match(/_(\d+)\./);
+      if (match) {
+        const num = parseInt(match[1]);
+        if (num > maxNumber) {
+          maxNumber = num;
         }
-        
-        uploadedData[key] = uploadedUrls;
-        
-      } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string' && value[0].startsWith('http')) {
-        // 編輯模式：保留現有的圖片 URL
-        console.log(`🔗 保留現有圖片: ${key}, 共 ${value.length} 張`);
-        uploadedData[key] = value;
-        
-      } else {
-        // 非檔案資料直接複製
-        uploadedData[key] = value;
       }
     }
+  }
+  
+  globalImageCounter = maxNumber + 1;
+  console.log(`編輯模式：從編號 ${globalImageCounter} 繼續上傳`);
+}
+
+for (const [key, value] of Object.entries(formData)) {
+  
+  // 檢查是否為檔案陣列(新上傳的圖片)
+  if (Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
+    console.log(`上傳圖片到資料夾: ${key}, 共 ${value.length} 張`);
+    
+    //壓縮圖片
+    const compressedFiles = await compressImages(value);
+
+    const uploadedUrls = [];
+    
+    for (let i = 0; i < compressedFiles.length; i++) {
+      const file = compressedFiles[i];
+      const fileExtension = file.name.split('.').pop();
+      const imageNumber = String(globalImageCounter).padStart(2, '0');
+      const fileName = `stores/${key}/${docId}_${imageNumber}.${fileExtension}`;
+      
+      console.log(`   ↳ 上傳到: ${fileName}`);
+      
+      const storageRef = storage.ref(fileName);
+      await storageRef.put(file);
+      const downloadURL = await storageRef.getDownloadURL();
+      uploadedUrls.push(downloadURL);
+      
+      console.log(`   ✅ 圖片 ${i + 1}/${value.length} 上傳成功`);
+      globalImageCounter++;
+    }
+    
+    uploadedData[key] = uploadedUrls;
+    
+  } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string' && value[0].startsWith('http')) {
+    // 編輯模式：保留現有的圖片 URL
+    console.log(`🔗 保留現有圖片: ${key}, 共 ${value.length} 張`);
+    uploadedData[key] = value;
+    
+  } else {
+    // 非檔案資料直接複製
+    uploadedData[key] = value;
+  }
+}
 
     // ========== 新增：刪除被移除的圖片 ========== //
     if (isEditMode) {
