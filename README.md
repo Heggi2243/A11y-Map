@@ -16,6 +16,9 @@
 我讓伴侶試著跟AI溝通製作出一個簡易Demo(如上圖那樣的indexPage)，讓他以使用者的角度提出真實的需求，我負責資料結構設計、全端開發與部署。我們希望透過高度結構化的資料與自動評級演算，解決資訊不對稱的問題。
 因此 **「暢行無阻 A11y-Map」** 就這樣誕生了！21天歷時160個小時，堪稱用愛發電的爆肝之作( ･ิω･ิ)b
 
+<img width="1784" height="855" alt="無標題-2025-12-12-1243" src="https://github.com/user-attachments/assets/1cc6217a-3bcd-4704-a00b-c2d3e23663b1" />
+
+
 ## 核心功能
 
 <img width="1536" height="3804" alt="storeInfo" src="https://github.com/user-attachments/assets/bfc79e8f-4c2d-4cc0-aa16-6c1bd60ea4db" />
