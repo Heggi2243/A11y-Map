@@ -85,7 +85,7 @@ document.addEventListener('keydown', (e) => {
 
 async function loadShopDetail(id) {
   try {
-    console.log('📥 載入商店詳情:', id);
+    // console.log('📥 載入商店詳情:', id);
     
     const doc = await db.collection('stores').doc(id).get();
     
@@ -95,12 +95,12 @@ async function loadShopDetail(id) {
     }
     
     const shop = { id: doc.id, ...doc.data() };
-    console.log('✅ 商店資料:', shop);
+    // console.log('✅ 商店資料:', shop);
     
     renderShopDetail(shop);
     
   } catch (error) {
-    console.error('❌ 載入失敗:', error);
+    // console.error('❌ 載入失敗:', error);
     showError('載入失敗: ' + error.message);
   }
 }

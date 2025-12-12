@@ -125,7 +125,7 @@ async function handleAllowLocation() {
   hideLocationPermissionModal();
   
   try {
-    console.log('🌍 正在取得位置...');
+    // console.log('正在取得位置...');
     const location = await requestUserLocation();
     
     state.userLocation = location;
@@ -135,7 +135,7 @@ async function handleAllowLocation() {
     localStorage.setItem('locationPermission', 'granted');
     localStorage.setItem('userLocation', JSON.stringify(location));
     
-    console.log('✅ 位置取得成功:', location);
+    // console.log('✅ 位置取得成功:', location);
     
     // 計算所有商店的距離
     updateShopsDistance();
@@ -144,7 +144,7 @@ async function handleAllowLocation() {
     renderShopList();
     
   } catch (error) {
-    console.error('❌ 定位失敗:', error);
+    // console.error('❌ 定位失敗:', error);
     alert(error.message || '定位失敗，將顯示所有店家');
     
     state.locationPermission = 'denied';
@@ -164,7 +164,7 @@ function handleDenyLocation() {
   state.locationPermission = 'denied';
   localStorage.setItem('locationPermission', 'denied');
   
-  console.log('❌ 使用者拒絕定位');
+  // console.log('❌ 使用者拒絕定位');
   
   // 顯示所有店家
   renderShopList();
@@ -179,7 +179,7 @@ function updateShopsDistance() {
     state.allShops.forEach(shop => {
       shop.distanceMeters = 1000; // 預設1公里
     });
-    console.log('⚠️ 無定位資訊，所有店家使用預設顯示');
+    // console.log('⚠️ 無定位資訊，所有店家使用預設顯示');
     return;
   }
   
@@ -197,7 +197,7 @@ function updateShopsDistance() {
     } else {
       // 沒有座標：設為預設距離
       shop.distanceMeters = 1500; // 設為1.5公里，稍微大一點但不會被過濾
-      console.warn(`⚠️ 店家 ${shop.name} 沒有座標資訊`);
+      // console.warn(`⚠️ 店家 ${shop.name} 沒有座標資訊`);
     }
   });
   
@@ -209,7 +209,7 @@ function updateShopsDistance() {
 
 async function loadShopsFromFirestore() {
   try {
-    console.log('📥 開始載入商店資料...');
+    // console.log('📥 開始載入商店資料...');
     state.isLoading = true;
     
     // 暫時移除 status 篩選
@@ -237,17 +237,17 @@ async function loadShopsFromFirestore() {
       };
       
       state.allShops.push(shop);
-      console.log(shop);
+      // console.log(shop);
     });
 
      // 更新距離
     updateShopsDistance();
     
-    console.log(`✅ 載入完成，共 ${state.allShops.length} 筆商店資料`);
+    // console.log(`✅ 載入完成，共 ${state.allShops.length} 筆商店資料`);
     state.isLoading = false;
     
   } catch (error) {
-    console.error('❌ 載入商店資料失敗:', error);
+    // console.error('❌ 載入商店資料失敗:', error);
     state.isLoading = false;
     alert('載入資料失敗，請重新整理頁面');
   }
@@ -810,7 +810,7 @@ function attachFilterListeners() {
       // 重新渲染篩選面板
       renderFilterPanel();
       
-      console.log('已清除所有篩選條件');
+      // console.log('已清除所有篩選條件');
     });
   }
   
@@ -883,7 +883,7 @@ function initEventListeners() {
 // ========== 初始化 ========== //
 
 async function init() {
-  console.log('接收到初始化命令');
+  // console.log('接收到初始化命令');
 
    // 檢查是否有儲存的定位權限
   const savedPermission = localStorage.getItem('locationPermission');
@@ -893,11 +893,11 @@ async function init() {
     // 使用之前儲存的位置
     state.userLocation = JSON.parse(savedLocation);
     state.locationPermission = 'granted';
-    console.log('✅ 使用已儲存的位置:', state.userLocation);
+    // console.log('✅ 使用已儲存的位置:', state.userLocation);
   } else if (savedPermission === 'denied') {
     // 之前拒絕過
     state.locationPermission = 'denied';
-    console.log('❌ 使用者之前拒絕定位');
+    // console.log('❌ 使用者之前拒絕定位');
   } else {
     // 第一次使用，顯示定位權限 Modal
     showLocationPermissionModal();
