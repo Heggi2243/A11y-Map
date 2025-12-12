@@ -39,6 +39,7 @@
 
 - **🔐 CMS管理後台**：提供管理員使用的商店管理後台和資料上傳表單，支援圖片上傳、資料CRUD。
 <img width="1899" height="1595" alt="storeManage html" src="https://github.com/user-attachments/assets/e227e83d-1071-4dd9-9877-ca8ba25e02d3" />
+注意到了嗎？不管前台後台的footer都是像賽道般的小方塊，因為我們希望使用者能像我們的網站名一樣用飆的(暢行無阻)！
 
 ## 🛠️ Tech Stack
 
