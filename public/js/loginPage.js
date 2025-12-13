@@ -1,8 +1,8 @@
 
+firebase.initializeApp(FIREBASE_CONFIG);
+const analytics = firebase.analytics(); 
 
-      firebase.initializeApp(FIREBASE_CONFIG);
-
-      // ========== 新增：初始化 reCAPTCHA ========== //
+  // ========== 新增：初始化 reCAPTCHA ========== //
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
   console.log('本地開發模式：啟用 App Verification 繞過');
   
