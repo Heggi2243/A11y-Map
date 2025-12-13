@@ -4,6 +4,7 @@
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
+const analytics = firebase.analytics(); 
 
 // 全局變數
 let gallerySwiper = null;
@@ -201,7 +202,7 @@ function renderShopDetail(shop) {
   const evaluationHtml = `
       <div class="bg-${colorAry[0]} border-2 border-${colorAry[1]} rounded-2xl p-5 shadow-sm transform rotate-1 flex items-center">
         <div class="p-3 rounded-full mr-4 border border-${colorAry[1]}">
-          <i data-lucide="${colorAry[2]}" class="text-${colorAry[3]} fill-${colorAry[3]}" size="24"></i>
+          <i data-lucide="${colorAry[2]}" class="text-${colorAry[3]} }" size="24"></i>
         </div>
         <div>
           <h3 class="font-display font-bold text-${colorAry[4]} text-lg">${content[0]}</h3>

@@ -4,6 +4,7 @@
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
+const analytics = firebase.analytics(); 
 
 // ========== State Management ========== //
 

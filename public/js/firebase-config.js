@@ -7,5 +7,7 @@ const FIREBASE_CONFIG = {
   projectId: "a11y-map",
   storageBucket: "a11y-map.firebasestorage.app",
   messagingSenderId: "145049751456",
-  appId: "1:145049751456:web:b0ae0b725882f12794dec5"
+  appId: "1:145049751456:web:b0ae0b725882f12794dec5",
+  measurementId: "G-EDXPXWBSJP"
 };
+
