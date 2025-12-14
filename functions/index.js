@@ -4,6 +4,8 @@
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const axios = require('axios');
+const crypto = require('crypto'); // Node.js內建，不需安裝(接綠界相關)
+const nodemailer = require('nodemailer');
 
 
 // 用process.env讀取環境變數
@@ -13,6 +15,31 @@ const GOOGLE_MAPS_API_KEY = defineString('GOOGLE_MAPS_API_KEY');
  *  (舊)const apiKey = functions.config().google.maps_api_key;
  *  ↑本來要在try裡面使用，但這個方法2026.03要被棄用了QQ
 */
+
+// 綠界
+const ECPAY_MERCHANT_ID = defineString('ECPAY_MERCHANT_ID');
+const ECPAY_HASH_KEY = defineString('ECPAY_HASH_KEY');
+const ECPAY_HASH_IV = defineString('ECPAY_HASH_IV');
+
+// 通知email
+const GMAIL_USER = defineString('GMAIL_USER'); 
+const GMAIL_PASSWORD = defineString('GMAIL_PASSWORD'); 
+
+// ========== Gmail SMTP 設定 ========== 
+let transporter = null;
+
+function getEmailTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: GMAIL_USER.value(),
+        pass: GMAIL_PASSWORD.value()
+      }
+    });
+  }
+  return transporter;
+}
 
 admin.initializeApp();
 
@@ -29,7 +56,7 @@ const allowedUIDs = [
  * 2.2 不是管理員 -> 立即刪除帳號
  * (雖然還沒開放會員註冊，但就先擺起來放著)
  */
-exports.blockUnauthorizedUsers = functions.auth.user().onCreate(async (user) => {
+exports.blockUnauthorizedUsers = functions.region('asia-east1').auth.user().onCreate(async (user) => {
     const uid = user.uid;
     const email = user.email || "無 Email";
 
@@ -57,7 +84,7 @@ exports.blockUnauthorizedUsers = functions.auth.user().onCreate(async (user) => 
  * 觸發時機:
  * 每當 login_sessions 集合有新文件時執行
  */
-exports.sendNewDeviceEmail = functions.firestore
+exports.sendNewDeviceEmail = functions.region('asia-east1').firestore
     .document('login_sessions/{sessionId}')
     .onCreate(async (snap, context) => {
         const sessionData = snap.data();
@@ -79,8 +106,7 @@ exports.sendNewDeviceEmail = functions.firestore
 
         console.log('偵測到新裝置登入，準備發送 Email');
 
-        // 準備 Email 內容
-        const platform = deviceInfo.platform || '未知';
+        // Email內容
         const userAgent = deviceInfo.userAgent || '未知';
         const timezone = deviceInfo.timezone || '未知';
 
@@ -92,39 +118,64 @@ exports.sendNewDeviceEmail = functions.firestore
             📧 帳號: ${email}
             🕐 登入時間: ${loginTime ? loginTime.toDate().toLocaleString('zh-TW') : '未知'}
             🌐 IP 位址: ${ipAddress}
-            💻 作業系統: ${platform}
             🌍 時區: ${timezone}
             🔍 瀏覽器資訊: ${userAgent}
 
             如果這不是您本人的操作，請立即：
             1. 變更您的密碼
-            2. 檢查 Session 管理後台
-            3. 聯繫其他管理員
+            2. 檢查Session管理後台
+            3. 告知美麗的阿吉
 
             此為系統自動通知，請勿直接回覆此郵件。
 
             ---
-            無障礙店家管理系統
+            暢行無阻A11y-Map小精靈
         `;
 
-        // 發送 Email（使用 Firebase Extensions 的 Trigger Email 或自訂方式）
-        // 方式 1: 使用 mail 集合（需要安裝 Trigger Email extension）
+         // 文件ID
+        const docId = loginTime 
+            ? `${loginTime.toDate().getTime()} 偵測到新登入`
+            : `${Date.now()} 偵測到新登入`;
+
         try {
-            await admin.firestore().collection('mail').add({
+            // 改用nodemailer發送郵件
+            const transporter = getEmailTransporter();
+            
+            const info = await transporter.sendMail({
+                from: `"暢行無阻系統" <${GMAIL_USER.value()}>`,
                 to: email,
-                message: {
-                    subject: '⚠️ 偵測到新裝置登入您的管理員帳號',
-                    text: emailContent,
-                    html: emailContent.replace(/\n/g, '<br>')
-                }
+                subject: '偵測到新裝置登入您的管理員帳號',
+                text: emailContent,
+                html: emailContent.replace(/\n/g, '<br>')
             });
-            console.log('Email通知已加入佇列');
+            
+            console.log('Email 已發送:', info.messageId);
+            
+            // 寫入 mail collection（紀錄用）
+            await admin.firestore().collection('mail').doc(docId).set({
+                to: email,
+                subject: '偵測到新裝置登入您的管理員帳號',
+                sentAt: admin.firestore.FieldValue.serverTimestamp(),
+                status: 'sent',
+                messageId: info.messageId
+            });
+            
         } catch (error) {
             console.error('發送Email失敗:', error);
+            
+            // 記錄失敗
+            await admin.firestore().collection('mail').doc(docId).set({
+                to: email,
+                subject: '偵測到新裝置登入您的管理員帳號',
+                sentAt: admin.firestore.FieldValue.serverTimestamp(),
+                status: 'failed',
+                error: error.message
+            });
         }
 
+
         return null;
-    });
+});
 
 /**
  * 輔助函式：檢查是否為新裝置
@@ -274,3 +325,142 @@ exports.geocodeAddress = functions.region('asia-east1').https.onCall(async (data
   }
 });
 
+// ========== 綠界 ========== 
+
+/**
+ * 產生綠界檢查碼
+ */
+function generateCheckMacValue(params, hashKey, hashIV) {
+
+  // 1. 參數排序(依照ASCII)
+  const sortedKeys = Object.keys(params).sort();
+
+
+  // 2. 組合成 Query String
+    let rawString = sortedKeys
+      .filter(key => key !== 'CheckMacValue') // 確保不包含 CheckMacValue
+      .map(key => `${key}=${params[key]}`)
+      .join('&');
+
+    // 3. 前後加上 HashKey 與 HashIV
+    rawString = `HashKey=${hashKey}&${rawString}&HashIV=${hashIV}`;
+
+    // 4. 進行 URL Encode (關鍵！這裡是用來模擬 .NET 的編碼邏輯)
+    let encodedString = encodeURIComponent(rawString).toLowerCase();
+
+    // 5. 修正編碼差異 (綠界對於特殊符號的龜毛要求)
+    encodedString = encodedString
+      .replace(/%2d/g, '-')
+      .replace(/%5f/g, '_')
+      .replace(/%2e/g, '.')
+      .replace(/%21/g, '!')
+      .replace(/%2a/g, '*')
+      .replace(/%28/g, '(')
+      .replace(/%29/g, ')')
+      .replace(/%20/g, '+'); // 空白要轉成 +
+
+    // 6. SHA256 加密並轉大寫
+    const checkMacValue = crypto
+      .createHash('sha256')
+      .update(encodedString)
+      .digest('hex')
+      .toUpperCase();
+
+    return checkMacValue;
+}
+
+/**
+ * 建立綠界訂單
+ */
+exports.createECPayOrder = functions.region('asia-east1').https.onCall(async (data, context) => {
+  try {
+    console.log('建立綠界訂單:', data);
+
+    const { amount, itemName = '贊助暢行無阻' } = data;
+
+    // 驗證金額
+    if (!amount || amount < 1) {
+      throw new functions.https.HttpsError('invalid-argument', '金額必須大於 0');
+    }
+
+    const merchantId = ECPAY_MERCHANT_ID.value();
+    const hashKey = ECPAY_HASH_KEY.value();
+    const hashIV = ECPAY_HASH_IV.value();
+
+    // 產生訂單編號（時間戳 + 隨機數）
+    const tradeNo = `A11Y${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
+    // 綠界 API 參數
+    const params = {
+      MerchantID: merchantId,
+      MerchantTradeNo: tradeNo,
+      MerchantTradeDate: new Date().toLocaleString('zh-TW', { 
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(/\//g, '/').replace(/,/g, ''),
+      PaymentType: 'aio',
+      TotalAmount: amount,
+      TradeDesc: '贊助暢行無阻網站',
+      ItemName: itemName,
+      ReturnURL: 'https://asia-east1-a11y-map.cloudfunctions.net/ecpayCallback', // 付款完成後端通知
+      ClientBackURL: 'https://a11y-map.web.app/donate-success.html', // 付款完成前端跳轉
+      ChoosePayment: 'ALL',
+      EncryptType: 1,
+    };
+
+    // 產生檢查碼
+    params.CheckMacValue = generateCheckMacValue(params, hashKey, hashIV);
+
+    console.log('✅ 訂單參數:', params);
+
+    return {
+      success: true,
+      formData: params,
+      actionUrl: 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5', // 測試環境
+      // 正式環境改用: 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'
+    };
+
+  } catch (error) {
+    console.error('建立訂單失敗:', error);
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
+/**
+ * 綠界付款結果回呼
+ */
+exports.ecpayCallback = functions.region('asia-east1').https.onRequest(async (req, res) => {
+  try {
+    console.log('收到綠界回呼:', req.body);
+
+    const { RtnCode, RtnMsg, TradeNo, TradeAmt, PaymentDate } = req.body;
+
+    if (RtnCode === '1') {
+      console.log('付款成功:', TradeNo, TradeAmt);
+
+      // 儲存捐款記錄到Firestore
+      await admin.firestore().collection('donations').add({
+        tradeNo: TradeNo,
+        amount: parseInt(TradeAmt),
+        paymentDate: PaymentDate,
+        status: 'success',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } else {
+      console.log('付款失敗:', RtnMsg);
+    }
+
+    // 回應綠界（必須回傳 "1|OK"）
+    res.send('1|OK');
+
+  } catch (error) {
+    console.error('回呼處理失敗:', error);
+    res.send('0|ERROR');
+  }
+});

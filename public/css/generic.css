@@ -107,6 +107,35 @@ input[type=number]::-webkit-outer-spin-button {
     font-size: 0.875rem; 
     font-weight: 500;
 }
+
+/* ============================ store.html =============================== /
+
+        /* Swiper 按鈕樣式調整 */
+        .swiper-button-prev,
+        .swiper-button-next {
+        width: 40px !important;
+        height: 40px !important;
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .swiper-button-prev:after,
+        .swiper-button-next:after {
+        font-size: 20px !important;
+        font-weight: bold;
+        }
+
+        /* Gallery Swiper slide 寬度 */
+        .gallery-swiper .swiper-slide {
+        width: auto !important;
+        }
+
+        /* Modal Swiper 分頁樣式 */
+        .modal-swiper .swiper-pagination {
+        color: white;
+        font-weight: bold;
+        }
     
 /* ======================================================================= */
 

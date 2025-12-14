@@ -855,30 +855,6 @@ function initEventListeners() {
   // 定位權限Modal事件
   document.getElementById('allow-location-btn').addEventListener('click', handleAllowLocation);
   document.getElementById('deny-location-btn').addEventListener('click', handleDenyLocation);
-
-
-  const footerToggleBtn = document.getElementById('footer-toggle-btn');
-  const footerLabel = document.getElementById('footer-label');
-  const footerLinks = document.getElementById('footer-links');
-  const footerChevron = document.getElementById('footer-chevron');
-  
-  let isFooterExpanded = false;
-
-  function toggleFooter() {
-    isFooterExpanded = !isFooterExpanded;
-    if (isFooterExpanded) {
-      footerLinks.style.maxHeight = footerLinks.scrollHeight + "px";
-      footerChevron.style.transform = "rotate(180deg)";
-    } else {
-      footerLinks.style.maxHeight = "0px";
-      footerChevron.style.transform = "rotate(0deg)";
-    }
-  }
-
-  if (footerToggleBtn && footerLabel) {
-    footerToggleBtn.addEventListener('click', toggleFooter);
-    footerLabel.addEventListener('click', toggleFooter);
-  }
 }
 
 // ========== 初始化 ========== //
