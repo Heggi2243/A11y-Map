@@ -223,7 +223,7 @@ function generateCheckMacValue(params, hashKey, hashIV) {
 }
 ```
 
-<img width="913" height="578" alt="image" src="https://github.com/user-attachments/assets/051afd76-27e5-45d4-9549-ea457895e807" />
+<img width="605" height="404" alt="image" src="https://github.com/user-attachments/assets/051afd76-27e5-45d4-9549-ea457895e807" />
 
 - 目前綠界帳號申請中，尚未正式啟用。但已通過測試環境！
 
