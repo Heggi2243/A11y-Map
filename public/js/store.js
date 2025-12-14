@@ -185,7 +185,7 @@ function renderShopDetail(shop) {
     content = ['暢行無阻!','這地點對您的設備非常友善。'];
   }else if (shop.convenience >= 3 && count >= 1) {
     colorAry = ['blue-50','blue-200','heart-handshake','blue-600','blue-800'];
-    content = ['尚可接受','需要陪伴者提供一點協助'];
+    content = ['還算不錯','需要陪伴者提供一點協助'];
   }else if (shop.convenience >= 2 && count >= 1){
     colorAry = ['org-50','org-200','hand-helping','org-600','org-800'];
     content = ['有點難度','需要陪伴者與店家共同協助'];
@@ -202,7 +202,7 @@ function renderShopDetail(shop) {
   const evaluationHtml = `
       <div class="bg-${colorAry[0]} border-2 border-${colorAry[1]} rounded-2xl p-5 shadow-sm transform rotate-1 flex items-center">
         <div class="p-3 rounded-full mr-4 border border-${colorAry[1]}">
-          <i data-lucide="${colorAry[2]}" class="text-${colorAry[3]} }" size="24"></i>
+          <i data-lucide="${colorAry[2]}" class="text-${colorAry[3]} size="24"></i>
         </div>
         <div>
           <h3 class="font-display font-bold text-${colorAry[4]} text-lg">${content[0]}</h3>
