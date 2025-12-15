@@ -65,11 +65,11 @@ export const FORM_SCHEMA = {
       "sectionId": "basic_info",
       "sectionTitle": "基本店家資訊",
       "fields": [
-        { "itemId": "store_cover", "label": "店家封面", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
-        { "itemId": "name", "label": "店家名稱", "type": "text_input", "required": true},
+        { "itemId": "store_cover", "label": "*店家封面", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
+        { "itemId": "name", "label": "*店家名稱", "type": "text_input", "required": true},
         {
           "itemId": "category",
-          "label": "類別",
+          "label": "*類別",
           "type": "checkbox_group", 
           "selectionType": "multiple",   
           "required": true,
@@ -80,11 +80,11 @@ export const FORM_SCHEMA = {
             {"value": "住宿", "label": "住宿"}
           ]
         },
-        { "itemId": "address", "label": "店家地址", "type": "text_input", "required": true},
-        { "itemId": "avgCost", "label": "一人平均消費(元)", "type": "number_input", "required": true},
-        { "itemId": "visitDate", "label": "到訪日期", "type": "date_input", "required": true},
+        { "itemId": "address", "label": "*店家地址", "type": "text_input", "required": true},
+        { "itemId": "avgCost", "label": "*一人平均消費(元)", "type": "number_input", "required": true},
+        { "itemId": "visitDate", "label": "*到訪日期", "type": "date_input", "required": true},
         { "itemId": "mapUrl", 
-          "label": "地圖網址", 
+          "label": "*地圖網址", 
           "type": "textarea",
           "required": true, 
           "validation": {    // 自訂驗證
@@ -92,11 +92,11 @@ export const FORM_SCHEMA = {
            "message": "地圖網址格式錯誤，必須是 Google Maps 短網址"
           }
         },
-        { "itemId": "entrance_photo", "label": "門口/階梯狀況", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
-        { "itemId": "interior_photo", "label": "餐飲/店內環境", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
+        { "itemId": "entrance_photo", "label": "*門口/階梯狀況", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
+        { "itemId": "interior_photo", "label": "*餐飲/店內環境", "type": "file_upload", "required": true, "dataType": "image", "note": "圖片上傳 (可複數)" },
         {
           "itemId": "convenience",
-          "label": "動線/便利度評分",
+          "label": "*動線/便利度評分",
           "type": "select_rating", 
           "required": true,
           "options": ["5","4.5", "4","3.5", "3", "2", "1", "0"], 
@@ -105,14 +105,14 @@ export const FORM_SCHEMA = {
           "itemId": "food",
           "label": "食物評分",
           "type": "select_rating",
-          "required": true,
+          "required": false,
           "options": ["5", "4", "3", "2", "1", "0"]
         },
         {
           "itemId": "service",
           "label": "服務評分",
           "type": "select_rating",
-          "required": true,
+          "required": false,
           "options": ["5", "4", "3", "2", "1", "0"]
         }
       ]
@@ -122,7 +122,7 @@ export const FORM_SCHEMA = {
       "sectionTitle": "空間與設施",
       "fields": [
         {
-          "itemId": "ramp", "label": "出入口坡道", "type": "radio_group", "required": true, "selectionType": "single",
+          "itemId": "ramp", "label": "*出入口坡道", "type": "radio_group", "required": true, "selectionType": "single",
           "options": [
             {"value": "有坡道 (平緩)", "label": "有坡道 (平緩)"},
             {"value": "有坡道 (陡峭)", "label": "有坡道 (陡峭)"},
@@ -131,7 +131,7 @@ export const FORM_SCHEMA = {
         },
         {
           "itemId": "steps",
-          "label": "階梯狀況",
+          "label": "*階梯狀況",
           "type": "checkbox_group", 
           "selectionType": "multiple",   
           "required": true,
@@ -144,7 +144,7 @@ export const FORM_SCHEMA = {
           ]
         },
         { "itemId": "doorWidthCm",
-          "label": "門寬", 
+          "label": "*門寬", 
           "type": "radio_group", 
           "selectionType": "single",
           "required": true,
@@ -156,7 +156,7 @@ export const FORM_SCHEMA = {
            },
         {
           "itemId": "restroom",
-          "label": "廁所",
+          "label": "*廁所",
           "type": "radio_group",
           "selectionType": "single",
           "required": true,
@@ -178,7 +178,7 @@ export const FORM_SCHEMA = {
           ]
         },
         {
-          "itemId": "circulation", "label": "內部動線", "type": "radio_group", "required": true, "selectionType": "single",
+          "itemId": "circulation", "label": "*內部動線", "type": "radio_group", "required": true, "selectionType": "single",
           "options": [
             {"value": "普通", "label": "普通"},
             {"value": "寬敞", "label": "寬敞"},
@@ -186,7 +186,7 @@ export const FORM_SCHEMA = {
           ]
         },
         {
-          "itemId": "assistance", "label": "協助需求", "type": "checkbox_group", "required": true, "selectionType": "multiple",
+          "itemId": "assistance", "label": "*協助需求", "type": "checkbox_group", "required": true, "selectionType": "multiple",
           "options": [
             {"value": "需協助開門", "label": "需協助開門"},
             {"value": "需協助進門", "label": "需協助進門"},
@@ -225,7 +225,7 @@ export const FORM_SCHEMA = {
     },
     {
         "sectionId":"Thoughts",
-        "sectionTitle": "走訪心得",
+        "sectionTitle": "*走訪心得",
         "fields": [
             { "itemId": "description", "type": "textarea", "required": true, },
         ]

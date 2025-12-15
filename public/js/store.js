@@ -311,8 +311,8 @@ function renderShopDetail(shop) {
         <section>
           <h2 class="text-2xl font-display font-black text-retro-blue mb-4 flex items-center"><i data-lucide="accessibility" class="mr-3" size="28"></i> 空間與設施</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            ${renderDetailItem('食物', renderRating(shop.food), 'utensils', true)}
-            ${renderDetailItem('服務', renderRating(shop.service), 'smile', true)}
+            ${shop.food ? renderDetailItem('食物', renderRating(shop.food), 'utensils', true) : ''}
+            ${shop.service ? renderDetailItem('服務', renderRating(shop.service), 'utensils', true) : ''}
             ${renderDetailItem('出入口坡道', shop.ramp || '未提供', 'arrow-up-circle')}
             ${renderDetailItem('階梯狀況', Array.isArray(shop.steps) ? shop.steps.join(', ') : shop.steps || '未提供', 'accessibility')}
             ${renderDetailItem('門寬', shop.doorWidthCm , 'door-open')}
