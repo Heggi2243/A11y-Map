@@ -173,6 +173,60 @@ function generateDeviceFingerprint() {
 }
 ```
 
+
+## 🪙 金流串接
+<img width="755" height="868" alt="donate" src="https://github.com/user-attachments/assets/b37e5d92-e818-44fc-bb11-72a5bd226c51" />
+
+- 成功整合**綠界科技 (ECPay)**第三方支付 API，實作完整的贊助流程：
+
+- 安全加密：使用Node.js crypto模組實作符合綠界規範的SHA256 CheckMacValue加密演算法。
+
+- **非同步處理**：透過Cloud Functions建立後端API，確保金鑰（HashKey/IV）不外流至前端。
+
+- 實作動態表單自動提交機制，實現從網站到支付頁面的無縫跳轉。
+
+```
+function generateCheckMacValue(params, hashKey, hashIV) {
+  // 1. 參數排序(依照ASCII)
+  const sortedKeys = Object.keys(params).sort();
+  // 2. 組合成 Query String
+    let rawString = sortedKeys
+      .filter(key => key !== 'CheckMacValue') // 確保不包含 CheckMacValue
+      .map(key => `${key}=${params[key]}`)
+      .join('&');
+
+    // 3. 前後加上 HashKey 與 HashIV
+    rawString = `HashKey=${hashKey}&${rawString}&HashIV=${hashIV}`;
+
+    // 4. 進行 URL Encode
+    let encodedString = encodeURIComponent(rawString).toLowerCase();
+
+    // 5. 修正編碼差異
+    encodedString = encodedString
+      .replace(/%2d/g, '-')
+      .replace(/%5f/g, '_')
+      .replace(/%2e/g, '.')
+      .replace(/%21/g, '!')
+      .replace(/%2a/g, '*')
+      .replace(/%28/g, '(')
+      .replace(/%29/g, ')')
+      .replace(/%20/g, '+'); // 空白要轉成 +
+
+    // 6. SHA256 加密並轉大寫
+    const checkMacValue = crypto
+      .createHash('sha256')
+      .update(encodedString)
+      .digest('hex')
+      .toUpperCase();
+
+    return checkMacValue;
+}
+```
+
+<img width="605" height="404" alt="image" src="https://github.com/user-attachments/assets/051afd76-27e5-45d4-9549-ea457895e807" />
+
+- 目前綠界帳號申請中，尚未正式啟用。但已通過測試環境！
+
 ## 🚀 未來展望
 
 [ ] 意見箱：開放一般使用者提交資訊更新要求。
