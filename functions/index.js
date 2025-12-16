@@ -422,8 +422,7 @@ exports.createECPayOrder = functions.region('asia-east1').https.onCall(async (da
     return {
       success: true,
       formData: params,
-      actionUrl: 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5', // 測試環境
-      // 正式環境改用: 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'
+      actionUrl: 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'
     };
 
   } catch (error) {
