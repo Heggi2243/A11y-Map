@@ -144,6 +144,10 @@ input[type=number]::-webkit-outer-spin-button {
     #engTitle {
         display: none; /* 將其從頁面佈局中完全移除 */
     }
+
+    #donateDiv {
+        margin-bottom: 8rem;
+    }
 }
 
 @media (min-width: 580px) {

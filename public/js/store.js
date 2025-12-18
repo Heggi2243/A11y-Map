@@ -122,7 +122,7 @@ function renderShopDetail(shop) {
     ...(shop.store_cover || []),
     ...(shop.entrance_photo || []),
     ...(shop.interior_photo || []),
-  ].slice(0, 6);
+  ];
 
   // 基本資訊
   const name = shop.name || '未命名店家';

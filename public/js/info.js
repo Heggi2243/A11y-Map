@@ -108,6 +108,10 @@ ABOUT: {
             我們希望人人都有快樂生活的權利,讓身障者、年邁的長輩或行動不便的朋友,不再因為擔心設施不全或造成他人困擾而卻步。也讓您在為身邊的親友安排聚餐或旅遊行程時,不再感到手足無措,能夠自信地規劃出一趟<b>暢行無阻之旅</b>。
             <br><br>
             【聯絡信箱】cxwzA11yMap@gmail.com
+            <br>
+            <a href="/donate.html" class="inline-block bg-retro-blue mt-6 text-white px-6 py-3 rounded-xl font-bold hover:bg-retro-blue/90 transition">
+                贊助我們
+            </a>
         </p>
         <p class="text-sm text-retro-blue/60 font-bold">Version 1.0.0</p>
         </div>

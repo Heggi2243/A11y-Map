@@ -91,10 +91,25 @@ exports.sendNewDeviceEmail = functions.region('asia-east1').firestore
         const uid = sessionData.uid;
         const email = sessionData.email;
         const ipAddress = sessionData.ipAddress;
+        const browser = sessionData.browser || '未知';
+        const os = sessionData.os || '未知';
         const deviceInfo = sessionData.deviceInfo || {};
-        const loginTime = sessionData.loginTime;
+        const timezone = deviceInfo.timezone || '未知';
+        const loginTimeStamp = sessionData.loginTime;
+        const loginTime = loginTimeStamp
+            ? loginTimeStamp.toDate().toLocaleString('zh-TW', {
+                timeZone: 'Asia/Taipei',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+              })
+            : '未知';
 
-        console.log(`新 Session 記錄: UID=${uid}, Email=${email}`);
+        // console.log(`新 Session 記錄: UID=${uid}, Email=${email}`);
 
         // 檢查是否為新裝置
         const isNewDevice = await checkIfNewDevice(uid, sessionData.deviceFingerprint, snap.id);
@@ -104,11 +119,10 @@ exports.sendNewDeviceEmail = functions.region('asia-east1').firestore
             return null;
         }
 
-        console.log('偵測到新裝置登入，準備發送 Email');
+        // console.log('偵測到新裝置登入，準備發送 Email');
 
         // Email內容
-        const userAgent = deviceInfo.userAgent || '未知';
-        const timezone = deviceInfo.timezone || '未知';
+        
 
         const emailContent = `
             親愛的管理員，
@@ -116,10 +130,10 @@ exports.sendNewDeviceEmail = functions.region('asia-east1').firestore
             系統偵測到您的帳號有新裝置登入：
 
             📧 帳號: ${email}
-            🕐 登入時間: ${loginTime ? loginTime.toDate().toLocaleString('zh-TW') : '未知'}
+            🕐 登入時間: ${loginTime}
             🌐 IP 位址: ${ipAddress}
             🌍 時區: ${timezone}
-            🔍 瀏覽器資訊: ${userAgent}
+            🔍 瀏覽器資訊: ${browser}
 
             如果這不是您本人的操作，請立即：
             1. 變更您的密碼
@@ -133,8 +147,8 @@ exports.sendNewDeviceEmail = functions.region('asia-east1').firestore
         `;
 
          // 文件ID
-        const docId = loginTime 
-            ? `${loginTime.toDate().getTime()} 偵測到新登入`
+        const docId = loginTimeStamp 
+            ? `${loginTimeStamp.toDate().getTime()} 偵測到新登入`
             : `${Date.now()} 偵測到新登入`;
 
         try {
@@ -142,7 +156,7 @@ exports.sendNewDeviceEmail = functions.region('asia-east1').firestore
             const transporter = getEmailTransporter();
             
             const info = await transporter.sendMail({
-                from: `"暢行無阻系統" <${GMAIL_USER.value()}>`,
+                from: `"暢行無阻小精靈" <${GMAIL_USER.value()}>`,
                 to: email,
                 subject: '偵測到新裝置登入您的管理員帳號',
                 text: emailContent,

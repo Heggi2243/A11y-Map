@@ -157,15 +157,36 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
      * 5. 符合使用者隱私：不蒐集個人資訊，只蒐集裝置，無法反向推論管理員身分
      */
     function generateDeviceFingerprint() {
+
+      const ua = navigator.userAgent;
+      let browser = 'Unknown';
+      let os = 'Unknown';
+
+      // 瀏覽器(只保留名稱，不要版本
+      if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+      else if (ua.includes('Firefox')) browser = 'Firefox';
+      else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+      else if (ua.includes('Edg')) browser = 'Edge';
+
+      // 作業系統識別
+      if (ua.includes('Windows NT 10.0')) os = 'Windows10';
+      else if (ua.includes('Windows NT 11.0')) os = 'Windows11';
+      else if (ua.includes('Windows')) os = 'Windows';
+      else if (ua.includes('Mac OS X')) os = 'macOS';
+      else if (ua.includes('Linux')) os = 'Linux';
+      else if (ua.includes('Android')) os = 'Android';
+      else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+
       // 收集裝置特徵
       const features = [
-        navigator.userAgent, //瀏覽器
+        browser, // 瀏覽器
+        os,  // 作業系統
         navigator.language,  //語言設定
         screen.width + 'x' + screen.height, // 螢幕解析度(EX:1920x1080)，換螢幕機率低
         screen.colorDepth,  //色彩深度
-        new Date().getTimezoneOffset(),  //時區偏移
-        navigator.hardwareConcurrency || 0, //CPU(除非換電腦)
-        navigator.platform //作業系統(EX:Win32)
+        Math.round(new Date().getTimezoneOffset() / 60), // 時區(換這個看看)
+        navigator.hardwareConcurrency || 0,   // CPU核心數
+        navigator.maxTouchPoints || 0         // 觸控點數(區分手機/平板/電腦)
       ];
 
       /**
@@ -189,7 +210,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
        * 記錄登入 Session
        * 包含：日期時間、管理員(email+UID)、IP、裝置(OS)、瀏覽器、狀態
        */
-      async function recordLoginSession(user) {
+    async function recordLoginSession(user) {
       try {
         // 1. 生成裝置指紋
         const deviceFingerprint = generateDeviceFingerprint();
@@ -242,6 +263,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
           console.warn('無法取得 IP');
         }
 
+
         // 5. 建立 session 記錄 (加入 deviceFingerprint)
         const sessionData = {
           uid: user.uid,
@@ -252,7 +274,6 @@ if (window.location.hostname === 'localhost' || window.location.hostname === '12
           os: os,
           deviceFingerprint: deviceFingerprint,  // ← 加入這個
           deviceInfo: {  // ← 額外的裝置資訊
-            platform: navigator.platform,
             userAgent: navigator.userAgent,
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             screenResolution: `${screen.width}x${screen.height}`
