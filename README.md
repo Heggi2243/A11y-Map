@@ -222,7 +222,7 @@ function generateCheckMacValue(params, hashKey, hashIV) {
     return checkMacValue;
 }
 ```
-
+- 2025/12/18 綠界金流已正式啟用。
 - 路徑：點選首頁footer → [關於我們](https://a11y-map.web.app/info.html?view=about) ，即可於下方看到贊助按鈕。
 
 ## 🚀 未來展望
