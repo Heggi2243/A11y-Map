@@ -35,7 +35,7 @@ export function createFooter(containerId = 'app-footer') {
   }
 
   // 設定 Footer HTML
-  container.className = 'fixed bottom-0 left-0 w-full z-50 transition-all duration-300 ease-in-out bg-transparent';
+  container.className = 'fixed bottom-0 left-0 w-full z-40 transition-all duration-300 ease-in-out bg-transparent';
   container.innerHTML = `
     <!-- Chevron Button -->
     <div class="absolute left-1/2 -translate-x-1/2 -top-5 z-50">
