@@ -232,3 +232,10 @@ function generateCheckMacValue(params, hashKey, hashIV) {
 [ ] 更精緻的價格區間顯示：根據商店類別標示價格範圍。
 
 [ ] 加入 ARIA Labels、Semantic HTML，讓視障朋友也能透過螢幕閱讀器順利使用本網站。
+
+
+## 📄 版權聲明 (Copyright & License)
+- 本專案僅供閱覽、學習與技術交流參考，未開放任何形式的授權。
+- 未經作者許可，禁止複製、修改、分發或用於任何商業用途。
+- All rights reserved. This project is for viewing and educational purposes only. No reuse or redistribution is permitted.
+
