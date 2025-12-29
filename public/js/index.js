@@ -6,6 +6,12 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const analytics = firebase.analytics(); 
 
+// 管理員UID (懸浮按鈕用)
+const adminUIDs = [
+  "TKJqrWGdmoPtaZuDmSLOUtTAzqK2",
+  "bwYPuwjyX9VTDSVYw5THhFW7xAg2",
+];
+
 // ========== State Management ========== //
 
 const DEFAULT_USER_SETTINGS = {
@@ -24,10 +30,211 @@ const state = {
   isLoading: true,
   userLocation: null, // 使用者位置 { lat, lng }
   locationPermission: null, // 'granted', 'denied', null
+  locationTimestamp: null, // 記錄定位時間
 };
+
+const LOCATION_CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取定位
+
+// ========== 管理員功能 ========== //
+
+/**
+ * 顯示管理員懸浮按鈕
+ */
+function showAdminButton() {
+
+  // 檢查按鈕是否已存在
+  if (document.getElementById('admin-float-btn')) return;
+  
+  const adminBtn = document.createElement('a');
+  adminBtn.id = 'admin-float-btn';
+  adminBtn.href = 'storePage.html';
+  adminBtn.className = 'fixed bottom-6 right-6 z-50 bg-retro-blue text-white p-4 rounded-full hover:bg-retro-blue/90 hover:translate-y-[-2px] transition-all duration-200 border-2 border-retro-blue';
+  adminBtn.setAttribute('aria-label', '商店管理');
+  adminBtn.innerHTML = `<i data-lucide="arrow-big-left-dash" size="24"></i>`;
+  
+  document.body.appendChild(adminBtn);
+  
+  // 初始化 Lucide 圖示
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+}
+
+/**
+ * 檢查當前使用者是否為管理員
+ */
+function checkAdminStatus() {
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user && adminUIDs.includes(user.uid)) {
+      // console.log('管理員身分確認:', user.uid);
+      showAdminButton();
+    }
+  });
+}
 
 
 // ========== 地理位置功能 ========== //
+
+/**
+ * 檢查快取的位置是否還有效
+ */
+function isLocationCacheValid() {
+  const savedTimestamp = localStorage.getItem('locationTimestamp');
+  if (!savedTimestamp) return false;
+  
+  const age = Date.now() - parseInt(savedTimestamp);
+  return age < LOCATION_CACHE_DURATION;
+}
+
+/**
+ * 儲存位置到localStorage
+ */
+function saveLocationToStorage(location) {
+  const timestamp = Date.now();
+  localStorage.setItem('userLocation', JSON.stringify(location));
+  localStorage.setItem('locationTimestamp', timestamp.toString());
+  state.userLocation = location;
+  state.locationTimestamp = timestamp;
+}
+
+/**
+ * 從 localStorage 讀取位置
+ */
+function loadLocationFromStorage() {
+  const savedLocation = localStorage.getItem('userLocation');
+  const savedTimestamp = localStorage.getItem('locationTimestamp');
+  
+  if (savedLocation && savedTimestamp) {
+    return {
+      location: JSON.parse(savedLocation),
+      timestamp: parseInt(savedTimestamp)
+    };
+  }
+  return null;
+}
+
+/**
+ * 請求使用者定位(靜默讀取更新)
+ */
+async function requestUserLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('瀏覽器不支援定位功能'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        if (!isInTaiwan(lat, lng)) {
+          reject(new Error('此服務僅限台灣地區使用'));
+          return;
+        }
+        
+        resolve({ lat, lng });
+      },
+      (error) => {
+        let message = '無法取得位置';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = '拒絕了定位請求';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = '位置資訊無法取得';
+            break;
+          case error.TIMEOUT:
+            message = '定位請求逾時';
+            break;
+        }
+        reject(new Error(message));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0 // 不使用快取，總是取得新位置
+      }
+    );
+  });
+}
+
+/**
+ * 背景靜默更新位置
+ */
+async function updateLocationInBackground() {
+  
+  // 只有在已授權的情況下才靜默更新
+  if (state.locationPermission !== 'granted') {
+    return;
+  }
+
+  try {
+    const location = await requestUserLocation();
+    
+    // 檢查位置是否有顯著變化（移動超過100公尺才更新）
+    if (state.userLocation) {
+      const distance = calculateDistance(
+        state.userLocation.lat,
+        state.userLocation.lng,
+        location.lat,
+        location.lng
+      );
+      
+      if (distance < 100) {
+        // 移動距離太小，不需要更新
+        return;
+      }
+    }
+    
+    // 儲存新位置
+    saveLocationToStorage(location);
+    
+    // 重新計算距離
+    updateShopsDistance();
+    
+    // 重新渲染
+    renderShopList();
+    
+    console.log('位置已更新:', location);
+    
+  } catch (error) {
+    console.log('背景定位更新失敗（不影響使用）:', error.message);
+  }
+}
+
+/**
+ * 處理允許定位
+ */
+async function handleAllowLocation() {
+  
+  hideLocationPermissionModal();
+  
+  try {
+    const location = await requestUserLocation();
+    
+    state.locationPermission = 'granted';
+    localStorage.setItem('locationPermission', 'granted');
+    
+    // 儲存位置和時間戳
+    saveLocationToStorage(location);
+    
+    // 計算所有商店的距離
+    updateShopsDistance();
+    
+    // 重新渲染
+    renderShopList();
+    
+  } catch (error) {
+    alert(error.message || '定位失敗，將顯示所有店家');
+    
+    state.locationPermission = 'denied';
+    localStorage.setItem('locationPermission', 'denied');
+    
+    renderShopList();
+  }
+}
+
 
 /**
  * 計算兩點之間的距離（公尺）使用 Haversine 公式
@@ -51,59 +258,14 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
  * 檢查座標是否在台灣範圍內
  */
 function isInTaiwan(lat, lng) {
-  // 台灣本島範圍（約略）
+  // 台灣本島範圍(約略)
   return lat >= 21.9 && lat <= 25.3 && lng >= 120.0 && lng <= 122.0;
 }
 
-/**
- * 請求使用者定位
- */
-async function requestUserLocation() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('瀏覽器不支援定位功能'));
-      return;
-    }
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        
-        // 檢查是否在台灣
-        if (!isInTaiwan(lat, lng)) {
-          reject(new Error('此服務僅限台灣地區使用'));
-          return;
-        }
-        
-        resolve({ lat, lng });
-      },
-      (error) => {
-        let message = '無法取得位置';
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            message = '您拒絕了定位請求';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            message = '位置資訊無法取得';
-            break;
-          case error.TIMEOUT:
-            message = '定位請求逾時';
-            break;
-        }
-        reject(new Error(message));
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000 // 5 分鐘內的快取位置可接受
-      }
-    );
-  });
-}
 
 /**
- * 顯示定位權限 Modal
+ * 顯示定位權限Modal(首次使用需要)
  */
 function showLocationPermissionModal() {
   const modal = document.getElementById('location-permission-modal');
@@ -120,58 +282,6 @@ function hideLocationPermissionModal() {
 }
 
 /**
- * 處理允許定位
- */
-async function handleAllowLocation() {
-  hideLocationPermissionModal();
-  
-  try {
-    // console.log('正在取得位置...');
-    const location = await requestUserLocation();
-    
-    state.userLocation = location;
-    state.locationPermission = 'granted';
-    
-    // 儲存到 localStorage
-    localStorage.setItem('locationPermission', 'granted');
-    localStorage.setItem('userLocation', JSON.stringify(location));
-    
-    // console.log('✅ 位置取得成功:', location);
-    
-    // 計算所有商店的距離
-    updateShopsDistance();
-    
-    // 重新渲染
-    renderShopList();
-    
-  } catch (error) {
-    // console.error('❌ 定位失敗:', error);
-    alert(error.message || '定位失敗，將顯示所有店家');
-    
-    state.locationPermission = 'denied';
-    localStorage.setItem('locationPermission', 'denied');
-    
-    // 顯示所有店家
-    renderShopList();
-  }
-}
-
-/**
- * 處理拒絕定位
- */
-function handleDenyLocation() {
-  hideLocationPermissionModal();
-  
-  state.locationPermission = 'denied';
-  localStorage.setItem('locationPermission', 'denied');
-  
-  // console.log('❌ 使用者拒絕定位');
-  
-  // 顯示所有店家
-  renderShopList();
-}
-
-/**
  * 更新所有商店的距離資訊
  */
 function updateShopsDistance() {
@@ -180,7 +290,7 @@ function updateShopsDistance() {
     state.allShops.forEach(shop => {
       shop.distanceMeters = 1000; // 預設1公里
     });
-    // console.log('⚠️ 無定位資訊，所有店家使用預設顯示');
+    // console.log('無定位資訊，所有店家使用預設顯示');
     return;
   }
   
@@ -222,6 +332,12 @@ async function loadShopsFromFirestore() {
     
     snapshot.forEach(doc => {
       const data = doc.data(); //先取得Data，避免無定位服務甚麼都看不到
+
+      // 過濾掉草稿
+      if (data.draft === 1) {
+        return;
+      }
+
       const shop = {
         id: doc.id,
         ...doc.data(),
@@ -713,12 +829,7 @@ function renderFootprintsHtml(circulation, size = 16) {
   let html = '';
   for(let i=0; i<count; i++) {
     const margin = i > 0 ? '-ml-1.5' : '';
-    html += `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke="#1e3a8a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline-block ${margin}">
-       <g transform="translate(5, 2)">
-          <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 2.25-6 6.04-6 .26-.01.52-.01.78 0 2.76.18 4.96 2.57 5.02 5.6.03 2.5-1.03 3.5-1.03 5.62V16h-6.81z" />
-       </g>
-    </svg>`;
+     html += `<i data-lucide="hexagon" size="${size}" class="inline-block ${margin}"></i>`;
   }
   return `<div class="flex items-center text-retro-blue" title="${circulation}">${html}</div>`;
 }
@@ -819,9 +930,15 @@ function attachFilterListeners() {
 
 // 初始事件監聽
 function initEventListeners() {
+
   document.getElementById('search-input').addEventListener('input', (e) => {
     state.searchQuery = e.target.value;
     renderShopList();
+  });
+
+  document.getElementById('deny-location-btn')?.addEventListener('click', () => {
+    hideLocationPermissionModal();
+    // 不設定permission，下次進入還會詢問要不要啟用定位
   });
 
    // ========= 類別按鈕事件 ========== //
@@ -854,27 +971,42 @@ function initEventListeners() {
 
   // 定位權限Modal事件
   document.getElementById('allow-location-btn').addEventListener('click', handleAllowLocation);
-  document.getElementById('deny-location-btn').addEventListener('click', handleDenyLocation);
+  // document.getElementById('deny-location-btn').addEventListener('click', handleDenyLocation);
 }
 
 // ========== 初始化 ========== //
 
 async function init() {
-  // console.log('接收到初始化命令');
+   const savedPermission = localStorage.getItem('locationPermission');
 
-   // 檢查是否有儲存的定位權限
-  const savedPermission = localStorage.getItem('locationPermission');
-  const savedLocation = localStorage.getItem('userLocation');
-
-  if (savedPermission === 'granted' && savedLocation) {
-    // 使用之前儲存的位置
-    state.userLocation = JSON.parse(savedLocation);
+  //使用定位
+  if (savedPermission === 'granted') {
     state.locationPermission = 'granted';
-    // console.log('✅ 使用已儲存的位置:', state.userLocation);
+    
+    // 檢查快取是否有效
+    if (isLocationCacheValid()) {
+      // 使用快取的位置
+      const cached = loadLocationFromStorage();
+      if (cached) {
+        state.userLocation = cached.location;
+        state.locationTimestamp = cached.timestamp;
+        console.log('使用快取位置（' + Math.round((Date.now() - cached.timestamp) / 1000) + '秒前）');
+      }
+    } else {
+      // 快取過期，背景更新
+      console.log('位置快取已過期，正在更新');
+      // 先使用舊位置渲染，同時在背景更新
+      const cached = loadLocationFromStorage();
+      if (cached) {
+        state.userLocation = cached.location;
+      }
+      updateLocationInBackground(); // 背景更新
+    }
+    
   } else if (savedPermission === 'denied') {
-    // 之前拒絕過
+    //暫不使用定位
     state.locationPermission = 'denied';
-    // console.log('❌ 使用者之前拒絕定位');
+
   } else {
     // 第一次使用，顯示定位權限 Modal
     showLocationPermissionModal();
@@ -886,6 +1018,15 @@ async function init() {
   initEventListeners();
   lucide.createIcons();
   
+  // ========== 新增：定期背景更新 ========== 
+  // 每5分鐘檢查一次是否需要更新位置
+  setInterval(() => {
+    if (state.locationPermission === 'granted' && !isLocationCacheValid()) {
+      updateLocationInBackground();
+    }
+  }, LOCATION_CACHE_DURATION);
+
+   checkAdminStatus();
 }
 
 if (document.readyState === 'loading') {

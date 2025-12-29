@@ -1,5 +1,5 @@
 // ============================================
-// 商店詳情
+// 商店詳情 store.js
 // ============================================
 
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -185,7 +185,7 @@ function renderShopDetail(shop) {
     content = ['暢行無阻!','這地點對您的設備非常友善。'];
   }else if (shop.convenience >= 3 && count >= 1) {
     colorAry = ['blue-50','blue-200','heart-handshake','blue-600','blue-800'];
-    content = ['還算不錯','需要陪伴者提供一點協助'];
+    content = ['整體不錯','需要陪伴者提供一點協助'];
   }else if (shop.convenience >= 2 && count >= 1){
     colorAry = ['org-50','org-200','hand-helping','org-600','org-800'];
     content = ['有點難度','需要陪伴者與店家共同協助'];

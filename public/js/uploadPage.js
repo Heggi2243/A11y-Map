@@ -210,7 +210,7 @@ async function loadStoreData(storeId) {
   }
 }
 
-// ========== 新增：更新頁面標題（根據模式） ========== 
+// ========== 更新頁面標題(根據模式) ========== 
 /**
  * 根據模式更新頁面標題和按鈕文字
  * @param {boolean} isEditMode - 是否為編輯模式
@@ -237,243 +237,268 @@ function updatePageUI(isEditMode) {
     }
   }
 }
+// ==================== 圖片、資料寫入處理 ==================== 
 
-// ========== 修改：提交處理（支援新增和編輯） ========== 
-async function handleSubmit(buttonElement) {
+/**
+ * 處理圖片上傳並返回上傳後的資料
+ * @param {boolean} isEditMode - 是否為編輯模式
+ * @param {string} docId - 文件ID
+ * @param {Object} oldData - 舊資料（編輯模式使用）
+ * @returns {Promise<Object>} 上傳後的資料
+ */
+async function processImageUpload(isEditMode, docId, oldData = {}) {
+  const uploadedData = {};
+  let globalImageCounter = 1;
+  
+  // 從現有圖片找出最大編號
+  if (isEditMode && oldData) {
+    const imageFields = ['store_cover', 'entrance_photo', 'interior_photo'];
+    let maxNumber = 0;
+    
+    for (const field of imageFields) {
+      const urls = oldData[field] || [];
+      for (const url of urls) {
+        const match = url.match(/_(\d+)\./);
+        if (match) {
+          const num = parseInt(match[1]);
+          if (num > maxNumber) maxNumber = num;
+        }
+      }
+    }
+    globalImageCounter = maxNumber + 1;
+    console.log(`編輯模式：從編號 ${globalImageCounter} 繼續上傳`);
+  }
 
+  // 處理每個欄位
+  for (const [key, value] of Object.entries(formData)) {
+    // 新上傳的圖片
+    if (Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
+      console.log(`上傳圖片到資料夾: ${key}, 共 ${value.length} 張`);
+      const compressedFiles = await compressImages(value);
+      const uploadedUrls = [];
+      
+      for (let i = 0; i < compressedFiles.length; i++) {
+        const file = compressedFiles[i];
+        const fileExtension = file.name.split('.').pop();
+        const imageNumber = String(globalImageCounter).padStart(2, '0');
+        const fileName = `stores/${key}/${docId}_${imageNumber}.${fileExtension}`;
+        
+        const storageRef = storage.ref(fileName);
+        await storageRef.put(file);
+        const downloadURL = await storageRef.getDownloadURL();
+        uploadedUrls.push(downloadURL);
+        
+        globalImageCounter++;
+      }
+      uploadedData[key] = uploadedUrls;
+    } 
+    // 保留現有圖片
+    else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string' && value[0].startsWith('http')) {
+      uploadedData[key] = value;
+    } 
+    // 一般資料
+    else {
+      uploadedData[key] = value;
+    }
+  }
+  
+  return uploadedData;
+}
+
+/**
+ * 刪除被移除的圖片
+ * @param {Object} oldData - 舊資料
+ * @param {Object} newData - 新資料
+ */
+async function deleteRemovedImages(oldData, newData) {
+  const imageFields = ['store_cover', 'entrance_photo', 'interior_photo'];
+  
+  for (const field of imageFields) {
+    const oldUrls = oldData[field] || [];
+    const newUrls = newData[field] || [];
+    const deletedUrls = oldUrls.filter(url => !newUrls.includes(url));
+    
+    if (deletedUrls.length > 0) {
+      console.log(`🗑️ 準備刪除 ${field} 的圖片:`, deletedUrls);
+      for (const url of deletedUrls) {
+        try {
+          const storageRef = storage.refFromURL(url);
+          await storageRef.delete();
+          console.log(`   ✅ 已刪除: ${storageRef.fullPath}`);
+        } catch (error) {
+          console.warn(`   ⚠️ 刪除失敗 (${url}):`, error.message);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * 寫入或更新 Firestore 文件
+ * @param {boolean} isEditMode - 是否為編輯模式
+ * @param {string} docId - 文件ID
+ * @param {Object} uploadedData - 上傳後的資料
+ * @param {number|null} latitude - 緯度
+ * @param {number|null} longitude - 經度
+ * @param {number} draft - 是否為草稿 (0=正式, 1=草稿)
+ */
+async function saveToFirestore(isEditMode, docId, uploadedData, latitude, longitude, draft) {
+  const docData = {
+    ...uploadedData,
+    documentId: docId,
+    latitude: latitude,
+    longitude: longitude,
+    draft: draft,
+  };
+  
+  if (isEditMode) {
+    docData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+    docData.updatedBy = firebase.auth().currentUser?.uid || 'anonymous';
+    await db.collection('stores').doc(docId).update(docData);
+  } else {
+    docData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    docData.createdBy = firebase.auth().currentUser?.uid || 'anonymous';
+    docData.status = draft === 1 ? 'draft' : 'pending';
+    await db.collection('stores').doc(docId).set(docData);
+  }
+}
+
+// ==================== 草稿模式(不驗證、不取得座標) ==================== 
+async function handleSaveDraft(buttonElement) {
   const originalHTML = buttonElement.innerHTML;
-  //判斷是新增還是編輯
+  const { isEditMode, storeId } = getPageMode();
+  
+  try {
+    console.log('開始存成草稿:', formData);
+    
+    buttonElement.disabled = true;
+    buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">儲存中...</span>`;
+
+    // 取得舊資料
+    let oldData = {};
+    if (isEditMode) {
+      const oldDoc = await db.collection('stores').doc(storeId).get();
+      if (oldDoc.exists) oldData = oldDoc.data();
+    }
+
+    // 決定文件 ID
+    let docId = isEditMode ? storeId : await generateDocumentId(
+      formData['visitDate'] || new Date().toISOString().split('T')[0], 
+      'stores', 
+      db
+    );
+
+    // 處理圖片上傳
+    const uploadedData = await processImageUpload(isEditMode, docId, oldData);
+
+    // 刪除被移除的圖片
+    if (isEditMode) {
+      await deleteRemovedImages(oldData, uploadedData);
+    }
+
+    // 寫入 Firestore (draft = 1, 保留舊座標)
+    await saveToFirestore(
+      isEditMode, 
+      docId, 
+      uploadedData, 
+      oldData.latitude || null, 
+      oldData.longitude || null, 
+      1
+    );
+
+    console.log('✅ 草稿儲存成功! Document ID:', docId);
+    alert(`✅ 草稿已儲存！\n文件 ID: ${docId}`);
+    
+    window.location.href = '/storePage.html'; 
+    
+  } catch (error) {
+    console.error('❌ 儲存草稿失敗:', error);
+    alert(`❌ 儲存失敗: ${error.message}`);
+    buttonElement.disabled = false;
+    buttonElement.innerHTML = originalHTML;
+  }
+}
+
+// ==================== 提交處理（支援新增和編輯） ==================== 
+async function handleSubmit(buttonElement) {
+  const originalHTML = buttonElement.innerHTML;
   const { isEditMode, storeId } = getPageMode();
   
   try {
     console.log(`開始${isEditMode ? '更新' : '上傳'}表單資料:`, formData);
     
-    // ========== 表單驗證 ========== 
+    // 表單驗證
     const validation = validateForm(formData);
-    
     if (!validation.isValid) {
       showValidationErrors(validation.errors);
       return;
     }
     
-    // 顯示載入狀態
     buttonElement.disabled = true;
     buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">${isEditMode ? '更新中...' : '上傳中...'}</span>`;
 
-    // ========== 編輯模式時，先取得舊資料 ========== 
+    // 取得舊資料
     let oldData = {};
     if (isEditMode) {
       const oldDoc = await db.collection('stores').doc(storeId).get();
-      if (oldDoc.exists) {
-        oldData = oldDoc.data();
-        console.log('舊資料:', oldData);
-      }
+      if (oldDoc.exists) oldData = oldDoc.data();
     }
     
-    // ========== 12/7新增:地址轉經緯度 ========== 
+    // 地址轉經緯度
     let latitude = null;
     let longitude = null;
 
     if (formData.address) {
-      // 新增模式 or (編輯模式&&地址改變)
       const needsGeocoding = !isEditMode || (oldData.address !== formData.address);
       
       if (needsGeocoding) {
-        // 需要取得新座標
-        if (isEditMode) {
-          console.log(`地址改變: ${oldData.address} → ${formData.address}`);
-        } else {
-          console.log('新增模式：取得座標');
-        }
-        
         try {
-          console.log('📍 正在將地址轉換為經緯度...');
           buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">取得座標中...</span>`;
-          
           const coords = await geocodeAddress(formData.address);
           latitude = coords.lat;
           longitude = coords.lng;
           console.log(`✅ 座標: (${latitude}, ${longitude})`);
         } catch (error) {
           console.warn('⚠️ 座標取得失敗:', error.message);
-          if (!confirm(
-            `無法取得座標：${error.message}\n\n` +
-            `是否繼續上傳？(無座標將無法顯示距離)`
-          )) {
+          if (!confirm(`無法取得座標：${error.message}\n\n是否繼續上傳？(無座標將無法顯示距離)`)) {
             buttonElement.disabled = false;
             buttonElement.innerHTML = originalHTML;
             return;
           }
         }
       } else {
-        // 編輯模式且地址未改變 → 使用舊座標
         latitude = oldData.latitude;
         longitude = oldData.longitude;
-        console.log(`地址未改變，保留座標: (${latitude}, ${longitude})`);
       }
     }
 
-    // ========== 1.新增或使用現有文件ID ========== 
-    let docId;
-    
+    // 決定文件 ID
+    let docId = isEditMode ? storeId : await generateDocumentId(formData['visitDate'], 'stores', db);
+
+    // 處理圖片上傳
+    const uploadedData = await processImageUpload(isEditMode, docId, oldData);
+
+    // 刪除被移除的圖片
     if (isEditMode) {
-      docId = storeId;
-      console.log(`📋 使用現有文件ID: ${docId}`);
-    } else {
-      docId = await generateDocumentId(formData['visitDate'], 'stores', db);
-      console.log(`📋 生成新文件ID: ${docId}`);
+      await deleteRemovedImages(oldData, uploadedData);
     }
 
-    // ========== 2. 處理圖片上傳 ========== 
-    const uploadedData = {};
-    let globalImageCounter = 1;
-    
-    // 12/11修正：從現有的圖片最大編號往上加(舊的檔案才不會被覆蓋)
-if (isEditMode && oldData) {
-  const imageFields = ['store_cover', 'entrance_photo', 'interior_photo'];
-  let maxNumber = 0;
-  
-  for (const field of imageFields) {
-    const urls = oldData[field] || [];
-    for (const url of urls) {
-      // 從 URL 提取編號，例如：20251209001_03.webp → 3
-      const match = url.match(/_(\d+)\./);
-      if (match) {
-        const num = parseInt(match[1]);
-        if (num > maxNumber) {
-          maxNumber = num;
-        }
-      }
-    }
-  }
-  
-  globalImageCounter = maxNumber + 1;
-  console.log(`編輯模式：從編號 ${globalImageCounter} 繼續上傳`);
-}
+    // 寫入 Firestore (draft = 0)
+    await saveToFirestore(isEditMode, docId, uploadedData, latitude, longitude, 0);
 
-for (const [key, value] of Object.entries(formData)) {
-  
-  // 檢查是否為檔案陣列(新上傳的圖片)
-  if (Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
-    console.log(`上傳圖片到資料夾: ${key}, 共 ${value.length} 張`);
+    console.log(`✅ ${isEditMode ? '更新' : '上傳'}成功! Document ID:`, docId);
+    alert(`✅ 店家資料${isEditMode ? '更新' : '上傳'}成功！\n文件 ID: ${docId}\n座標: ${latitude ? `(${latitude}, ${longitude})` : '未取得'}`);
     
-    //壓縮圖片
-    const compressedFiles = await compressImages(value);
-
-    const uploadedUrls = [];
-    
-    for (let i = 0; i < compressedFiles.length; i++) {
-      const file = compressedFiles[i];
-      const fileExtension = file.name.split('.').pop();
-      const imageNumber = String(globalImageCounter).padStart(2, '0');
-      const fileName = `stores/${key}/${docId}_${imageNumber}.${fileExtension}`;
-      
-      console.log(`   ↳ 上傳到: ${fileName}`);
-      
-      const storageRef = storage.ref(fileName);
-      await storageRef.put(file);
-      const downloadURL = await storageRef.getDownloadURL();
-      uploadedUrls.push(downloadURL);
-      
-      console.log(`   ✅ 圖片 ${i + 1}/${value.length} 上傳成功`);
-      globalImageCounter++;
-    }
-    
-    uploadedData[key] = uploadedUrls;
-    
-  } else if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string' && value[0].startsWith('http')) {
-    // 編輯模式：保留現有的圖片 URL
-    console.log(`🔗 保留現有圖片: ${key}, 共 ${value.length} 張`);
-    uploadedData[key] = value;
-    
-  } else {
-    // 非檔案資料直接複製
-    uploadedData[key] = value;
-  }
-}
-
-    // ========== 新增：刪除被移除的圖片 ========== //
-    if (isEditMode) {
-      const imageFields = ['store_cover', 'entrance_photo', 'interior_photo'];
-      
-      for (const field of imageFields) {
-        const oldUrls = oldData[field] || [];
-        const newUrls = uploadedData[field] || [];
-        
-        // 找出被刪除的圖片
-        const deletedUrls = oldUrls.filter(url => !newUrls.includes(url));
-        
-        if (deletedUrls.length > 0) {
-          console.log(`🗑️ 準備刪除 ${field} 的圖片:`, deletedUrls);
-          
-          for (const url of deletedUrls) {
-            try {
-              // 從 URL 取得 Storage 路徑
-              const storageRef = storage.refFromURL(url);
-              await storageRef.delete();
-              console.log(`   ✅ 已刪除: ${storageRef.fullPath}`);
-            } catch (error) {
-              console.warn(`   ⚠️ 刪除失敗 (${url}):`, error.message);
-              // 繼續處理其他圖片，不中斷流程
-            }
-          }
-        }
-      }
-    }
-    // ========================================== //
-
-    console.log('📝 準備寫入的資料:', uploadedData);
-
-    // ========== 3. 準備要寫入firestore的資料 ========== 
-    const docData = {
-      ...uploadedData,
-      documentId: docId,
-      latitude: latitude,      //經度
-      longitude: longitude,    //緯度
-    };
-    
-    if (isEditMode) {
-      // 編輯模式：加入更新時間
-      docData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-      docData.updatedBy = firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'anonymous';
-      
-      await db.collection('stores').doc(docId).update(docData);
-      console.log('✅ 資料更新成功! Document ID:', docId);
-      alert(`✅ 店家資料更新成功！\n文件 ID: ${docId}\n座標: ${latitude ? `(${latitude}, ${longitude})` : '未取得'}`);
-    } else {
-      // 新增模式：加入建立時間
-      docData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      docData.createdBy = firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'anonymous';
-      docData.status = 'pending';
-      
-      await db.collection('stores').doc(docId).set(docData);
-      console.log('✅ 資料上傳成功! Document ID:', docId);
-      alert(`✅ 店家資料上傳成功！\n文件 ID: ${docId}\n座標: ${latitude ? `(${latitude}, ${longitude})` : '未取得'}`);
-    }
-
-    // 跳轉回列表頁
     window.location.href = '/storePage.html'; 
     
   } catch (error) {
     console.error('❌ 操作失敗:', error);
-    console.error('錯誤代碼:', error.code);
-    console.error('錯誤訊息:', error.message);
     
     let errorMsg = `${isEditMode ? '更新' : '上傳'}失敗，請稍後再試。`;
+    if (error.code === 'permission-denied') errorMsg = '權限不足';
+    else if (error.message) errorMsg = error.message;
     
-    if (error.code === 'permission-denied') {
-      errorMsg = '權限不足，請檢查 Firestore 規則設定。';
-    } else if (error.code === 'unavailable') {
-      errorMsg = '無法連接到資料庫，請檢查網路連線。';
-    } else if (error.code === 'not-found') {
-      errorMsg = '找不到要更新的文件。';
-    } else if (error.message) {
-      errorMsg = error.message;
-    }
-    
-    alert(`❌ ${errorMsg}\n\n詳細資訊請查看console`);
-    
-    // 恢復按鈕
+    alert(`❌ ${errorMsg}`);
     buttonElement.disabled = false;
     buttonElement.innerHTML = originalHTML;
   }
@@ -481,30 +506,22 @@ for (const [key, value] of Object.entries(formData)) {
 
 // ========== 修改：初始化 ========== 
 async function init() {
+
   if (!initFirebase()) {
-    console.error('❌ Firebase 初始化失敗，無法使用上傳功能');
-    alert('系統初始化失敗，請重新整理頁面或聯絡管理員。');
+    alert('系統初始化失敗');
     return;
   }
 
-  // 判斷模式
   const { isEditMode, storeId } = getPageMode();
-  
-  console.log(`頁面模式: ${isEditMode ? '編輯' : '新增'}`);
-  
-  // 更新 UI
   updatePageUI(isEditMode);
   
-  // 編輯模式：載入資料
   if (isEditMode) {
     const loaded = await loadStoreData(storeId);
-    if (!loaded) return; // 載入失敗，中止
+    if (!loaded) return;
   } else {
-    // 新增模式：清空 formData（確保乾淨）
     clearFormData();
   }
   
-  // 渲染表單(自動預填formData)
   renderForm();
 
   // 綁定提交按鈕
@@ -512,6 +529,17 @@ async function init() {
   if (submitBtn) {
     submitBtn.onclick = () => handleSubmit(submitBtn);
   }
+  
+  // 綁定草稿按鈕
+  const draftBtn = document.getElementById('draft-btn');
+  if (draftBtn) {
+    draftBtn.onclick = () => handleSaveDraft(draftBtn);
+  }
+  
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+  
 }
 
 // 當 DOM 載入完成後啟動應用程式

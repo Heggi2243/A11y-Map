@@ -19,7 +19,7 @@ export const formData = {};
 
 export function setFormData(key, value) {
   formData[key] = value;
-  console.log('FormData updated:', formData);
+  // console.log('FormData updated:', formData);
 }
 
 

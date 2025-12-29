@@ -3,7 +3,208 @@
 @tailwind utilities;
 
 /* 你的自訂樣式 */
-@layer utilities {
+
+  
+  .no-scrollbar::-webkit-scrollbar {
+      display: none;
+  }
+
+  .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+  }
+
+  body {
+      background-color: #fdfbf7;
+  }
+
+  /*類別*/
+
+  .category-tab{
+      font-weight: 700;
+  }
+  .category-tab:not(.bg-retro-blue):hover {
+    background-color: rgba(30, 58, 138, 0.05);
+    border-color: #1e3a8a;
+  }
+
+
+
+  /* ========前端footer的方塊裝飾======== */
+  .checker-strip {
+      background-color: #FFFFFF;
+      background-image: linear-gradient(45deg, #1e3a8a 25%, transparent 25%),
+                      linear-gradient(-45deg, #1e3a8a 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, #1e3a8a 75%),
+                      linear-gradient(-45deg, transparent 75%, #1e3a8a 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  }
+
+  /*Info*/
+  #content-container{
+      padding-bottom: 4rem;
+  }
+
+  /*loginPage*/
+  .font-titan { font-family: 'Titan One', cursive; }
+  .font-fredoka { font-family: 'Fredoka', sans-serif; }
+
+
+
+  /* Hide arrows in number input */
+  input[type=number]::-webkit-inner-spin-button, 
+  input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+  }
+
+  /*網頁軸*/
+  ::-webkit-scrollbar {
+      width: 12px;
+  }
+  ::-webkit-scrollbar-thumb {
+      background: #1e3a8a;
+      border: 2px solid #fdfbf7;
+  }
+
+  /* Loading Overlay */
+  #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(253, 251, 247, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+  }
+
+  #loading-overlay.hidden {
+      display: none;
+  }
+
+
+  /* Utility for JS toggling */
+  .hidden { display: none !important; }
+
+  /* footer */
+  .checkerboard-pattern {
+      background-image: 
+          linear-gradient(45deg, #1e3a8a 25%, transparent 25%), 
+          linear-gradient(-45deg, #1e3a8a 25%, transparent 25%), 
+          linear-gradient(45deg, transparent 75%, #1e3a8a 75%), 
+          linear-gradient(-45deg, transparent 75%, #1e3a8a 75%);
+      background-size: 40px 40px;
+      background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+
+  }
+
+  /* footer下方用於版權文字的藍色條紋 */
+  .copyright-bar {
+      background-color: #1e3a8a; 
+      height: 35px; 
+      display: flex;
+      justify-content: center; 
+      align-items: center;   
+      color: white;
+      font-size: 0.875rem; 
+      font-weight: 500;
+  }
+
+  /* ============================ store.html =============================== /
+
+          /* Swiper 按鈕樣式調整 */
+          .swiper-button-prev,
+          .swiper-button-next {
+          width: 40px !important;
+          height: 40px !important;
+          background: white;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+
+          .swiper-button-prev:after,
+          .swiper-button-next:after {
+          font-size: 20px !important;
+          font-weight: bold;
+          }
+
+          /* Gallery Swiper slide 寬度 */
+          .gallery-swiper .swiper-slide {
+          width: auto !important;
+          }
+
+          /* Modal Swiper 分頁樣式 */
+          .modal-swiper .swiper-pagination {
+          color: white;
+          font-weight: bold;
+          }
+      
+  /* ======================== uploadPage ======================== */
+
+
+
+  .upload-button {
+    display: inline-flex; /* 改用 inline-flex 讓按鈕寬度隨內容伸縮 */
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem; /* 稍微加大間距 */
+    
+
+    padding: 0.75rem 1.5rem; /* 稍微調整 padding，避免太擠 */
+
+    font-family: "YourDisplayFont", sans-serif;
+    font-weight: 700;
+    color: rgba(30, 58, 138, 1);
+    background-color: #ffffff;
+    border: 4px solid rgba(30, 58, 138, 1);
+    border-radius: 1rem;
+    box-shadow: 4px 4px 0px 0px rgba(30, 58, 138, 1);
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    white-space: nowrap; /* 強制文字不換行 */
+  }
+
+  /* 確保圖示大小固定 */
+  .upload-button .icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .upload-button .button-text {
+    font-size: 1.5rem; /* text-2xl */
+    letter-spacing: 0.1em; /* tracking-widest */
+  }
+
+  .upload-button:hover {
+    background-color: rgba(30, 58, 138, 0.05);
+    transform: translateY(2px);
+    box-shadow: 2px 2px 0px 0px rgba(30, 58, 138, 1);
+  }
+
+  /* ======================================================================= */
+
+  @media (max-width: 580px) {
+      /* 針對 ID 為 engTitle 的元素 */
+      #engTitle {
+          display: none; /* 將其從頁面佈局中完全移除 */
+      }
+
+      #donateDiv {
+          margin-bottom: 8rem;
+      }
+  }
+
+  @media (min-width: 580px) {
+      #engTitle {
+          display: block; /* 確保在桌面上是顯示的 (如果它本來是 display: block;) */
+      }
+  }
+
   @keyframes shimmer {
     0% {
       background-position: -200% 0;
@@ -16,4 +217,3 @@
   .animate-shimmer {
     animation: shimmer 3s infinite;
   }
-}

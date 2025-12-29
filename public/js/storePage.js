@@ -114,11 +114,12 @@ function renderTable(allStore){
 
     row.innerHTML = `
     <td class="px-3 py-2 whitespace-nowrap">
-      <img src="${coverImage || '../img/763732019.jpg'}" alt="${store.name|| 'Unknown'}" class="w-full h-32 object-cover transition-transform duration-500 group-hover:scale-110 rounded-lg">
+      <img src="${coverImage || '../img/cat.png'}" alt="${store.name|| 'Unknown'}" class="w-full h-32 object-cover transition-transform duration-500 group-hover:scale-110 rounded-lg">
     </td>
-    <td class="px-3 py-2 whitespace-nowrap">
+    <td class="px-3 py-2 whitespace-nowrap max-w-[200px] md:max-w-none">
       <div class="flex items-center gap-2 mb-1">
-        <span class="bg-retro-yellow text-retro-blue text-xs font-black px-1.5 p-1 rounded border border-retro-blue"> ${category || 'Unknown'}</span>
+        <span class="bg-retro-yellow text-retro-blue text-xs font-black px-1.5 p-1 rounded border border-retro-blue"> ${category || '未設置'}</span>
+        ${store.draft === 1 ? '<span class="bg-orange-500 text-white text-xs font-black px-2 py-1 rounded border-2 border-orange-700 ">草稿</span>' : ''}
         <h3 class="text-xl font-black text-retro-blue truncate tracking-tight">${store.name}</h3>
       </div>
       <div class="flex items-center text-retro-blue/80 text-sm font-bold truncate">
