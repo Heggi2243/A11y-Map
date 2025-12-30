@@ -235,9 +235,10 @@ function generateCheckMacValue(params, hashKey, hashIV) {
 
 ## 📑 更新紀錄
 
-### 2025/12/29 **Version 1.1.0**
+### 2025/12/30 **Version 1.1.0**
 - **[新增]** 管理員草稿功能：支援文章暫存，不再需要一次性完成撰寫。
 - **[新增]** 快速返回後台按鈕：優化管理員在首頁與後台間的切換體驗。
+- **[新增]** SEO：基本SEO(description、keywords)、Open Graph、Twitter Card，台/臺異體字keywords。
 - **[優化]** 定位精準度：導入位置快取過期機制，每五分鐘更新一次定位。確保及時定位的準確性。
 
 
