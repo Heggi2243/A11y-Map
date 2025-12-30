@@ -240,6 +240,7 @@ function generateCheckMacValue(params, hashKey, hashIV) {
 - **[新增]** 快速返回後台按鈕：優化管理員在首頁與後台間的切換體驗。
 - **[新增]** SEO：基本SEO(description、keywords)、Open Graph、Twitter Card，台/臺異體字keywords。
 - **[優化]** 定位精準度：導入位置快取過期機制，每五分鐘更新一次定位。確保及時定位的準確性。
+- **[優化]** 搜尋列表支援"臺"、"台"異體字搜尋。
 
 
 ## 📄 版權聲明 (Copyright & License)
