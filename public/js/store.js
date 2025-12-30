@@ -6,8 +6,8 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const analytics = firebase.analytics(); 
 
-// 全局變數
-let gallerySwiper = null;
+// Swiper
+let gallerySwiper = null; 
 let modalSwiper = null;
 
 // 從 URL 取得商店 ID
@@ -15,12 +15,167 @@ const urlParams = new URLSearchParams(window.location.search);
 const shopId = urlParams.get('id');
 
 if (!shopId) {
-  showError('缺少店家 ID');
+  showError('缺少店家ID');
 } else {
   loadShopDetail(shopId);
 }
 
-// ========== Modal 控制函數 ========== //
+
+// ==================== SEO相關 ==================== //
+
+/**
+ * 更新頁面的 SEO meta tags 和 JSON-LD
+ */
+function updateSEO(shop) {
+  const name = shop.name || '未命名店家';
+  const category = Array.isArray(shop.category) ? shop.category.join(', ') : shop.category || '其他';
+  const address = shop.address || '';
+  const description = shop.description || `${name} - ${category}類無障礙友善店家`;
+  const imageUrl = (shop.store_cover?.[0] || shop.entrance_photo?.[0] || shop.interior_photo?.[0]) || 'https://yourdomain.com/img/og-default.jpg';
+  const currentUrl = window.location.href;
+  
+  // 更新 title
+  document.title = `${name} - 無障礙${category} | 暢行無阻 A11y-Map`;
+  
+  // 更新 meta description
+  updateMetaTag('name', 'description', `${name} - ${description.substring(0, 150)}`);
+  
+  // 處理異體字「臺」、「台」
+  const locationPart = address.split(/市|區|鄉|鎮/)[0]; // 例如：臺中、臺北
+  const locationVariants = locationPart ? [
+    locationPart,
+    locationPart.replace(/臺/g, '台'), // 臺中 → 台中
+    locationPart.replace(/台/g, '臺')  // 台中 → 臺中（反向也處理）
+  ] : [];
+
+  // 更新 meta keywords
+  const keywords = [
+    '無障礙',
+    '輪椅友善',
+    category,
+    name,
+    ...locationVariants, // 包含所有異體字變化
+    '臺灣',
+    '台灣'
+  ].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(','); // 去重
+  
+  updateMetaTag('name', 'keywords', keywords);
+  
+  // 更新 Open Graph
+  updateMetaTag('property', 'og:title', `${name} - 無障礙${category}`);
+  updateMetaTag('property', 'og:description', description.substring(0, 200));
+  updateMetaTag('property', 'og:image', imageUrl);
+  updateMetaTag('property', 'og:url', currentUrl);
+  
+  // 更新 Twitter Card
+  updateMetaTag('name', 'twitter:title', `${name} - 無障礙${category}`);
+  updateMetaTag('name', 'twitter:description', description.substring(0, 200));
+  updateMetaTag('name', 'twitter:image', imageUrl);
+  
+  // 更新 Canonical URL
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical) {
+    canonical.href = currentUrl;
+  }
+  
+  // 更新 JSON-LD Structured Data
+  updateStructuredData(shop, imageUrl);
+}
+
+/**
+ * 更新或創建 meta tag
+ */
+function updateMetaTag(attribute, attributeValue, content) {
+  let meta = document.querySelector(`meta[${attribute}="${attributeValue}"]`);
+  if (meta) {
+    meta.setAttribute('content', content);
+  } else {
+    meta = document.createElement('meta');
+    meta.setAttribute(attribute, attributeValue);
+    meta.setAttribute('content', content);
+    document.head.appendChild(meta);
+  }
+}
+
+/**
+ * 更新 JSON-LD Structured Data
+ */
+function updateStructuredData(shop, imageUrl) {
+  const name = shop.name || '未命名店家';
+  const category = Array.isArray(shop.category) ? shop.category.join(', ') : shop.category || '其他';
+  const address = shop.address || '';
+  const description = shop.description || '';
+  
+  // 建立評分（基於便利度）
+  const rating = shop.convenience ? {
+    "@type": "AggregateRating",
+    "ratingValue": shop.convenience,
+    "bestRating": "5",
+    "worstRating": "1"
+  } : null;
+  
+  // 建立價格範圍
+  let priceRange = '$$';
+  if (shop.avgCost) {
+    const cost = parseInt(shop.avgCost);
+    if (cost < 300) priceRange = '$';
+    else if (cost < 500) priceRange = '$$';
+    else if (cost < 800) priceRange = '$$$';
+    else priceRange = '$$$$';
+  }
+  
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": name,
+    "description": description,
+    "image": imageUrl,
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "TW",
+      "streetAddress": address
+    },
+    "priceRange": priceRange,
+    "servesCuisine": category,
+    "url": window.location.href,
+    "isAccessibleForFree": true,
+    "amenityFeature": [
+      {
+        "@type": "LocationFeatureSpecification",
+        "name": "無障礙設施",
+        "value": true
+      }
+    ]
+  };
+  
+  // 如果有評分，加入評分資料
+  if (rating) {
+    structuredData.aggregateRating = rating;
+  }
+  
+  // 如果有座標，加入地理位置
+  if (shop.latitude && shop.longitude) {
+    structuredData.geo = {
+      "@type": "GeoCoordinates",
+      "latitude": shop.latitude,
+      "longitude": shop.longitude
+    };
+  }
+  
+  // 更新 script tag
+  let script = document.getElementById('structured-data');
+  if (script) {
+    script.textContent = JSON.stringify(structuredData, null, 2);
+  } else {
+    script = document.createElement('script');
+    script.id = 'structured-data';
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(structuredData, null, 2);
+    document.head.appendChild(script);
+  }
+}
+
+// ==================== Swiper Modal 控制函數 ==================== //
 
 function initSwiper(images) {
   setTimeout(() => {
@@ -86,7 +241,7 @@ document.addEventListener('keydown', (e) => {
 
 async function loadShopDetail(id) {
   try {
-    // console.log('📥 載入商店詳情:', id);
+    // console.log('載入商店詳情:', id);
     
     const doc = await db.collection('stores').doc(id).get();
     
@@ -96,16 +251,17 @@ async function loadShopDetail(id) {
     }
     
     const shop = { id: doc.id, ...doc.data() };
-    // console.log('✅ 商店資料:', shop);
+    // console.log('商店資料:', shop);
     
     renderShopDetail(shop);
     
   } catch (error) {
-    // console.error('❌ 載入失敗:', error);
+    // console.error('載入失敗:', error);
     showError('載入失敗: ' + error.message);
   }
 }
 
+//計算星星
 function renderRating(item) {
   let html = '';
   for (let i = 0; i < 5; i++) {
@@ -117,6 +273,10 @@ function renderRating(item) {
 // ========== 渲染商店詳情 ========== //
 
 function renderShopDetail(shop) {
+
+  // SEO
+  updateSEO(shop);
+
   // 整合所有圖片
   const allImages = [
     ...(shop.store_cover || []),
@@ -181,7 +341,7 @@ function renderShopDetail(shop) {
 
   if (Array.isArray(shop.assistance) && shop.assistance.includes('無須協助') && shop.convenience >= 4) {
     tags.push('完全無障礙');
-    colorAry = ['brand-50','brand-200','star','brand-600','brand-800'];
+    colorAry = ['brand-50','brand-600','star','brand-800','brand-800'];
     content = ['暢行無阻!','這地點對您的設備非常友善。'];
   }else if (shop.convenience >= 3 && count >= 1) {
     colorAry = ['blue-50','blue-200','heart-handshake','blue-600','blue-800'];
@@ -200,7 +360,7 @@ function renderShopDetail(shop) {
   const transitInfo = buildTransitInfo(shop);
 
   const evaluationHtml = `
-      <div class="bg-${colorAry[0]} border-2 border-${colorAry[1]} rounded-2xl p-5 shadow-sm transform rotate-1 flex items-center">
+      <div class="bg-${colorAry[0]} border-2 border-${colorAry[1]} rounded-2xl p-5 rotate-1 flex items-center">
         <div class="p-3 rounded-full mr-4 border border-${colorAry[1]}">
           <i data-lucide="${colorAry[2]}" class="text-${colorAry[3]}" size="24"></i>
         </div>
@@ -223,7 +383,7 @@ function renderShopDetail(shop) {
             <div class="swiper-slide">
               <img 
                 src="${url}" 
-                class="h-32 w-48 object-cover rounded-2xl border-2 border-retro-blue/10 shadow-sm cursor-pointer hover:opacity-90 transition-opacity" 
+                class="border-default h-32 w-48 object-cover rounded-2xl shadow-sm cursor-pointer hover:opacity-90 transition-opacity" 
                 onclick="openImageModal(${index})"
                 onerror="this.parentElement.style.display='none'"
               >
@@ -262,7 +422,7 @@ function renderShopDetail(shop) {
   ` : '';
 
   const tagsHtml = tags.map(t => 
-    `<span class="px-4 py-1.5 bg-white text-retro-blue text-sm font-bold rounded-xl border-2 border-retro-blue/10 shadow-sm">#${escapeHtml(t)}</span>`
+    `<span class="border-default px-4 py-1.5 bg-white text-retro-blue text-sm font-bold rounded-xl shadow-sm">#${escapeHtml(t)}</span>`
   ).join('');
 
   const html = `
@@ -284,7 +444,7 @@ function renderShopDetail(shop) {
     <div class="max-w-3xl mx-auto p-4 -mt-8 relative z-10 space-y-6">
       ${evaluationHtml}
       ${galleryHtml}
-      <div class="flex items-stretch justify-between bg-white rounded-3xl border-2 border-retro-blue/10 shadow-lg shadow-retro-blue/5 overflow-hidden">
+      <div class="border-default flex items-stretch justify-between bg-white rounded-3xl shadow-lg shadow-retro-blue/5 overflow-hidden">
         <div class="flex flex-col items-center justify-center bg-retro-blue/5 p-6 border-r-2 border-retro-blue/10 w-1/3">
           <span class="text-xs text-retro-blue/60 uppercase tracking-wide font-black mb-1">便利度</span>
           <span class="text-4xl font-display font-black text-retro-blue leading-none">${shop.convenience}</span>
@@ -312,11 +472,11 @@ function renderShopDetail(shop) {
           <h2 class="text-2xl font-display font-black text-retro-blue mb-4 flex items-center"><i data-lucide="accessibility" class="mr-3" size="28"></i> 空間與設施</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             ${shop.food ? renderDetailItem('食物', renderRating(shop.food), 'utensils', true) : ''}
-            ${shop.service ? renderDetailItem('服務', renderRating(shop.service), 'utensils', true) : ''}
+            ${shop.service ? renderDetailItem('服務', renderRating(shop.service), 'smile', true) : ''}
             ${renderDetailItem('出入口坡道', shop.ramp || '未提供', 'arrow-up-circle')}
             ${renderDetailItem('階梯狀況', Array.isArray(shop.steps) ? shop.steps.join(', ') : shop.steps || '未提供', 'accessibility')}
             ${renderDetailItem('門寬', shop.doorWidthCm , 'door-open')}
-            ${renderDetailItem('內部動線', shop.circulation || '未提供', renderFootprintsHtml(shop.circulation, 20))}
+            ${renderDetailItem('內部動線', shop.circulation || '未提供', 'container')}
             ${renderDetailItem(
               '廁所', 
               (shop.restroom || '未提供') +
@@ -336,7 +496,7 @@ function renderShopDetail(shop) {
         
         <section>
           <h2 class="text-2xl font-display font-black text-retro-blue mb-4 flex items-center"><i data-lucide="truck" class="mr-3" size="28"></i> 交通指引</h2>
-          <div class="bg-white rounded-3xl p-6 border-2 border-retro-blue/10 shadow-sm space-y-6">
+          <div class="border-default bg-white rounded-3xl p-6 shadow-sm space-y-6">
             ${shop.nearestParking ? `
             <div><span class="text-xs font-black text-retro-blue/50 uppercase block mb-1">最近無障礙車位</span><p class="text-retro-blue font-bold text-lg">${escapeHtml(shop.nearestParking)}</p></div>
             <hr class="border-retro-blue/10"/>
@@ -355,7 +515,7 @@ function renderShopDetail(shop) {
         ${description ? `
         <section>
           <h2 class="text-2xl font-display font-black text-retro-blue mb-4 flex items-center"><i data-lucide="message-circle-more" class="mr-3" size="28"></i>走訪心得</h2>
-          <div class="bg-white p-6 rounded-2xl border-2 border-retro-blue/10">
+          <div class="border-default bg-white p-6 rounded-2xl">
             <p class="text-retro-blue/80 font-medium leading-relaxed whitespace-pre-wrap">${escapeHtml(description)}</p>
           </div>
         </section>
@@ -411,23 +571,7 @@ function renderPriceLevel(level) {
   return html;
 }
 
-function renderFootprintsHtml(circulation, size = 16) {
-  let count = 1;
-  if (circulation === '寬敞') count = 3;
-  else if (circulation === '普通') count = 2;
-  
-  let html = '';
-  for(let i=0; i<count; i++) {
-    const margin = i > 0 ? '-ml-1.5' : '';
-    html += `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke="#1e3a8a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline-block ${margin}">
-       <g transform="translate(5, 2)">
-          <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 2.25-6 6.04-6 .26-.01.52-.01.78 0 2.76.18 4.96 2.57 5.02 5.6.03 2.5-1.03 3.5-1.03 5.62V16h-6.81z" />
-       </g>
-    </svg>`;
-  }
-  return `<div class="flex items-center text-retro-blue" title="${circulation}">${html}</div>`;
-}
+
 
 function renderDetailItem(label, value, iconOrHtml, isHtml = false) {
     const iconContent = typeof iconOrHtml === 'string' && iconOrHtml.startsWith('<') 
@@ -438,7 +582,7 @@ function renderDetailItem(label, value, iconOrHtml, isHtml = false) {
   const displayValue = isHtml ? value : escapeHtml(value);
 
   return `
-    <div class="flex items-center p-4 bg-white border-2 border-retro-blue/10 rounded-2xl shadow-sm hover:border-retro-blue/30 transition-colors">
+    <div class="border-default flex items-center p-4 bg-white rounded-2xl shadow-sm transition-colors">
       <div class="text-retro-blue mr-4 bg-retro-blue/5 p-2 rounded-xl flex items-center justify-center min-w-[2.5rem]">${iconContent}</div>
       <div>
         <span class="block text-xs font-bold text-retro-blue/40 mb-0.5">${escapeHtml(label)}</span>

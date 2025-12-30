@@ -182,7 +182,7 @@ async function updateLocationInBackground() {
       );
       
       if (distance < 100) {
-        // 移動距離太小，不需要更新
+        // 移動距離太小，不更新
         return;
       }
     }
@@ -622,14 +622,11 @@ function renderShopList() {
       renderBadge('good', '無障礙廁所') : 
       renderBadge('warning', shop.restroom?.split(' ')[0] || '未提供');
     
-    // 門寬徽章，用回範圍標示比較無疑義
-    // const doorBadge = renderBadge(fitsDoor ? 'good' : 'bad', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`);
+    // 門寬徽章，用範圍標示比較無疑義
     const doorBadge = shop.doorWidthCm === 75 ? 
       renderBadge('warning', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`) :
       renderBadge('good', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`) ;
 
-    // 動線圖示
-    const footprints = renderFootprintsHtml(shop.circulation, 16);
 
     // ========== 修改：距離顯示 ========== 
     let distanceDisplay;
@@ -641,7 +638,7 @@ function renderShopList() {
 
     // 卡片 HTML
     const html = `
-      <a href="store.html?id=${shop.id}" target="_blank" rel="noopener noreferrer" class="shop-card group bg-white rounded-3xl border-2 border-retro-blue/10 overflow-hidden flex flex-col md:flex-row relative transition-all duration-300 hover:shadow-xl hover:shadow-retro-blue/10 hover:border-retro-blue/30 hover:-translate-y-1 cursor-pointer block ${!isCompatible ? 'opacity-75 grayscale-[0.5]' : ''}">
+      <a href="store.html?id=${shop.id}" target="_blank" rel="noopener noreferrer" class="border-default shop-card group bg-white rounded-3xl overflow-hidden flex flex-col md:flex-row relative transition-all duration-300 hover:shadow-xl hover:shadow-retro-blue/10 hover:-translate-y-1 cursor-pointer block ${!isCompatible ? 'opacity-75 grayscale-[0.5]' : ''}">
         <div class="h-48 md:h-auto md:w-48 flex-shrink-0 relative overflow-hidden">
           <img src="${shop.imageUrl}" alt="${escapeHtml(shop.name)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'">
           ${!isCompatible ? '<div class="absolute inset-0 bg-retro-blue/80 flex items-center justify-center pointer-events-none backdrop-blur-sm"><span class="text-white font-display font-bold border-2 border-white px-4 py-2 rounded-xl transform -rotate-3">不符合需求</span></div>' : ''}
@@ -669,7 +666,7 @@ function renderShopList() {
           <div class="pt-4 border-t-2 border-retro-blue/5 flex items-center justify-between text-xs font-bold text-retro-blue/50">
             <div class="flex gap-4">
               <div class="flex items-center text-retro-blue">
-                <div class="mr-2">${footprints}</div> 
+                <i data-lucide="container" size="16" class="mr-1 text-retro-blue"></i>
                 內部空間：${shop.circulation || '未提供'}
               </div>
             </div>
@@ -820,19 +817,6 @@ function renderBadge(type, text, icon = true) {
   return `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border-2 ${bgClass} ${textClass} ${borderClass} mr-1 mb-1 shadow-sm">${iconHtml}${escapeHtml(text)}</span>`;
 }
 
-function renderFootprintsHtml(circulation, size = 16) {
-  let count = 1;
-  if (circulation === '寬敞') count = 3;
-  else if (circulation === '普通') count = 2;
-  else if (circulation === '略顯壅擠') count = 1;
-  
-  let html = '';
-  for(let i=0; i<count; i++) {
-    const margin = i > 0 ? '-ml-1.5' : '';
-     html += `<i data-lucide="hexagon" size="${size}" class="inline-block ${margin}"></i>`;
-  }
-  return `<div class="flex items-center text-retro-blue" title="${circulation}">${html}</div>`;
-}
 
 // ========== 點擊類事件監聽 ========== //
 
@@ -994,7 +978,7 @@ async function init() {
       }
     } else {
       // 快取過期，背景更新
-      console.log('位置快取已過期，正在更新');
+      // console.log('位置快取已過期，正在更新');
       // 先使用舊位置渲染，同時在背景更新
       const cached = loadLocationFromStorage();
       if (cached) {
