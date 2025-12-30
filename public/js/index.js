@@ -451,9 +451,13 @@ function updateFilterBadge() {
 
 function getFilteredShops() {
   let filtered = state.allShops.filter(shop => {
-    // 搜尋匹配
-    const matchesSearch = shop.name.includes(state.searchQuery) || 
-                         shop.address.includes(state.searchQuery) ;
+    // 搜尋匹配(支援異體字)
+    const normalizedQuery = normalizeText(state.searchQuery);
+    const normalizedName = normalizeText(shop.name);
+    const normalizedAddress = normalizeText(shop.address);
+
+    const matchesSearch = normalizedName.includes(normalizedQuery) || 
+                         normalizedAddress.includes(normalizedQuery);
     
     const matchesCategory = state.selectedCategory === '全部' || 
                            shop.categoryArray.includes(state.selectedCategory);
@@ -781,6 +785,17 @@ function renderToggle(label, icon, checked, id, description = '') {
 }
 
 // ========== UI 工具函式 ========== //
+
+/**
+ * 異體字統一(用於搜尋比對)
+ */
+function normalizeText(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/臺/g, '台')  // 統一將「臺」轉為「台」
+    .toLowerCase();         // 轉小寫
+}
+
 
 function escapeHtml(unsafe) {
   if (!unsafe) return '';
