@@ -31,6 +31,7 @@ const state = {
   userLocation: null, // 使用者位置 { lat, lng }
   locationPermission: null, // 'granted', 'denied', null
   locationTimestamp: null, // 記錄定位時間
+  pendingNearbyMode: false, // 找附近模式按鈕UI預設OFF
 };
 
 const LOCATION_CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取定位
@@ -170,6 +171,10 @@ async function updateLocationInBackground() {
   }
 
   try {
+
+    state.locationPermission = 'updating';
+    renderShopList();
+    
     const location = await requestUserLocation();
     
     // 檢查位置是否有顯著變化（移動超過100公尺才更新）
@@ -186,7 +191,9 @@ async function updateLocationInBackground() {
         return;
       }
     }
-    
+
+    state.locationPermission = 'granted';
+
     // 儲存新位置
     saveLocationToStorage(location);
     
@@ -200,6 +207,7 @@ async function updateLocationInBackground() {
     
   } catch (error) {
     console.log('背景定位更新失敗（不影響使用）:', error.message);
+    state.locationPermission = 'granted';
   }
 }
 
@@ -209,6 +217,9 @@ async function updateLocationInBackground() {
 async function handleAllowLocation() {
   
   hideLocationPermissionModal();
+
+  state.locationPermission = 'loading'; // 新增載入狀態
+  renderShopList(); // 立即重新渲染，顯示「抓取定位中...」
   
   try {
     const location = await requestUserLocation();
@@ -221,6 +232,18 @@ async function handleAllowLocation() {
     
     // 計算所有商店的距離
     updateShopsDistance();
+
+    // 如果是從篩選面板觸發的，啟用找附近模式
+    if (state.pendingNearbyMode) {
+      state.userSettings.nearbyMode = true;
+      state.pendingNearbyMode = false; // 重置標記
+      
+      // 重新渲染篩選面板(如果篩選面板有開啟)
+      const filterModal = document.getElementById('filter-modal');
+      if (filterModal && !filterModal.classList.contains('hidden')) {
+        renderFilterPanel();
+      }
+    }
     
     // 重新渲染
     renderShopList();
@@ -634,9 +657,14 @@ function renderShopList() {
 
     // ========== 修改：距離顯示 ========== 
     let distanceDisplay;
-    if (state.locationPermission === 'granted' && state.userLocation) {
+    if (state.locationPermission === 'loading') {
+      // 定位中的狀態
+      distanceDisplay = '抓取定位中...';
+    } else if (state.locationPermission === 'granted' && state.userLocation) {
+      // 已定位成功
       distanceDisplay = formatDistance(shop.distanceMeters);
     } else {
+      // 未啟用定位
       distanceDisplay = '需啟用定位功能';
     }
 
@@ -858,6 +886,9 @@ function attachFilterListeners() {
       if (checkbox.dataset.id === 'nearbyMode') {
         if (!checkbox.checked && state.locationPermission !== 'granted') {
           e.preventDefault();
+          
+          // 定位成功後要啟用找附近模式
+          state.pendingNearbyMode = true;
           
           // 顯示定位權限Modal
           showLocationPermissionModal();
