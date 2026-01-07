@@ -113,7 +113,7 @@ ABOUT: {
                 贊助我們
             </a>
         </p>
-        <p class="text-sm text-retro-blue/60 font-bold">Version 1.1.0</p>
+        <p class="text-sm text-retro-blue/60 font-bold">Version 1.1.1</p>
         </div>
     </div>
     `
