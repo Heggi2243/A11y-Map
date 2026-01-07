@@ -1,6 +1,7 @@
 /** Firebase Function
  * 適用需要呼叫第三方API等比較複雜的邏輯業務
  */
+
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 const axios = require('axios');
@@ -143,14 +144,13 @@ exports.sendNewDeviceEmail = functions.region('asia-east1').firestore
             此為系統自動通知，請勿直接回覆此郵件。
 
             ---
-            暢行無阻A11y-Map小精靈
+            暢行無阻小精靈
         `;
 
          // 文件ID
-        const docId = loginTimeStamp 
-            ? `${loginTimeStamp.toDate().getTime()} 偵測到新登入`
-            : `${Date.now()} 偵測到新登入`;
-
+        const baseDocId = sessionData.documentId || snap.id; // 如果沒有就用原本的
+        const mailDocId = `${baseDocId}-偵測到新登入`;
+        
         try {
             // 改用nodemailer發送郵件
             const transporter = getEmailTransporter();
@@ -163,27 +163,29 @@ exports.sendNewDeviceEmail = functions.region('asia-east1').firestore
                 html: emailContent.replace(/\n/g, '<br>')
             });
             
-            console.log('Email 已發送:', info.messageId);
+            // console.log('Email 已發送:', info.messageId);
             
             // 寫入 mail collection（紀錄用）
-            await admin.firestore().collection('mail').doc(docId).set({
+            await admin.firestore().collection('mail').doc(mailDocId).set({
                 to: email,
                 subject: '偵測到新裝置登入您的管理員帳號',
                 sentAt: admin.firestore.FieldValue.serverTimestamp(),
                 status: 'sent',
-                messageId: info.messageId
+                messageId: info.messageId,
+                relatedSessionId: baseDocId
             });
             
         } catch (error) {
             console.error('發送Email失敗:', error);
             
             // 記錄失敗
-            await admin.firestore().collection('mail').doc(docId).set({
+            await admin.firestore().collection('mail').doc(mailDocId).set({
                 to: email,
                 subject: '偵測到新裝置登入您的管理員帳號',
                 sentAt: admin.firestore.FieldValue.serverTimestamp(),
                 status: 'failed',
-                error: error.message
+                error: error.message,
+                relatedSessionId: baseDocId
             });
         }
 

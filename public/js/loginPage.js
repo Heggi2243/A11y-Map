@@ -1,4 +1,7 @@
 
+//資料命名function
+import { generateDocumentId } from '../utils/basic.js';
+
 firebase.initializeApp(FIREBASE_CONFIG);
 const analytics = firebase.analytics(); 
 
@@ -268,8 +271,18 @@ async function recordLoginSession(user) {
       console.warn('無法取得 IP');
     }
 
+     // 5. 使用 generateDocumentId 生成文件ID
+    const baseDocId = await generateDocumentId(
+      new Date(),  // 傳入 Date 物件 → 會產生 YYYYMMDDHHMM 格式
+      'login_sessions',
+      db
+    );
 
-    // 5. 建立session記錄 (加入 deviceFingerprint)
+    // 取得 email 前5碼
+    const emailPrefix = user.email.substring(0, 5);
+    const docId = `${baseDocId}-${emailPrefix}`;
+
+    // 6. 建立session記錄 (加入 deviceFingerprint)
     const sessionData = {
       uid: user.uid,
       email: user.email,
@@ -284,13 +297,17 @@ async function recordLoginSession(user) {
         screenResolution: `${screen.width}x${screen.height}`
       },
       status: 'active',
-      endTime: null
+      endTime: null,
+      documentId: docId // 傳給Cloud Function 
     };
 
-    const sessionRef = await db.collection('login_sessions').add(sessionData);
-    sessionStorage.setItem('currentSessionId', sessionRef.id);
-    
-    console.log('Session 記錄成功:', sessionRef.id);
+
+    // 使用 set() 而不是 add()，指定文件ID
+    await db.collection('login_sessions').doc(docId).set(sessionData);
+    sessionStorage.setItem('currentSessionId', docId);
+
+    console.log('Session 記錄成功:', docId);
+
     
   } catch (error) {
     console.error('❌ Session 記錄失敗:', error);
