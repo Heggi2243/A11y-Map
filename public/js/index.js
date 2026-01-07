@@ -218,6 +218,18 @@ async function handleAllowLocation() {
   
   hideLocationPermissionModal();
 
+  //  如果是從篩選面板觸發的，啟用找附近模式(UI優化:先渲染按鈕)
+  if (state.pendingNearbyMode) {
+      state.userSettings.nearbyMode = true;
+      state.pendingNearbyMode = false; // 重置標記
+      
+      // 重新渲染篩選面板(如果篩選面板有開啟)
+      const filterModal = document.getElementById('filter-modal');
+      if (filterModal && !filterModal.classList.contains('hidden')) {
+        renderFilterPanel();
+      }
+    }
+
   state.locationPermission = 'loading'; // 新增載入狀態
   renderShopList(); // 立即重新渲染，顯示「抓取定位中...」
   
@@ -232,18 +244,6 @@ async function handleAllowLocation() {
     
     // 計算所有商店的距離
     updateShopsDistance();
-
-    // 如果是從篩選面板觸發的，啟用找附近模式
-    if (state.pendingNearbyMode) {
-      state.userSettings.nearbyMode = true;
-      state.pendingNearbyMode = false; // 重置標記
-      
-      // 重新渲染篩選面板(如果篩選面板有開啟)
-      const filterModal = document.getElementById('filter-modal');
-      if (filterModal && !filterModal.classList.contains('hidden')) {
-        renderFilterPanel();
-      }
-    }
     
     // 重新渲染
     renderShopList();
@@ -253,6 +253,17 @@ async function handleAllowLocation() {
     
     state.locationPermission = 'denied';
     localStorage.setItem('locationPermission', 'denied');
+
+    // 定位失敗時，找附近模式跳回OFF
+    if (state.userSettings.nearbyMode) {
+      state.userSettings.nearbyMode = false;
+      
+      // 重新渲染篩選面板
+      const filterModal = document.getElementById('filter-modal');
+      if (filterModal && !filterModal.classList.contains('hidden')) {
+        renderFilterPanel();
+      }
+    }
     
     renderShopList();
   }
