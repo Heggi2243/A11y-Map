@@ -171,9 +171,6 @@ async function updateLocationInBackground() {
   }
 
   try {
-
-    state.locationPermission = 'updating';
-    renderShopList();
     
     const location = await requestUserLocation();
     
@@ -192,8 +189,6 @@ async function updateLocationInBackground() {
       }
     }
 
-    state.locationPermission = 'granted';
-
     // 儲存新位置
     saveLocationToStorage(location);
     
@@ -203,11 +198,10 @@ async function updateLocationInBackground() {
     // 重新渲染
     renderShopList();
     
-    console.log('位置已更新:', location);
+    // console.log('位置已更新:', location);
     
   } catch (error) {
     console.log('背景定位更新失敗（不影響使用）:', error.message);
-    state.locationPermission = 'granted';
   }
 }
 
@@ -671,11 +665,10 @@ function renderShopList() {
     if (state.locationPermission === 'loading') {
       // 定位中的狀態
       distanceDisplay = '抓取定位中...';
-    } else if (state.locationPermission === 'granted' && state.userLocation) {
-      // 已定位成功
+    } else if (state.locationPermission === 'granted') {
+      // 有granted就顯示距離(背景更新時不會改變)
       distanceDisplay = formatDistance(shop.distanceMeters);
     } else {
-      // 未啟用定位
       distanceDisplay = '需啟用定位功能';
     }
 
