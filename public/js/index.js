@@ -676,7 +676,13 @@ function renderShopList() {
     const html = `
       <a href="store.html?id=${shop.id}" target="_blank" rel="noopener noreferrer" class="border-default shop-card group bg-white rounded-3xl overflow-hidden flex flex-col md:flex-row relative transition-all duration-300 hover:shadow-xl hover:shadow-retro-blue/10 hover:-translate-y-1 cursor-pointer block ${!isCompatible ? 'opacity-75 grayscale-[0.5]' : ''}">
         <div class="h-48 md:h-auto md:w-48 flex-shrink-0 relative overflow-hidden">
-          <img src="${shop.imageUrl}" alt="${escapeHtml(shop.name)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'">
+          <img 
+            src="${shop.imageUrl}" 
+            alt="${escapeHtml(shop.name)}" 
+            loading="lazy"
+            decoding="async" 
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'
+          ">
           ${!isCompatible ? '<div class="absolute inset-0 bg-retro-blue/80 flex items-center justify-center pointer-events-none backdrop-blur-sm"><span class="text-white font-display font-bold border-2 border-white px-4 py-2 rounded-xl transform -rotate-3">不符合需求</span></div>' : ''}
         </div>
         <div class="p-5 flex-1 flex flex-col justify-between">
