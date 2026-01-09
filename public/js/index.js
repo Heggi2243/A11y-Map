@@ -152,9 +152,9 @@ async function requestUserLocation() {
         reject(new Error(message));
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0 // 不使用快取，總是取得新位置
+        enableHighAccuracy: false,  // 改為 false
+        timeout: 15000,
+        maximumAge: 60000
       }
     );
   });
@@ -185,6 +185,7 @@ async function updateLocationInBackground() {
       
       if (distance < 100) {
         // 移動距離太小，不更新
+        console.log('移動距離太小，不更新位置');
         return;
       }
     }
@@ -198,7 +199,7 @@ async function updateLocationInBackground() {
     // 重新渲染
     renderShopList();
     
-    // console.log('位置已更新:', location);
+    console.log('位置已更新:', location);
     
   } catch (error) {
     console.log('背景定位更新失敗（不影響使用）:', error.message);
@@ -388,11 +389,11 @@ async function loadShopsFromFirestore() {
      // 更新距離
     updateShopsDistance();
     
-    // console.log(`✅ 載入完成，共 ${state.allShops.length} 筆商店資料`);
+    // console.log(`載入完成，共 ${state.allShops.length} 筆商店資料`);
     state.isLoading = false;
     
   } catch (error) {
-    // console.error('❌ 載入商店資料失敗:', error);
+    // console.error(' 載入商店資料失敗:', error);
     state.isLoading = false;
     alert('載入資料失敗，請重新整理頁面');
   }
@@ -555,7 +556,6 @@ function applyFilters() {
   // 黃點點
   updateFilterBadge();
 
-  // document.getElementById('filter-badge').classList.remove('hidden');
   renderShopList();
 }
 
@@ -959,7 +959,6 @@ function attachFilterListeners() {
       // 重新渲染篩選面板
       renderFilterPanel();
       
-      // console.log('已清除所有篩選條件');
     });
   }
   
@@ -1013,39 +1012,62 @@ function initEventListeners() {
 
 // ========== 初始化 ========== //
 
-async function init() {
-   const savedPermission = localStorage.getItem('locationPermission');
+/**
+ * 每5分鐘檢查
+    ↓
+  是否已授權？ ─NO→ 跳過
+    ↓ YES
+  快取過期？ ─NO→ 跳過
+    ↓ YES
+  使用者 1 分鐘內有活動？ ─NO→ 跳過
+    ↓ YES
+  重新抓取定位
+    ↓
+  移動距離 > 100m？ ─NO→ 不更新畫面
+    ↓ YES
+  儲存新位置 + 重新計算距離 + 渲染列表
+ */
 
-  //使用定位
+// 全域變數
+let lastUserInteraction = Date.now();
+
+// 記錄使用者活動
+function recordUserActivity() {
+  lastUserInteraction = Date.now();
+}
+
+async function init() {
+  const savedPermission = localStorage.getItem('locationPermission');
+
+  // 使用定位
   if (savedPermission === 'granted') {
     state.locationPermission = 'granted';
     
-    // 檢查快取是否有效
-    if (isLocationCacheValid()) {
-      // 使用快取的位置
-      const cached = loadLocationFromStorage();
-      if (cached) {
-        state.userLocation = cached.location;
-        state.locationTimestamp = cached.timestamp;
-        console.log('使用快取位置（' + Math.round((Date.now() - cached.timestamp) / 1000) + '秒前）');
+    // 載入快取位置
+    const cached = loadLocationFromStorage();
+    if (cached) {
+      state.userLocation = cached.location;
+      state.locationTimestamp = cached.timestamp;
+      
+      /* 快取時間戳在五分鐘內->使用快取位置；超過五分鐘 = 使用舊位置。
+         快取超過五分鐘&&使用者有活動的話，會在下一輪區段中更新位置。
+      */
+      if (isLocationCacheValid()) {
+        console.log('使用快取位置');
+      } else {
+        console.log('使用舊位置');
       }
-    } else {
-      // 快取過期，背景更新
-      // console.log('位置快取已過期，正在更新');
-      // 先使用舊位置渲染，同時在背景更新
-      const cached = loadLocationFromStorage();
-      if (cached) {
-        state.userLocation = cached.location;
-      }
-      updateLocationInBackground(); // 背景更新
     }
     
+    // 記錄使用者活動
+    document.addEventListener('click', recordUserActivity);
+    document.addEventListener('scroll', recordUserActivity);
+    document.addEventListener('touchstart', recordUserActivity);
+    document.addEventListener('keydown', recordUserActivity);
+    
   } else if (savedPermission === 'denied') {
-    //暫不使用定位
     state.locationPermission = 'denied';
-
   } else {
-    // 第一次使用，顯示定位權限 Modal
     showLocationPermissionModal();
   }
   
@@ -1055,15 +1077,19 @@ async function init() {
   initEventListeners();
   lucide.createIcons();
   
-  // ========== 新增：定期背景更新 ========== 
-  // 每5分鐘檢查一次是否需要更新位置
+  // 定期檢查（只在最近有活動時更新）
   setInterval(() => {
-    if (state.locationPermission === 'granted' && !isLocationCacheValid()) {
+    const hasRecentActivity = (Date.now() - lastUserInteraction) < 60000; // 1 分鐘內有活動
+    
+    if (state.locationPermission === 'granted' && 
+        !isLocationCacheValid() && 
+        hasRecentActivity) {
+      // console.log('使用者有活動，將於背景更新位置');
       updateLocationInBackground();
     }
   }, LOCATION_CACHE_DURATION);
 
-   checkAdminStatus();
+  checkAdminStatus();
 }
 
 if (document.readyState === 'loading') {
