@@ -679,10 +679,7 @@ function renderShopList() {
           <img 
             src="${shop.imageUrl}" 
             alt="${escapeHtml(shop.name)}" 
-            loading="lazy"
-            decoding="async" 
-            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'
-          ">
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'">
           ${!isCompatible ? '<div class="absolute inset-0 bg-retro-blue/80 flex items-center justify-center pointer-events-none backdrop-blur-sm"><span class="text-white font-display font-bold border-2 border-white px-4 py-2 rounded-xl transform -rotate-3">不符合需求</span></div>' : ''}
         </div>
         <div class="p-5 flex-1 flex flex-col justify-between">

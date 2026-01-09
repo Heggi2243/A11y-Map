@@ -35,8 +35,8 @@ async function compressImages(files) {
       const compressed = await new Promise((resolve, reject) => {
         new Compressor(file, {
           quality: 0.6,           // 品質設定
-          maxWidth: 1200,         // 最大寬度
-          maxHeight: 1200,        // 最大高度
+          maxWidth: 1000,         // 最大寬度
+          maxHeight: 1000,        // 最大高度
           mimeType: 'image/webp', // 輸出格式
           convertSize: 1000000,
           
