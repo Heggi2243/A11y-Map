@@ -117,16 +117,15 @@ async function geocodeAddress(address) {
     
     // 檢查使用者是否已登入
     const currentUser = firebase.auth().currentUser;
+
     if (!currentUser) {
       throw new Error('請先登入');
     }
     
     console.log(`👤 當前使用者: ${currentUser.uid}`);
 
-    //前端也指定連接區域
     const functions = firebase.app().functions('asia-east1');
     
-    // 呼叫 Cloud Function
     const geocodeFunction = functions.httpsCallable('geocodeAddress');
     console.log('準備呼叫 geocodeAddress function (asia-east1)...');
     
@@ -444,33 +443,87 @@ async function handleSubmit(buttonElement) {
       if (oldDoc.exists) oldData = oldDoc.data();
     }
     
-    // 地址轉經緯度
-    let latitude = null;
-    let longitude = null;
+  // 地址轉經緯度
+  // 地址轉經緯度
+  let latitude = null;
+  let longitude = null;
+  let coordinateStatus = ''; // 用來記錄座標狀態
 
-    if (formData.address) {
-      const needsGeocoding = !isEditMode || (oldData.address !== formData.address);
+  if (formData.address) {
+    const needsGeocoding = !isEditMode || (oldData.address !== formData.address);
+    
+    if (needsGeocoding) {
+      try {
+        buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">取得座標中...</span>`;
+        
+        const coords = await geocodeAddress(formData.address);
+        latitude = coords.lat;
+        longitude = coords.lng;
+        
+        coordinateStatus = `座標取得成功: (${latitude}, ${longitude})`;
+        console.log(`✅ ${coordinateStatus}`);
+      } catch (error) {
+        console.error('❌ 座標取得失敗:', error);
+        coordinateStatus = `座標取得失敗: ${error.message}`;
+        
+        if (!confirm(`無法取得座標：${error.message}\n\n是否繼續上傳？(無座標將無法顯示距離)`)) {
+          buttonElement.disabled = false;
+          buttonElement.innerHTML = originalHTML;
+          return;
+        }
+        
+        coordinateStatus += ' (使用者選擇繼續上傳)';
+      }
+    } else {
+      // 編輯模式且地址未變更
+      latitude = oldData.latitude || null;
+      longitude = oldData.longitude || null;
       
-      if (needsGeocoding) {
-        try {
-          buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">取得座標中...</span>`;
-          const coords = await geocodeAddress(formData.address);
-          latitude = coords.lat;
-          longitude = coords.lng;
-          console.log(`✅ 座標: (${latitude}, ${longitude})`);
-        } catch (error) {
-          console.warn('⚠️ 座標取得失敗:', error.message);
-          if (!confirm(`無法取得座標：${error.message}\n\n是否繼續上傳？(無座標將無法顯示距離)`)) {
-            buttonElement.disabled = false;
-            buttonElement.innerHTML = originalHTML;
-            return;
+      if (latitude && longitude) {
+        coordinateStatus = `沿用舊座標: (${latitude}, ${longitude})`;
+      } else {
+        coordinateStatus = `舊資料無座標，且地址未變更\n舊地址: ${oldData.address}\n新地址: ${formData.address}`;
+        
+        // 提示使用者
+        if (!confirm(`偵測到以下狀況：\n\n${coordinateStatus}\n\n是否要重新取得座標？`)) {
+          // 使用者選擇不重新取得
+          coordinateStatus += '\n(使用者選擇不重新取得座標)';
+        } else {
+          // 使用者選擇重新取得座標
+          try {
+            buttonElement.innerHTML = `<span class="text-2xl font-bold font-display tracking-widest uppercase">取得座標中...</span>`;
+            
+            const coords = await geocodeAddress(formData.address);
+            latitude = coords.lat;
+            longitude = coords.lng;
+            
+            coordinateStatus = `重新取得座標成功: (${latitude}, ${longitude})`;
+            console.log(`✅ ${coordinateStatus}`);
+          } catch (error) {
+            console.error('❌ 重新取得座標失敗:', error);
+            coordinateStatus = `重新取得座標失敗: ${error.message}`;
+            
+            if (!confirm(`${error.message}\n\n是否繼續上傳？(無座標將無法顯示距離)`)) {
+              buttonElement.disabled = false;
+              buttonElement.innerHTML = originalHTML;
+              return;
+            }
+            
+            coordinateStatus += ' (使用者選擇繼續上傳)';
           }
         }
-      } else {
-        latitude = oldData.latitude;
-        longitude = oldData.longitude;
       }
+      
+      console.log(`♻️ ${coordinateStatus}`);
     }
+  } else {
+    coordinateStatus = '表單中沒有地址欄位';
+    console.warn(`⚠️ ${coordinateStatus}`);
+  }
+
+  console.log('最終座標:', latitude, longitude);
+  console.log('座標狀態:', coordinateStatus);
+      
 
     // 決定文件 ID
     let docId = isEditMode ? storeId : await generateDocumentId(formData['visitDate'], 'stores', db);
@@ -486,9 +539,8 @@ async function handleSubmit(buttonElement) {
     // 寫入 Firestore (draft = 0)
     await saveToFirestore(isEditMode, docId, uploadedData, latitude, longitude, 0);
 
-    console.log(`✅ ${isEditMode ? '更新' : '上傳'}成功! Document ID:`, docId);
-    alert(`✅ 店家資料${isEditMode ? '更新' : '上傳'}成功！\n文件 ID: ${docId}\n座標: ${latitude ? `(${latitude}, ${longitude})` : '未取得'}`);
-    
+   console.log(`✅ ${isEditMode ? '更新' : '上傳'}成功! Document ID:`, docId);
+   alert(`✅ 店家資料${isEditMode ? '更新' : '上傳'}成功！\n\n文件 ID: ${docId}\n\n座標狀態:\n${coordinateStatus}`);
     window.location.href = '/storePage.html'; 
     
   } catch (error) {
