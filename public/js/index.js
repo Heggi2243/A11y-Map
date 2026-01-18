@@ -116,6 +116,8 @@ async function manualRefreshLocation() {
     renderShopList();
     
     console.log('手動更新位置成功:', location);
+
+    alert('定位資訊已更新');
     
   } catch (error) {
     alert(error.message || '定位失敗，請稍後再試');
@@ -680,21 +682,6 @@ function renderShopList() {
   // ========== 新增：顯示重新定位按鈕 ========== 
   const refreshBtnContainer = document.getElementById('refresh-location-container');
   if (state.locationPermission === 'granted') {
-    // 計算距離上次定位的時間
-    const timeSinceUpdate = state.locationTimestamp 
-      ? Math.floor((Date.now() - state.locationTimestamp) / 1000) 
-      : null;
-    
-    let timeText = '';
-    if (timeSinceUpdate !== null) {
-      if (timeSinceUpdate < 60) {
-        timeText = '剛剛更新';
-      } else if (timeSinceUpdate < 3600) {
-        timeText = `${Math.floor(timeSinceUpdate / 60)} 分鐘前`;
-      } else {
-        timeText = `${Math.floor(timeSinceUpdate / 3600)} 小時前`;
-      }
-    }
     
     refreshBtnContainer.innerHTML = `
       <button 
@@ -704,7 +691,6 @@ function renderShopList() {
       >
         <i data-lucide="map-pin" size="16"></i>
         <span>重新定位</span>
-        ${timeText ? `<span class="text-retro-blue/50 text-xs">(${timeText})</span>` : ''}
       </button>
     `;
     

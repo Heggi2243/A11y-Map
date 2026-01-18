@@ -86,7 +86,7 @@ export const FORM_SCHEMA = {
         { "itemId": "visitDate", "label": "*到訪日期", "type": "date_input", "required": true},
         { "itemId": "mapUrl", 
           "label": "*地圖網址", 
-          "type": "textarea",
+          "type": "text_input",
           "required": true, 
           "validation": {    // 自訂驗證
           "pattern": "^https://maps\\.app\\.goo\\.gl/",
