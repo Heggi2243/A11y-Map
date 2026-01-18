@@ -77,7 +77,8 @@ export const FORM_SCHEMA = {
             {"value": "餐飲", "label": "餐飲"},
             {"value": "景點", "label": "景點"},
             {"value": "購物", "label": "購物"},
-            {"value": "住宿", "label": "住宿"}
+            {"value": "住宿", "label": "住宿"},
+            {"value": "其他", "label": "其他"}
           ]
         },
         { "itemId": "address", "label": "*店家地址", "type": "text_input", "required": true},

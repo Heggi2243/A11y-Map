@@ -32,9 +32,10 @@ const state = {
   locationPermission: null, // 'granted', 'denied', null
   locationTimestamp: null, // 記錄定位時間
   pendingNearbyMode: false, // 找附近模式按鈕UI預設OFF
+  isUpdatingLocation: false, // 新增:是否正在更新定位
 };
 
-const LOCATION_CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取定位
+const LOCATION_CACHE_DURATION = 3 * 60 * 1000; // 3分鐘快取定位
 
 // ========== 管理員功能 ========== //
 
@@ -75,6 +76,61 @@ function checkAdminStatus() {
 
 
 // ========== 地理位置功能 ========== //
+
+/**
+ * 手動重新抓取定位
+ */
+async function manualRefreshLocation() {
+  if (state.locationPermission !== 'granted') {
+    alert('請先允許定位權限');
+    return;
+  }
+  
+  if (state.isUpdatingLocation) {
+    return; // 避免重複觸發
+  }
+  
+  // 更新按鈕狀態
+  const refreshBtn = document.getElementById('refresh-location-btn');
+  const refreshIcon = refreshBtn?.querySelector('i');
+  
+  if (refreshBtn) {
+    state.isUpdatingLocation = true;
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    if (refreshIcon) {
+      refreshIcon.classList.add('animate-spin');
+    }
+  }
+  
+  try {
+    const location = await requestUserLocation();
+    
+    // 儲存新位置
+    saveLocationToStorage(location);
+    
+    // 重新計算距離
+    updateShopsDistance();
+    
+    // 重新渲染
+    renderShopList();
+    
+    console.log('手動更新位置成功:', location);
+    
+  } catch (error) {
+    alert(error.message || '定位失敗，請稍後再試');
+  } finally {
+    // 恢復按鈕狀態
+    if (refreshBtn) {
+      state.isUpdatingLocation = false;
+      refreshBtn.disabled = false;
+      refreshBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      if (refreshIcon) {
+        refreshIcon.classList.remove('animate-spin');
+      }
+    }
+  }
+}
 
 /**
  * 檢查快取的位置是否還有效
@@ -621,6 +677,47 @@ function renderShopList() {
     document.getElementById('status-dist').textContent = state.locationPermission === 'granted' ? '顯示所有店家' : '無定位資訊';
   }
 
+  // ========== 新增：顯示重新定位按鈕 ========== 
+  const refreshBtnContainer = document.getElementById('refresh-location-container');
+  if (state.locationPermission === 'granted') {
+    // 計算距離上次定位的時間
+    const timeSinceUpdate = state.locationTimestamp 
+      ? Math.floor((Date.now() - state.locationTimestamp) / 1000) 
+      : null;
+    
+    let timeText = '';
+    if (timeSinceUpdate !== null) {
+      if (timeSinceUpdate < 60) {
+        timeText = '剛剛更新';
+      } else if (timeSinceUpdate < 3600) {
+        timeText = `${Math.floor(timeSinceUpdate / 60)} 分鐘前`;
+      } else {
+        timeText = `${Math.floor(timeSinceUpdate / 3600)} 小時前`;
+      }
+    }
+    
+    refreshBtnContainer.innerHTML = `
+      <button 
+        id="refresh-location-btn" 
+        class="flex items-center gap-2 px-2 py-2 bg-white text-retro-blue font-bold text-sm border-2 border-retro-blue/20 rounded-xl hover:bg-retro-blue/5 transition-all shadow-sm"
+        ${state.isUpdatingLocation ? 'disabled' : ''}
+      >
+        <i data-lucide="map-pin" size="16"></i>
+        <span>重新定位</span>
+        ${timeText ? `<span class="text-retro-blue/50 text-xs">(${timeText})</span>` : ''}
+      </button>
+    `;
+    
+    // 綁定事件
+    const refreshBtn = document.getElementById('refresh-location-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', manualRefreshLocation);
+    }
+    
+    lucide.createIcons();
+  } else {
+    refreshBtnContainer.innerHTML = '';
+  }
 
   if (filtered.length === 0) {
     container.innerHTML = `
@@ -720,6 +817,7 @@ function renderShopList() {
   
   lucide.createIcons();
 }
+
 
 function renderFilterPanel() {
   const content = document.getElementById('filter-content');
@@ -1012,21 +1110,6 @@ function initEventListeners() {
 
 // ========== 初始化 ========== //
 
-/**
- * 每5分鐘檢查
-    ↓
-  是否已授權？ ─NO→ 跳過
-    ↓ YES
-  快取過期？ ─NO→ 跳過
-    ↓ YES
-  使用者 1 分鐘內有活動？ ─NO→ 跳過
-    ↓ YES
-  重新抓取定位
-    ↓
-  移動距離 > 100m？ ─NO→ 不更新畫面
-    ↓ YES
-  儲存新位置 + 重新計算距離 + 渲染列表
- */
 
 // 全域變數
 let lastUserInteraction = Date.now();
@@ -1049,8 +1132,8 @@ async function init() {
       state.userLocation = cached.location;
       state.locationTimestamp = cached.timestamp;
       
-      /* 快取時間戳在五分鐘內->使用快取位置；超過五分鐘 = 使用舊位置。
-         快取超過五分鐘&&使用者有活動的話，會在下一輪區段中更新位置。
+      /* 快取時間戳在3分鐘內->使用快取位置；超過3分鐘 = 使用舊位置。
+         快取超過3分鐘&&使用者有活動的話，會在下一輪區段中更新位置。
       */
       if (isLocationCacheValid()) {
         console.log('使用快取位置');
@@ -1079,7 +1162,7 @@ async function init() {
   
   // 定期檢查（只在最近有活動時更新）
   setInterval(() => {
-    const hasRecentActivity = (Date.now() - lastUserInteraction) < 60000; // 1 分鐘內有活動
+    const hasRecentActivity = (Date.now() - lastUserInteraction) < 3 * 60 * 1000; 
     
     if (state.locationPermission === 'granted' && 
         !isLocationCacheValid() && 
@@ -1097,3 +1180,4 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+

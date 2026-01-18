@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>無障礙旅遊地圖 | 暢行無阻 A11y-Map</title>
+    <title>無障礙美食地圖 | 暢行無阻 A11y-Map</title>
   
     <!-- 預先連接(強化效能用) -->
     <link rel="preconnect" href="https://www.gstatic.com">
@@ -21,7 +21,7 @@
     <!-- Open Graph (Facebook, LINE) -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="暢行無阻 A11y-Map">
-    <meta property="og:title" content="無障礙旅遊地圖 | 暢行無阻 A11y-Map">
+    <meta property="og:title" content="無障礙美食地圖 | 暢行無阻 A11y-Map">
     <meta property="og:description" content="專為輪椅使用者而生的網站，提供無障礙友善店家資訊">
     <meta property="og:image" content="">
     <meta property="og:url" content="">
@@ -89,17 +89,24 @@
             <button data-category="景點" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full transition-colors" aria-pressed="false">景點</button>
             <button data-category="購物" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full transition-colors" aria-pressed="false">購物</button>
             <button data-category="住宿" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full transition-colors" aria-pressed="false">住宿</button>
+            <button data-category="其他" class="category-tab flex-shrink-0 px-5 py-2 bg-white border-2 border-retro-blue/10 text-retro-blue text-sm font-display rounded-full transition-colors" aria-pressed="false">其他</button>
           </div>
         </header>
 
         <!-- Main Content -->
         <main class="flex-1 px-4 py-4 space-y-6 pb-24">
-          <div class="flex justify-between items-end px-1">
-            <h2 id="recommend-title" class="font-display font-bold text-retro-blue">為您推薦</h2>
-            <div class="flex flex-col items-end text-xs font-bold text-retro-blue/50">
-               <span id="status-width">輪椅: 中小型</span>
-               <span id="status-dist">距離 &lt; 30分</span>
+          <div class="flex justify-between items-end px-1 mt-2">
+            <div class="flex flex-col">
+              <!-- 狀態資訊（上方，較小字） -->
+              <div class="flex items-center gap-2 text-xs font-bold text-retro-blue/50 mb-1">
+                <span id="status-width">輪椅: 中小型</span>
+                <span class="text-retro-blue/30">•</span>
+                <span id="status-dist">顯示所有店家</span>
+              </div>
+              <!-- 推薦標題（下方，較大字） -->
+              <h2 id="recommend-title" class="font-display font-bold text-retro-blue text-lg">為您推薦</h2>
             </div>
+            <div id="refresh-location-container"></div>
           </div>
 
           <div id="shop-list-container" class="space-y-6">
