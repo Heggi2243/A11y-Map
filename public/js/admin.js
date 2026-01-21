@@ -2,7 +2,7 @@
 // session Controller
 // ============================================
 
-import { handleLogout } from '../utils/basic.js';
+import { handleLogout, createPagination, getPageSlice } from '../utils/basic.js';
 
 /**
  * 更新:集中管理變數
@@ -95,69 +95,30 @@ function formatTimestamp(timestamp) {
 // ============================================
 
 function renderPagination() {
-  const totalPages = Math.ceil(filteredSessions.length / ITEMS_PER_PAGE);
-  
-  // 移除舊的分頁控制
-  const oldPagination = document.getElementById('pagination-controls');
-  if (oldPagination) oldPagination.remove();
-  
-  if (totalPages <= 1) return; // 只有一頁或沒有資料,不顯示分頁
-  
-  // 創建分頁容器
-  const paginationContainer = document.createElement('div');
-  paginationContainer.id = 'pagination-controls';
-  paginationContainer.className = 'flex justify-center items-center gap-2 p-6 bg-blue-50 border-t-2 border-blue-900';
-  
-  // 上一頁按鈕
-  const prevBtn = createPaginationButton('← 上一頁', currentPage > 1, () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderCurrentPage();
-    }
-  });
-  paginationContainer.appendChild(prevBtn);
-  
-  // 頁碼資訊
-  const pageInfo = document.createElement('div');
-  pageInfo.className = 'px-4 py-2 text-sm font-bold text-blue-900';
-  pageInfo.textContent = `第 ${currentPage} / ${totalPages} 頁 (共 ${filteredSessions.length} 筆)`;
-  paginationContainer.appendChild(pageInfo);
-  
-  // 下一頁按鈕
-  const nextBtn = createPaginationButton('下一頁 →', currentPage < totalPages, () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderCurrentPage();
-    }
-  });
-  paginationContainer.appendChild(nextBtn);
-  
-  // 插入到表格下方
   const tableSection = elements.tableBody.closest('section');
-  tableSection.appendChild(paginationContainer);
+  
+  createPagination({
+    currentPage: currentPage,
+    totalItems: filteredSessions.length,
+    itemsPerPage: ITEMS_PER_PAGE,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      renderCurrentPage();
+    },
+    container: tableSection
+  });
 }
 
-function createPaginationButton(text, enabled, onClick) {
-  const btn = document.createElement('button');
-  btn.textContent = text;
-  btn.className = enabled 
-    ? 'px-4 py-2 bg-blue-900 text-white font-bold border-2 border-blue-900 hover:bg-blue-800 transition-all active:translate-y-1 shadow-[2px_2px_0px_0px_rgba(30,58,138,1)]'
-    : 'px-4 py-2 bg-gray-300 text-gray-500 font-bold border-2 border-gray-400 cursor-not-allowed';
-  btn.disabled = !enabled;
-  if (enabled) btn.onclick = onClick;
-  return btn;
-}
 
 function renderCurrentPage() {
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const sessionsToShow = filteredSessions.slice(startIndex, endIndex);
+  const sessionsToShow = getPageSlice(filteredSessions, currentPage, ITEMS_PER_PAGE);
   renderTable(sessionsToShow);
   renderPagination();
   
   // 滾動到頂部
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // window.scrollTo({ top: 500, behavior: 'smooth' });
 }
+
 
 // ============================================
 // 表格渲染

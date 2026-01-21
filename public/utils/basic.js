@@ -105,3 +105,90 @@ export async function handleLogout(db) {
     throw error;
   }
 }
+
+// ============================================
+// 通用分頁功能
+// ============================================
+
+/**
+ * 建立分頁控制器
+ * @param {Object} options - 分頁配置
+ * @param {number} options.currentPage - 當前頁碼
+ * @param {number} options.totalItems - 總資料筆數
+ * @param {number} options.itemsPerPage - 每頁顯示筆數
+ * @param {Function} options.onPageChange - 換頁回調函式
+ * @param {HTMLElement} options.container - 分頁控制器要插入的容器
+ * @returns {HTMLElement} 分頁控制器元素
+ */
+export function createPagination(options) {
+  const {
+    currentPage,
+    totalItems,
+    itemsPerPage,
+    onPageChange,
+    container
+  } = options;
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  
+  // 移除舊的分頁控制
+  const oldPagination = container.querySelector('#pagination-controls');
+  if (oldPagination) oldPagination.remove();
+  
+  if (totalPages <= 1) return null; // 只有一頁或沒有資料,不顯示分頁
+  
+  // 創建分頁容器
+  const paginationContainer = document.createElement('div');
+  paginationContainer.id = 'pagination-controls';
+  paginationContainer.className = 'flex justify-center items-center gap-2 p-6 bg-blue-50 border-t-2 border-blue-900';
+  
+  // 上一頁按鈕
+  const prevBtn = createPaginationButton('← 上一頁', currentPage > 1, () => {
+    if (currentPage > 1) {
+      onPageChange(currentPage - 1);
+    }
+  });
+  paginationContainer.appendChild(prevBtn);
+  
+  // 頁碼資訊
+  const pageInfo = document.createElement('div');
+  pageInfo.className = 'px-4 py-2 text-sm font-bold text-blue-900';
+  pageInfo.textContent = `第 ${currentPage} / ${totalPages} 頁 (共 ${totalItems} 筆)`;
+  paginationContainer.appendChild(pageInfo);
+  
+  // 下一頁按鈕
+  const nextBtn = createPaginationButton('下一頁 →', currentPage < totalPages, () => {
+    if (currentPage < totalPages) {
+      onPageChange(currentPage + 1);
+    }
+  });
+  paginationContainer.appendChild(nextBtn);
+  
+  // 插入到容器
+  container.appendChild(paginationContainer);
+  
+  return paginationContainer;
+}
+
+/**
+ * 建立分頁按鈕
+ */
+function createPaginationButton(text, enabled, onClick) {
+  const btn = document.createElement('button');
+  btn.textContent = text;
+  btn.className = enabled 
+    ? 'px-4 py-2 bg-blue-900 text-white font-bold border-2 border-blue-900 hover:bg-blue-800 transition-all active:translate-y-1 shadow-[2px_2px_0px_0px_rgba(30,58,138,1)]'
+    : 'px-4 py-2 bg-gray-300 text-gray-500 font-bold border-2 border-gray-400 cursor-not-allowed';
+  btn.disabled = !enabled;
+  if (enabled) btn.onclick = onClick;
+  return btn;
+}
+
+/**
+ * 計算當前頁面應顯示的資料範圍
+ */
+export function getPageSlice(data, currentPage, itemsPerPage) {
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  return data.slice(startIndex, endIndex);
+}

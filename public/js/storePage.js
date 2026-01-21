@@ -2,7 +2,7 @@
 // storePage Controller
 // ============================================
 
-import { handleLogout } from '../utils/basic.js';
+import { handleLogout, createPagination, getPageSlice } from '../utils/basic.js';
 
 
 /**
@@ -13,13 +13,17 @@ const elements = {
   tableBody: document.getElementById('table-body'),
 };
 
-// let allStore = [];
-
 // Firebase 配置
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 const storage = firebase.storage(); // <-刪除Storage圖片
+
+// 分頁控制器
+const ITEMS_PER_PAGE = 10;
+let currentPage = 1;
+let allStore = [];
+
 
 // ============================================
 // 身份驗證
@@ -57,7 +61,7 @@ async function loadStoreList() {
         // console.log(snapshot);
         
         //  修正：每次都建立新的陣列，避免累積
-        const allStore = [];
+        allStore = [];
         
         snapshot.forEach(doc => {
            allStore.push({
@@ -69,8 +73,10 @@ async function loadStoreList() {
         // console.log(`載入完成，共 ${allStore.length} 筆資料`);
 
 
-        renderTable(allStore);
-        // allStore
+        currentPage = 1;
+        renderCurrentPage();
+        
+        
     } catch (error) {
         console.error('載入商店列表失敗:', error);
     }
@@ -123,11 +129,7 @@ function renderTable(allStore){
         <h3 class="text-xl font-black text-retro-blue truncate tracking-tight">${store.name}</h3>
       </div>
       <div class="flex items-center text-retro-blue/80 text-sm font-bold truncate">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin w-3 h-3 mr-1 flex-shrink-0" aria-hidden="true">
-            <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0">
-            </path>
-        <circle cx="12" cy="10" r="3"></circle>
-        </svg>
+        <i data-lucide="map-pin" class="w-3 h-3 mr-1"></i>
         <span class="truncate">${store.address|| 'Unknown'}</span>
       </div>
       <div class="flex items-center text-retro-blue text-sm font-bold truncate">
@@ -135,34 +137,62 @@ function renderTable(allStore){
       </div>
     </td>
     <td class="px-3 py-2 whitespace-nowrap">
-       <div class="flex flex-col items-center gap-2">
+      <div class="flex flex-col items-center gap-2">
           <button 
             onclick="editStore('${store.id}')" 
             class="p-3 rounded-full bg-retro-blue text-white border-2 border-retro-blue hover:bg-retro-blue/90 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-retro-blue" 
             aria-label="編輯店家"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pen text-white" aria-hidden="true">
-              <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
-            </svg>
+            <i data-lucide="pencil" class="text-white" width="1em" height="1em" ></i>
           </button>
                     <button 
             onclick="deleteStore('${store.id}')" 
             class="p-3 rounded-full bg-retro-blue text-white border-2 border-retro-blue hover:bg-retro-blue/90 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-retro-blue" 
             aria-label="刪除店家"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 text-white" aria-hidden="true">
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-            </svg>
+             <i data-lucide="trash-2" class="text-white" width="1em" height="1em" ></i>
           </button>
-        </div>
-      </td>
+      </div>
+    </td>
     `
     elements.tableBody.appendChild(row);
   });
 
    console.log(`渲染完成，共 ${allStore.length} 筆`);
+
+   if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+}
+
+// ============================================
+// 分頁功能
+// ============================================
+
+function renderPagination() {
+
+  const tableSection = elements.tableBody.closest('section');
+  
+  createPagination({
+    currentPage: currentPage,
+    totalItems: allStore.length,
+    itemsPerPage: ITEMS_PER_PAGE,
+    onPageChange: (newPage) => {
+      currentPage = newPage;
+      renderCurrentPage();
+    },
+    container: tableSection
+  });
+}
+
+
+function renderCurrentPage() {
+  const sessionsToShow = getPageSlice(allStore, currentPage, ITEMS_PER_PAGE);
+  renderTable(sessionsToShow);
+  renderPagination();
+  
+  // 滾動到頂部
+  // window.scrollTo({ top: 500, behavior: 'smooth' });
 }
 
 
