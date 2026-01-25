@@ -32,7 +32,7 @@ const state = {
   locationPermission: null, // 'granted', 'denied', null
   locationTimestamp: null, // 記錄定位時間
   pendingNearbyMode: false, // 找附近模式按鈕UI預設OFF
-  isUpdatingLocation: false, // 新增:是否正在更新定位
+  isUpdatingLocation: false, // 是否正在更新定位
 };
 
 const LOCATION_CACHE_DURATION = 3 * 60 * 1000; // 3分鐘快取定位
@@ -427,21 +427,23 @@ async function loadShopsFromFirestore() {
 
       const shop = {
         id: doc.id,
-        ...doc.data(),
+        ...data, 
+        
         // 補充計算欄位
-        categoryArray: Array.isArray(doc.data().category) ? doc.data().category : [doc.data().category],
-        priceLevel: calculatePriceLevel(doc.data().avgCost),
-        rating: calculateRating(doc.data()),
-        doorWidthCm: parseDoorWidth(doc.data().doorWidthCm),
-        distanceMeters: 1000, // 預設距離
-        imageUrl: doc.data().store_cover?.[0] || `https://picsum.photos/800/600?random=${doc.id}`,
-        //從Firestore讀取經緯度
+        categoryArray: Array.isArray(data.category) ? data.category : [data.category],
+        
+        priceLevel: calculatePriceLevel(data.avgCost, data.bathroomDesign),
+        
+        rating: data.convenience,
+        doorWidthCm: parseDoorWidth(data.doorWidthCm),
+        distanceMeters: 1000, 
+        imageUrl: data.store_cover?.[0] || `https://picsum.photos/800/600?random=${doc.id}`,
         latitude: data.latitude || null,
         longitude: data.longitude || null,
+        bathroomDesign: data.bathroomDesign || null,
       };
       
       state.allShops.push(shop);
-      // console.log(shop);
     });
 
      // 更新距離
@@ -462,28 +464,36 @@ async function loadShopsFromFirestore() {
 
 // ========== 輔助函式 ========== //
 
-function calculatePriceLevel(avgCost) {
+/**
+ * 計算價格等級
+ * @param {string|number} avgCost 平均費用
+ * @param {string} bathroomDesign 浴室設計狀況
+ */
+function calculatePriceLevel(avgCost, bathroomDesign) {
+
   if (!avgCost) return 2;
   const cost = parseInt(avgCost);
-  if (cost < 300) return 1;
-  if (cost < 500) return 2;
-  if (cost < 800) return 3;
-  if (cost < 1200) return 4;
-  return 5;
+
+  // 住宿類商店
+  if (bathroomDesign) {
+    switch (true) {
+      case cost <= 2000: return 1;
+      case cost <= 3000: return 2;
+      case cost <= 4000: return 3;
+      case cost <= 5000: return 4;
+      default: return 5;
+    }
+  } 
+  
+  switch (true) {
+    case cost < 300: return 1;
+    case cost < 500: return 2;
+    case cost < 800: return 3;
+    case cost < 1200: return 4;
+    default: return 5;
+  }
 }
 
-function calculateRating(data) {
-  const ratings = [
-    parseFloat(data.convenience) || 0,
-    parseFloat(data.food) || 0,
-    parseFloat(data.service) || 0,
-  ].filter(r => r > 0);
-  
-  if (ratings.length === 0) return 3;
-  
-  const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
-  return Math.round(avg * 2) / 2;
-}
 
 function parseDoorWidth(doorWidthStr) {
   if (!doorWidthStr) return 80;

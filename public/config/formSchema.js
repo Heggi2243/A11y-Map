@@ -1,5 +1,5 @@
 // ============================================
-// 這裡負責表單內容配置
+//  formSchema.js 這裡負責表單內容配置
 // ============================================
 
 /**
@@ -79,7 +79,22 @@ export const FORM_SCHEMA = {
             {"value": "購物", "label": "購物"},
             {"value": "住宿", "label": "住宿"},
             {"value": "其他", "label": "其他"}
-          ]
+          ],
+          // ========== 新增：當勾選「住宿」時顯示浴室設計 ========== 
+          "conditionalField": {
+            "triggerValue": "住宿",
+            "itemId": "bathroomDesign",
+            "label": "*浴室設計",
+            "type": "radio_group",
+            "required": true,
+            "selectionType": "single",
+            "options": [
+              {"value": "無障礙設計", "label": "無障礙設計"},
+              {"value": "非無障礙設計", "label": "非無障礙設計"},
+              {"value": "危險", "label": "危險"}
+            ],
+            "note": "勾選「住宿」類別時需填寫此欄位"
+          }
         },
         { "itemId": "address", "label": "*店家地址", "type": "text_input", "required": true},
         { "itemId": "avgCost", "label": "*一人平均消費(元)", "type": "number_input", "required": true},

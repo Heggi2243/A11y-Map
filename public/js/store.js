@@ -102,7 +102,7 @@ function updateMetaTag(attribute, attributeValue, content) {
  */
 function updateStructuredData(shop, imageUrl) {
   const name = shop.name || '未命名店家';
-  const category = Array.isArray(shop.category) ? shop.category.join(', ') : shop.category || '其他';
+  const category = Array.isArray(shop.category) ? shop.category : [shop.category || '其他'];
   const address = shop.address || '';
   const description = shop.description || '';
   
@@ -124,9 +124,23 @@ function updateStructuredData(shop, imageUrl) {
     else priceRange = '$$$$';
   }
   
+  // ========== 1. 判斷更精確的 @type ========== 
+  let businessType = "LocalBusiness"; // 預設
+  
+  if (category.includes('餐飲')) {
+    businessType = "Restaurant"; // 餐廳
+  } else if (category.includes('住宿')) {
+    businessType = "LodgingBusiness"; // 住宿
+  } else if (category.includes('購物')) {
+    businessType = "Store"; // 商店
+  } else if (category.includes('景點')) {
+    businessType = "TouristAttraction"; // 景點
+  }
+  
+  // ========== 2. 基本結構 ========== 
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": businessType,
     "name": name,
     "description": description,
     "image": imageUrl,
@@ -136,24 +150,62 @@ function updateStructuredData(shop, imageUrl) {
       "streetAddress": address
     },
     "priceRange": priceRange,
-    "servesCuisine": category,
     "url": window.location.href,
     "isAccessibleForFree": true,
-    "amenityFeature": [
-      {
-        "@type": "LocationFeatureSpecification",
-        "name": "無障礙設施",
-        "value": true
-      }
-    ]
+    "amenityFeature": []
   };
   
-  // 如果有評分，加入評分資料
+  // ========== 3. 無障礙設施特徵 ========== 
+  
+  // 3-1. 無障礙入口 (坡道平緩或順行)
+  if (shop.ramp?.includes('平緩') || shop.ramp?.includes('順行')) {
+    structuredData.amenityFeature.push({
+      "@type": "LocationFeatureSpecification",
+      "name": "無障礙入口",
+      "value": true
+    });
+  }
+  
+  // 3-2. 無障礙廁所
+  if (shop.restroom?.includes('無障礙')) {
+    structuredData.amenityFeature.push({
+      "@type": "LocationFeatureSpecification",
+      "name": "無障礙廁所",
+      "value": true
+    });
+  }
+  
+  // 3-3. 無障礙浴室 (僅住宿類別)
+  if (category.includes('住宿') && shop.bathroomDesign) {
+    const isAccessible = shop.bathroomDesign === '無障礙設計';
+    structuredData.amenityFeature.push({
+      "@type": "LocationFeatureSpecification",
+      "name": "無障礙浴室",
+      "value": isAccessible,
+      "description": shop.bathroomDesign
+    });
+  }
+  
+  // 3-4. 輪椅友善 (綜合判斷)
+  const isWheelchairFriendly = (
+    (shop.ramp?.includes('平緩') || shop.ramp?.includes('順行')) &&
+    shop.convenience >= 4
+  );
+  
+  if (isWheelchairFriendly) {
+    structuredData.amenityFeature.push({
+      "@type": "LocationFeatureSpecification",
+      "name": "輪椅友善",
+      "value": true
+    });
+  }
+  
+  // ========== 4. 如果有評分，加入評分資料 ========== 
   if (rating) {
     structuredData.aggregateRating = rating;
   }
   
-  // 如果有座標，加入地理位置
+  // ========== 5. 如果有座標，加入地理位置 ========== 
   if (shop.latitude && shop.longitude) {
     structuredData.geo = {
       "@type": "GeoCoordinates",
@@ -162,7 +214,37 @@ function updateStructuredData(shop, imageUrl) {
     };
   }
   
-  // 更新 script tag
+  // ========== 6. 根據不同類型加入特定屬性 ========== 
+  
+  // 餐廳：加入菜系（如果有 food 評分就代表是餐廳）
+  // if (businessType === "Restaurant" && shop.food) {
+  //   // structuredData.servesCuisine = "多國料理"; // 之後再說
+  //   structuredData.starRating = {
+  //     "@type": "Rating",
+  //     "ratingValue": shop.food,
+  //     "bestRating": "5"
+  //   };
+  // }
+  
+  // 住宿：加入住宿相關資訊
+  if (businessType === "LodgingBusiness") {
+    // 如果有浴室設計資訊，加入無障礙浴室屬性
+    if (shop.bathroomDesign) {
+      // structuredData.petsAllowed = false; // 寵物相關
+      structuredData.amenityFeature.push({
+        "@type": "LocationFeatureSpecification",
+        "name": "浴室設計",
+        "value": shop.bathroomDesign
+      });
+    }
+  }
+  
+  // 景點：加入景點相關資訊
+  if (businessType === "TouristAttraction") {
+    structuredData.touristType = ["輪椅使用者", "行動不便者", "輪椅族"];
+  }
+  
+  // ========== 7. 更新 script tag ========== 
   let script = document.getElementById('structured-data');
   if (script) {
     script.textContent = JSON.stringify(structuredData, null, 2);
@@ -173,6 +255,8 @@ function updateStructuredData(shop, imageUrl) {
     script.textContent = JSON.stringify(structuredData, null, 2);
     document.head.appendChild(script);
   }
+  
+  // console.log('Structured Data:', structuredData);
 }
 
 // ==================== Swiper Modal 控制函數 ==================== //
@@ -279,9 +363,9 @@ function renderShopDetail(shop) {
 
   // 整合所有圖片
   const allImages = [
-    ...(shop.store_cover || []),
-    ...(shop.entrance_photo || []),
-    ...(shop.interior_photo || []),
+    ...(shop.store_cover || []).map(url => ({ url, type: 'cover' })),
+    ...(shop.entrance_photo || []).map(url => ({ url, type: 'entrance' })),
+    ...(shop.interior_photo || []).map(url => ({ url, type: 'interior' })),
   ];
 
   // 基本資訊
@@ -296,11 +380,23 @@ function renderShopDetail(shop) {
   // 價格等級
   const cost = parseInt(shop.avgCost);
   let priceLevel = 2;
-  if (cost < 300) priceLevel = 1;
-  else if (cost < 500) priceLevel = 2;
-  else if (cost < 800) priceLevel = 3;
-  else if (cost < 1200) priceLevel = 4;
-  else priceLevel = 5;
+
+  if (shop.category?.includes('住宿')){
+
+      if (cost <= 2000) priceLevel = 1;
+      else if (cost <= 3000) priceLevel = 2;
+      else if (cost <= 4000) priceLevel = 3;
+      else if (cost <= 5000) priceLevel = 4;
+      else priceLevel = 5;
+    
+  }else{
+      if (cost < 300) priceLevel = 1;
+      else if (cost < 500) priceLevel = 2;
+      else if (cost < 800) priceLevel = 3;
+      else if (cost < 1200) priceLevel = 4;
+      else priceLevel = 5;
+  }
+
   
   // hashTag 
   const tags = [];
@@ -339,25 +435,52 @@ function renderShopDetail(shop) {
     tags.push('服務優質');
   }
 
+  if (shop.bathroomDesign === '危險') {
+    tags.push('浴室危險');
+    count --;
+  } else if (shop.bathroomDesign === '無障礙設計'){
+    tags.push('無障礙浴室');
+  }
+
   if (Array.isArray(shop.assistance) && shop.assistance.includes('無須協助') && shop.convenience >= 4) {
     tags.push('完全無障礙');
     colorAry = ['brand-50','brand-600','star','brand-800','brand-800'];
     content = ['暢行無阻!','這地點對您的設備非常友善。'];
-  }else if (shop.convenience >= 3 && count >= 1) {
+  }else if (shop.convenience >= 3.5 && count >= 1) {
     colorAry = ['blue-50','blue-200','heart-handshake','blue-600','blue-800'];
     content = ['整體不錯','需要陪伴者提供一點協助'];
-  }else if (shop.convenience >= 2 && count >= 1){
+  }else if (shop.convenience >= 2 && count >= 0){
     colorAry = ['org-50','org-200','hand-helping','org-600','org-800'];
-    content = ['有點難度','需要陪伴者與店家共同協助'];
+    if ((shop.bathroomDesign)){
+      content = ['有點難度','空間窄小或是硬體設計不佳'];
+    }else {
+      content = ['有點難度','需要陪伴者與店家共同協助'];
+    }
   }else {
     colorAry = ['red-50','red-200','frown','red-600','red-800'];
     content = ['困難指數MAX','整體來說不太適合輔具使用者'];
   }
-
-
   
   // 交通資訊
   const transitInfo = buildTransitInfo(shop);
+
+  const generateAlt = (img, index) => {
+    const baseName = `${name} - ${category}`;
+    
+    switch (img.type) {
+      case 'cover':
+        return `${baseName} 封面照片`;
+      case 'entrance':
+        return `${baseName} 門口與階梯狀況 (${index + 1})`;
+      case 'interior':
+        return category.includes('餐飲') 
+          ? `${baseName} 餐飲與店內環境 (${index + 1})`
+          : `${baseName} 店內環境 (${index + 1})`;
+      default:
+        return `${baseName} 照片 (${index + 1})`;
+    }
+  };
+
 
   const evaluationHtml = `
       <div class="bg-${colorAry[0]} border-2 border-${colorAry[1]} rounded-2xl p-5 rotate-1 flex items-center">
@@ -370,6 +493,7 @@ function renderShopDetail(shop) {
         </div>
       </div>`;
 
+
   // 渲染圖片畫廊
   const galleryHtml = allImages.length > 0 ? `
     <div class="mt-12">
@@ -379,10 +503,11 @@ function renderShopDetail(shop) {
       
       <div class="swiper gallery-swiper -mx-4 px-4">
         <div class="swiper-wrapper">
-          ${allImages.map((url, index) => `
+          ${allImages.map((img, index) => `
             <div class="swiper-slide">
               <img 
-                src="${url}" 
+                src="${img.url}" 
+                alt="${generateAlt(img, index)}"
                 class="border-default h-32 w-48 object-cover rounded-2xl shadow-sm cursor-pointer hover:opacity-90 transition-opacity" 
                 onclick="openImageModal(${index})"
                 onerror="this.parentElement.style.display='none'"
@@ -402,10 +527,11 @@ function renderShopDetail(shop) {
         
         <div class="swiper modal-swiper w-auto max-w-md" onclick="event.stopPropagation()" style="height: 80vh;">
           <div class="swiper-wrapper" style="align-items: center;">
-            ${allImages.map(url => `
+            ${allImages.map((img, index) => `
               <div class="swiper-slide" style="display: flex; align-items: center; justify-content: center; height: 100%;">
                 <img 
-                  src="${url}" 
+                  src="${img.url}" 
+                  alt="${generateAlt(img, index)}"
                   class="max-h-[70vh] w-auto object-contain rounded-lg shadow-2xl"
                   onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'"
                 >
@@ -491,6 +617,14 @@ function renderShopDetail(shop) {
               'help-circle',
               true
             )}
+            ${shop.bathroomDesign ? renderDetailItem(
+              '浴室設計', 
+              shop.bathroomDesign === '危險' 
+                ? `<span class="text-red-800 font-bold">${shop.bathroomDesign}</span>` 
+                : shop.bathroomDesign, 
+              'bath', 
+              true
+            ) : ''}
           </div>
         </section>
         

@@ -11,6 +11,7 @@ import { handleLogout, createPagination, getPageSlice } from '../utils/basic.js'
 const elements = {
   logoutBtn: document.getElementById('logout-btn'),
   tableBody: document.getElementById('table-body'),
+  searchInput: document.getElementById('search-input'), // 新增
 };
 
 // Firebase 配置
@@ -23,7 +24,7 @@ const storage = firebase.storage(); // <-刪除Storage圖片
 const ITEMS_PER_PAGE = 10;
 let currentPage = 1;
 let allStore = [];
-
+let filteredStore = []; // 新增：篩選後的資料
 
 // ============================================
 // 身份驗證
@@ -53,14 +54,9 @@ elements.logoutBtn.addEventListener('click', () => handleLogout(db));
  */
 async function loadStoreList() {
     try {
-        // 如果我只需要取特定幾筆:
-        // let query = db.collection('stores');
-        // query = query.orderBy('documentId', 'desc'); //(資料>1000筆再在資料庫使用)
-
         const snapshot = await db.collection('stores').get();
-        // console.log(snapshot);
         
-        //  修正：每次都建立新的陣列，避免累積
+        // 修正：每次都建立新的陣列，避免累積
         allStore = [];
         
         snapshot.forEach(doc => {
@@ -70,41 +66,84 @@ async function loadStoreList() {
            }) 
         });
 
-        // console.log(`載入完成，共 ${allStore.length} 筆資料`);
+        // ========== 新增：以 documentId 降冪排序 ========== 
+        allStore.sort((a, b) => {
+          const idA = a.documentId || a.id;
+          const idB = b.documentId || b.id;
+          return idB.localeCompare(idA); // 降冪排序（新的在前）
+        });
 
+        console.log(`載入完成，共 ${allStore.length} 筆資料`);
 
+        // 初始化篩選結果
+        filteredStore = [...allStore];
+        
         currentPage = 1;
         renderCurrentPage();
-        
         
     } catch (error) {
         console.error('載入商店列表失敗:', error);
     }
 }
 
+// ========== 新增：搜尋功能 ========== 
+/**
+ * 處理搜尋
+ */
+function handleSearch() {
+  const searchTerm = elements.searchInput.value.trim().toLowerCase();
+  
+  if (searchTerm === '') {
+    // 搜尋框為空，顯示所有資料
+    filteredStore = [...allStore];
+  } else {
+    // 根據店名篩選
+    filteredStore = allStore.filter(store => {
+      const name = (store.name || '').toLowerCase();
+      return name.includes(searchTerm);
+    });
+  }
+  
+  // console.log(`搜尋結果: ${filteredStore.length} 筆`);
+  
+  // 重置到第一頁
+  currentPage = 1;
+  renderCurrentPage();
+}
+
+/**
+ * 初始化搜尋監聽
+ */
+function initSearchListener() {
+  if (elements.searchInput) {
+    // 輸入時即時搜尋
+    elements.searchInput.addEventListener('input', handleSearch);
+  }
+}
+
 // ============================================
 // 表格渲染
 // ============================================
-function renderTable(allStore){
+function renderTable(stores){
 
-  console.log('開始渲染表格...');
+  // console.log('開始渲染表格...');
   
   // 清空舊的表格內容
   elements.tableBody.innerHTML = '';
 
-  if (allStore.length === 0){
-    console.log('沒有資料');
+  if (stores.length === 0){
+    // console.log('沒有資料');
     elements.tableBody.innerHTML = `
       <tr>
         <td colspan="3" class="px-3 py-8 text-center text-gray-500">
-          目前沒有店家資料
+          ${elements.searchInput.value.trim() ? '找不到符合的店家' : '目前沒有店家資料'}
         </td>
       </tr>
     `;
     return;
   }
 
-  allStore.forEach(store =>{
+  stores.forEach(store =>{
     const row = document.createElement('tr');
     row.className = 'hover:bg-blue-50 transition-colors';
 
@@ -145,7 +184,7 @@ function renderTable(allStore){
           >
             <i data-lucide="pencil" class="text-white" width="1em" height="1em" ></i>
           </button>
-                    <button 
+          <button 
             onclick="deleteStore('${store.id}')" 
             class="p-3 rounded-full bg-retro-blue text-white border-2 border-retro-blue hover:bg-retro-blue/90 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-retro-blue" 
             aria-label="刪除店家"
@@ -154,11 +193,11 @@ function renderTable(allStore){
           </button>
       </div>
     </td>
-    `
+    `;
     elements.tableBody.appendChild(row);
   });
 
-   console.log(`渲染完成，共 ${allStore.length} 筆`);
+  //  console.log(`渲染完成，共 ${stores.length} 筆`);
 
    if (typeof lucide !== 'undefined') {
     lucide.createIcons();
@@ -175,7 +214,7 @@ function renderPagination() {
   
   createPagination({
     currentPage: currentPage,
-    totalItems: allStore.length,
+    totalItems: filteredStore.length, // 改用 filteredStore
     itemsPerPage: ITEMS_PER_PAGE,
     onPageChange: (newPage) => {
       currentPage = newPage;
@@ -187,7 +226,7 @@ function renderPagination() {
 
 
 function renderCurrentPage() {
-  const sessionsToShow = getPageSlice(allStore, currentPage, ITEMS_PER_PAGE);
+  const sessionsToShow = getPageSlice(filteredStore, currentPage, ITEMS_PER_PAGE); // 改用 filteredStore
   renderTable(sessionsToShow);
   renderPagination();
   
@@ -297,3 +336,6 @@ window.deleteStore = async function(storeId) {
     }
   }
 };
+
+// ========== 新增：初始化搜尋功能 ========== 
+initSearchListener();
