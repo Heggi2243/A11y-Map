@@ -374,8 +374,7 @@ function renderShopDetail(shop) {
   const avgCost = shop.avgCost ? `${shop.avgCost}元` : '未提供';
   const address = shop.address || '地址未提供';
   const description = shop.description || '暫無描述';
-  const imageUrl = allImages[0] || `https://picsum.photos/800/600?random=${shop.id}`;
-
+const imageUrl = (allImages[0]?.url) || `https://picsum.photos/800/600?random=${shop.id}`;
   
   // 價格等級
   const cost = parseInt(shop.avgCost);
@@ -507,8 +506,11 @@ function renderShopDetail(shop) {
             <div class="swiper-slide">
               <img 
                 src="${img.url}" 
+                srcset="${generateResponsiveSrcset(img.url)}"
+                sizes="200px"
                 alt="${generateAlt(img, index)}"
                 class="border-default h-32 w-48 object-cover rounded-2xl shadow-sm cursor-pointer hover:opacity-90 transition-opacity" 
+                loading="lazy"
                 onclick="openImageModal(${index})"
                 onerror="this.parentElement.style.display='none'"
               >
@@ -531,6 +533,8 @@ function renderShopDetail(shop) {
               <div class="swiper-slide" style="display: flex; align-items: center; justify-content: center; height: 100%;">
                 <img 
                   src="${img.url}" 
+                  srcset="${generateResponsiveSrcset(img.url)}"
+                  sizes="(max-width: 640px) 100vw, 800px"
                   alt="${generateAlt(img, index)}"
                   class="max-h-[70vh] w-auto object-contain rounded-lg shadow-2xl"
                   onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'"
@@ -552,8 +556,14 @@ function renderShopDetail(shop) {
   ).join('');
 
   const html = `
-    <div class="relative h-72 w-full rounded-b-[3rem] overflow-hidden shadow-xl shadow-retro-blue/10">
-      <img src="${imageUrl}" class="w-full h-full object-cover" onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'">
+  <div class="relative h-72 w-full rounded-b-[3rem] overflow-hidden shadow-xl shadow-retro-blue/10">
+    <img 
+      src="${imageUrl}" 
+      srcset="${generateResponsiveSrcset(imageUrl)}"
+      sizes="100vw"
+      alt="${name} - ${category} 封面照片"
+      class="w-full h-full object-cover" 
+      onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'">
       <div class="absolute inset-0 bg-gradient-to-t from-retro-dark/90 via-retro-dark/30 to-transparent"></div>
       <a href="/index.html" class="absolute top-6 left-6 bg-white p-3 rounded-full shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 transition-all z-20">
         <i data-lucide="arrow-left" size="24" class="text-retro-blue" stroke-width="3"></i>
@@ -667,6 +677,49 @@ function renderShopDetail(shop) {
 }
 
 // ========== 工具函式 ========== //
+
+/**
+ * 生成響應式圖片 srcset
+ * @param {string} imageUrl - 原圖 URL
+ * @returns {string} srcset 字串
+ */
+function generateResponsiveSrcset(imageUrl) {
+  if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
+    return '';
+  }
+  
+  try {
+    // Firebase Storage URL 格式：
+    // https://firebasestorage.googleapis.com/v0/b/bucket/o/path%2Ffile.webp?alt=media&token=xxx
+    
+    // 找到 .webp 的位置（在 ? 之前）
+    const queryIndex = imageUrl.indexOf('?');
+    const urlWithoutQuery = queryIndex !== -1 ? imageUrl.substring(0, queryIndex) : imageUrl;
+    
+    // 檢查是否是 webp 圖片
+    if (!urlWithoutQuery.endsWith('.webp')) {
+      return '';
+    }
+    
+    // 找到檔名部分（去掉 .webp）
+    const lastDotIndex = urlWithoutQuery.lastIndexOf('.webp');
+    const baseUrl = urlWithoutQuery.substring(0, lastDotIndex);
+    
+    // 取得 query string（包含 token）
+    const queryString = queryIndex !== -1 ? imageUrl.substring(queryIndex) : '';
+    
+    // 生成 srcset
+    return `
+      ${baseUrl}_200x200.webp${queryString} 200w,
+      ${baseUrl}_400x400.webp${queryString} 400w,
+      ${imageUrl} 1000w
+    `.replace(/\s+/g, ' ').trim();
+    
+  } catch (error) {
+    console.error('生成 srcset 失敗:', error);
+    return '';
+  }
+}
 
 function showError(message) {
   document.getElementById('shop-detail-container').innerHTML = `

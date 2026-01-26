@@ -15,11 +15,11 @@ const adminUIDs = [
 // ========== State Management ========== //
 
 const DEFAULT_USER_SETTINGS = {
-  wheelchairSize: 'small', //預設中小型輪椅
+  wheelchairSize: 'small',
   maxDistanceMeters: 2000,
   needsFriendlyEnvironment: false,
   needsA11yWC: false,
-  nearbyMode: false, // 找附近模式
+  nearbyMode: false,
 };
 
 const state = {
@@ -28,12 +28,18 @@ const state = {
   selectedCategory: '全部',
   allShops: [],
   isLoading: true,
-  userLocation: null, // 使用者位置 { lat, lng }
-  locationPermission: null, // 'granted', 'denied', null
-  locationTimestamp: null, // 記錄定位時間
-  pendingNearbyMode: false, // 找附近模式按鈕UI預設OFF
-  isUpdatingLocation: false, // 是否正在更新定位
+  userLocation: null,
+  locationPermission: null,
+  locationTimestamp: null,
+  pendingNearbyMode: false,
+  isUpdatingLocation: false,
+  
+  // ========== 新增：Lazy Loading 相關 ========== 
+  displayedShopsCount: 0, // 目前顯示的商店數量
+  shopsPerLoad: 10, // 每次載入 10 筆
+  isLoadingMore: false, // 是否正在載入更多
 };
+
 
 const LOCATION_CACHE_DURATION = 3 * 60 * 1000; // 3分鐘快取定位
 
@@ -673,7 +679,10 @@ function renderShopList() {
     return;
   }
   
+  // ========== 修改：重置顯示數量，重新開始 Lazy Loading ========== 
+  state.displayedShopsCount = 0;
   container.innerHTML = '';
+  
   const filtered = getFilteredShops();
 
   document.getElementById('recommend-title').textContent = `為您推薦 (${filtered.length})`;
@@ -682,17 +691,15 @@ function renderShopList() {
   const sizeText = state.userSettings.wheelchairSize === 'small' ? '中小型' : '中大型';
   document.getElementById('status-width').textContent = `輪椅: ${sizeText}`;
 
-  // 只有在使用者主動設定距離篩選時才顯示距離限制
   if (state.userSettings.nearbyMode && state.locationPermission === 'granted') {
     document.getElementById('status-dist').textContent = `距離 < ${formatDistance(state.userSettings.maxDistanceMeters)}`;
   } else {
     document.getElementById('status-dist').textContent = state.locationPermission === 'granted' ? '顯示所有店家' : '無定位資訊';
   }
 
-  // ========== 新增：顯示重新定位按鈕 ========== 
+  // 顯示重新定位按鈕
   const refreshBtnContainer = document.getElementById('refresh-location-container');
   if (state.locationPermission === 'granted') {
-    
     refreshBtnContainer.innerHTML = `
       <button 
         id="refresh-location-btn" 
@@ -704,7 +711,6 @@ function renderShopList() {
       </button>
     `;
     
-    // 綁定事件
     const refreshBtn = document.getElementById('refresh-location-btn');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', manualRefreshLocation);
@@ -726,53 +732,70 @@ function renderShopList() {
     return;
   }
 
-  filtered.forEach(shop => {
+  // ========== 修改：初始只載入第一批商店 ========== 
+  loadMoreShops();
+}
+
+
+/**
+ * 載入更多商店
+ */
+function loadMoreShops() {
+  if (state.isLoadingMore) return;
+  
+  state.isLoadingMore = true;
+  
+  const filtered = getFilteredShops();
+  const container = document.getElementById('shop-list-container');
+  
+  const start = state.displayedShopsCount;
+  const end = Math.min(start + state.shopsPerLoad, filtered.length);
+  const shopsToDisplay = filtered.slice(start, end);
+  
+  shopsToDisplay.forEach(shop => {
     const fitsDoor = state.userSettings.wheelchairSize === 'small' 
-      ? true  // 小型輪椅所有門都可以
+      ? true
       : shop.doorWidthCm >= 75;
       
     const restroomOK = !state.userSettings.needsA11yWC || 
                       (shop.restroom && shop.restroom.includes('無障礙'));
     const isCompatible = fitsDoor && restroomOK;
 
-    // 坡道徽章
     const rampBadge = !shop.ramp || shop.ramp.includes('無坡道') || shop.ramp.includes('順行') ? 
       renderBadge('good', '無坡道') : 
       (shop.ramp.includes('陡峭') ? 
         renderBadge('bad', '坡道陡') : 
         renderBadge('good', '坡道平緩'));
     
-    // 廁所徽章
     const restroomBadge = shop.restroom?.includes('無障礙') ? 
       renderBadge('good', '無障礙廁所') : 
       renderBadge('warning', shop.restroom?.split(' ')[0] || '未提供');
     
-    // 門寬徽章，用範圍標示比較無疑義
     const doorBadge = shop.doorWidthCm === 75 ? 
       renderBadge('warning', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`) :
-      renderBadge('good', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`) ;
+      renderBadge('good', `門寬 ${shop.doorWidthCm -5}~${shop.doorWidthCm +5}cm`);
 
-
-    // ========== 修改：距離顯示 ========== 
     let distanceDisplay;
     if (state.locationPermission === 'loading') {
-      // 定位中的狀態
       distanceDisplay = '抓取定位中...';
     } else if (state.locationPermission === 'granted') {
-      // 有granted就顯示距離(背景更新時不會改變)
       distanceDisplay = formatDistance(shop.distanceMeters);
     } else {
       distanceDisplay = '需啟用定位功能';
     }
 
-    // 卡片 HTML
+    // ========== 完整的 HTML 結構 ========== 
     const html = `
       <a href="store.html?id=${shop.id}" target="_blank" rel="noopener noreferrer" class="border-default shop-card group bg-white rounded-3xl overflow-hidden flex flex-col md:flex-row relative transition-all duration-300 hover:shadow-xl hover:shadow-retro-blue/10 hover:-translate-y-1 cursor-pointer block ${!isCompatible ? 'opacity-75 grayscale-[0.5]' : ''}">
         <div class="h-48 md:h-auto md:w-48 flex-shrink-0 relative overflow-hidden">
           <img 
             src="${shop.imageUrl}" 
+            srcset="${generateResponsiveSrcset(shop.imageUrl)}"
+            sizes="(max-width: 640px) 200px, 400px"
             alt="${escapeHtml(shop.name)}" 
-            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'">
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+            loading="lazy"
+            onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'">
           ${!isCompatible ? '<div class="absolute inset-0 bg-retro-blue/80 flex items-center justify-center pointer-events-none backdrop-blur-sm"><span class="text-white font-display font-bold border-2 border-white px-4 py-2 rounded-xl transform -rotate-3">不符合需求</span></div>' : ''}
         </div>
         <div class="p-5 flex-1 flex flex-col justify-between">
@@ -811,9 +834,80 @@ function renderShopList() {
     container.insertAdjacentHTML('beforeend', html);
   });
   
+  state.displayedShopsCount = end;
+  updateLoadMoreButton(filtered.length);
   lucide.createIcons();
+  state.isLoadingMore = false;
 }
 
+/**
+ * 更新「載入更多」按鈕
+ */
+function updateLoadMoreButton(totalCount) {
+  const container = document.getElementById('shop-list-container');
+  
+  // 移除舊的按鈕或提示
+  const oldButton = document.getElementById('load-more-btn');
+  const oldMessage = document.getElementById('all-loaded-message');
+  if (oldButton) oldButton.remove();
+  if (oldMessage) oldMessage.remove();
+  
+  if (state.displayedShopsCount < totalCount) {
+    // 還有更多商店，顯示「載入更多」按鈕
+    const button = document.createElement('div');
+    button.id = 'load-more-btn';
+    button.className = 'text-center py-8';
+    button.innerHTML = `
+      <button class="px-8 py-3 bg-retro-blue text-white font-display font-bold rounded-xl border-2 border-retro-blue shadow-[4px_4px_0px_0px_rgba(30,58,138,1)] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(30,58,138,1)] transition-all">
+        載入更多店家 (${totalCount - state.displayedShopsCount} 筆)
+      </button>
+    `;
+    
+    container.appendChild(button);
+    
+    // 綁定點擊事件
+    button.querySelector('button').addEventListener('click', loadMoreShops);
+    
+  } else if (state.displayedShopsCount > 0) {
+    // 已載入全部，顯示提示
+    const message = document.createElement('div');
+    message.id = 'all-loaded-message';
+    message.className = 'text-center py-8';
+    message.innerHTML = `
+      <p class="text-retro-blue/50 font-bold">已顯示全部 ${totalCount} 間店家</p>
+    `;
+    
+    container.appendChild(message);
+  }
+}
+
+/**
+ * 監聽滾動事件，接近底部時自動載入
+ */
+function initScrollListener() {
+  let scrollTimeout;
+  
+  window.addEventListener('scroll', () => {
+    // 節流：避免頻繁觸發
+    if (scrollTimeout) return;
+    
+    scrollTimeout = setTimeout(() => {
+      scrollTimeout = null;
+      
+      // 檢查是否接近底部（距離底部 500px 內）
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const pageHeight = document.documentElement.scrollHeight;
+      
+      if (scrollPosition >= pageHeight - 500) {
+        const filtered = getFilteredShops();
+        if (state.displayedShopsCount < filtered.length && !state.isLoadingMore) {
+          console.log('自動載入更多商店...');
+          loadMoreShops();
+        }
+      }
+    }, 200); // 200ms 節流
+  });
+}
 
 function renderFilterPanel() {
   const content = document.getElementById('filter-content');
@@ -914,6 +1008,40 @@ function renderToggle(label, icon, checked, id, description = '') {
 }
 
 // ========== UI 工具函式 ========== //
+
+/**
+ * 生成響應式圖片 srcset
+ * @param {string} imageUrl - 原圖 URL
+ * @returns {string} srcset 字串
+ */
+function generateResponsiveSrcset(imageUrl) {
+  if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
+    return '';
+  }
+  
+  try {
+    const queryIndex = imageUrl.indexOf('?');
+    const urlWithoutQuery = queryIndex !== -1 ? imageUrl.substring(0, queryIndex) : imageUrl;
+    
+    if (!urlWithoutQuery.endsWith('.webp')) {
+      return '';
+    }
+    
+    const lastDotIndex = urlWithoutQuery.lastIndexOf('.webp');
+    const baseUrl = urlWithoutQuery.substring(0, lastDotIndex);
+    const queryString = queryIndex !== -1 ? imageUrl.substring(queryIndex) : '';
+    
+    return `
+      ${baseUrl}_200x200.webp${queryString} 200w,
+      ${baseUrl}_400x400.webp${queryString} 400w,
+      ${imageUrl} 1000w
+    `.replace(/\s+/g, ' ').trim();
+    
+  } catch (error) {
+    console.error('生成 srcset 失敗:', error);
+    return '';
+  }
+}
 
 /**
  * 異體字統一(用於搜尋比對)
@@ -1118,19 +1246,14 @@ function recordUserActivity() {
 async function init() {
   const savedPermission = localStorage.getItem('locationPermission');
 
-  // 使用定位
   if (savedPermission === 'granted') {
     state.locationPermission = 'granted';
     
-    // 載入快取位置
     const cached = loadLocationFromStorage();
     if (cached) {
       state.userLocation = cached.location;
       state.locationTimestamp = cached.timestamp;
       
-      /* 快取時間戳在3分鐘內->使用快取位置；超過3分鐘 = 使用舊位置。
-         快取超過3分鐘&&使用者有活動的話，會在下一輪區段中更新位置。
-      */
       if (isLocationCacheValid()) {
         console.log('使用快取位置');
       } else {
@@ -1138,7 +1261,6 @@ async function init() {
       }
     }
     
-    // 記錄使用者活動
     document.addEventListener('click', recordUserActivity);
     document.addEventListener('scroll', recordUserActivity);
     document.addEventListener('touchstart', recordUserActivity);
@@ -1154,16 +1276,18 @@ async function init() {
   await loadShopsFromFirestore();
   renderShopList();
   initEventListeners();
+  
+  // ========== 新增：初始化滾動監聽（自動載入） ========== 
+  initScrollListener();
+  
   lucide.createIcons();
   
-  // 定期檢查（只在最近有活動時更新）
   setInterval(() => {
     const hasRecentActivity = (Date.now() - lastUserInteraction) < 3 * 60 * 1000; 
     
     if (state.locationPermission === 'granted' && 
         !isLocationCacheValid() && 
         hasRecentActivity) {
-      // console.log('使用者有活動，將於背景更新位置');
       updateLocationInBackground();
     }
   }, LOCATION_CACHE_DURATION);
@@ -1176,4 +1300,3 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
-

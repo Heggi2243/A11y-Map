@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-      "build": "npx tailwindcss -i ./src/input.css -o ./public/output.css",
-      "build:prod": "npx tailwindcss -i ./src/input.css -o ./public/output.css --minify",
-      "watch": "npx tailwindcss -i ./src/input.css -o ./public/output.css --watch"
+    "build": "npx tailwindcss -i ./src/input.css -o ./public/output.css",
+    "build:prod": "npx tailwindcss -i ./src/input.css -o ./public/output.css --minify",
+    "watch": "npx tailwindcss -i ./src/input.css -o ./public/output.css --watch"
   },
   "repository": {
     "type": "git",
@@ -22,5 +22,9 @@
   "homepage": "https://github.com/Heggi2243/a11y-map-backend#readme",
   "devDependencies": {
     "tailwindcss": "^3.4.18"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.6.0",
+    "sharp": "^0.34.5"
   }
 }
