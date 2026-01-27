@@ -2,6 +2,8 @@
 // index.js - 商店列表頁面
 // ============================================
 
+import { formatDate } from '../utils/basic.js';
+
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const analytics = firebase.analytics(); 
@@ -822,8 +824,14 @@ function loadMoreShops() {
             <div class="flex gap-4">
               <div class="flex items-center text-retro-blue">
                 <i data-lucide="container" size="16" class="mr-1 text-retro-blue"></i>
-                內部空間：${shop.circulation || '未提供'}
+                空間：${shop.circulation || '未提供'}
               </div>
+              ${shop.visitDate ? `
+              <div class="flex items-center text-retro-blue">
+                <i data-lucide="calendar" size="16" class="mr-1 text-retro-blue"></i>
+                ${formatDate(shop.visitDate)}
+              </div>
+              ` : ''}
             </div>
             <span class="text-retro-blue group-hover:translate-x-1 transition-transform">查看詳情 →</span>
           </div>

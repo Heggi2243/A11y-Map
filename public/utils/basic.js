@@ -192,3 +192,40 @@ export function getPageSlice(data, currentPage, itemsPerPage) {
   const endIndex = startIndex + itemsPerPage;
   return data.slice(startIndex, endIndex);
 }
+
+
+/**
+ * 格式化日期顯示 (Firestore Timestamp 或 Date 物件)
+ * @param {*} dateValue - Firestore Timestamp 或 Date 物件
+ * @returns {string} 格式化的日期字串 (YYYY/MM/DD)
+ */
+export function formatDate(dateValue) {
+  if (!dateValue) return '';
+  
+  let date;
+  
+  // 處理 Firestore Timestamp
+  if (dateValue && typeof dateValue.toDate === 'function') {
+    date = dateValue.toDate();
+  } 
+  // 處理 Date 物件
+  else if (dateValue instanceof Date) {
+    date = dateValue;
+  }
+  // 處理字串
+  else if (typeof dateValue === 'string') {
+    date = new Date(dateValue);
+  }
+  else {
+    return '';
+  }
+  
+  // 檢查是否為有效日期
+  if (isNaN(date.getTime())) return '';
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `${year}/${month}/${day}`;
+}

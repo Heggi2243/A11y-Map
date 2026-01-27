@@ -39,6 +39,18 @@
     border-color: #1e3a8a;
   }
 
+  
+  /* ================ store.js 輪播圖片 ================ */
+
+    /* Modal 圖片響應式樣式 */
+    @media (max-width: 768px) {
+        .modal-swiper .swiper-slide img {
+            width: 90vw;
+            height: auto;
+            max-height: 85vh;
+            object-fit: contain;
+        }
+    }
 
 
   /* ========前端footer的方塊裝飾======== */

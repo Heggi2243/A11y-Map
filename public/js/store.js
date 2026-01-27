@@ -2,6 +2,8 @@
 // 商店詳情 store.js
 // ============================================
 
+import { formatDate } from '../utils/basic.js';
+
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const analytics = firebase.analytics(); 
@@ -41,11 +43,11 @@ function updateSEO(shop) {
   updateMetaTag('name', 'description', `${name} - ${description.substring(0, 150)}`);
   
   // 處理異體字「臺」、「台」
-  const locationPart = address.split(/市|區|鄉|鎮/)[0]; // 例如：臺中、臺北
+  const locationPart = address.split(/市|區|鄉|鎮/)[0]; // 例如:臺中、臺北
   const locationVariants = locationPart ? [
     locationPart,
     locationPart.replace(/臺/g, '台'), // 臺中 → 台中
-    locationPart.replace(/台/g, '臺')  // 台中 → 臺中（反向也處理）
+    locationPart.replace(/台/g, '臺')  // 台中 → 臺中(反向也處理)
   ] : [];
 
   // 更新 meta keywords
@@ -106,7 +108,7 @@ function updateStructuredData(shop, imageUrl) {
   const address = shop.address || '';
   const description = shop.description || '';
   
-  // 建立評分（基於便利度）
+  // 建立評分(基於便利度)
   const rating = shop.convenience ? {
     "@type": "AggregateRating",
     "ratingValue": shop.convenience,
@@ -214,23 +216,21 @@ function updateStructuredData(shop, imageUrl) {
     };
   }
   
-  // ========== 6. 根據不同類型加入特定屬性 ========== 
+  // ========== 6. 加入拜訪日期和更新日期 ========== 
+  if (shop.visitDate) {
+    structuredData.datePublished = formatISODate(shop.visitDate);
+  }
   
-  // 餐廳：加入菜系（如果有 food 評分就代表是餐廳）
-  // if (businessType === "Restaurant" && shop.food) {
-  //   // structuredData.servesCuisine = "多國料理"; // 之後再說
-  //   structuredData.starRating = {
-  //     "@type": "Rating",
-  //     "ratingValue": shop.food,
-  //     "bestRating": "5"
-  //   };
-  // }
+  if (shop.updatedAt) {
+    structuredData.dateModified = formatISODate(shop.updatedAt);
+  }
+  
+  // ========== 7. 根據不同類型加入特定屬性 ========== 
   
   // 住宿：加入住宿相關資訊
   if (businessType === "LodgingBusiness") {
     // 如果有浴室設計資訊，加入無障礙浴室屬性
     if (shop.bathroomDesign) {
-      // structuredData.petsAllowed = false; // 寵物相關
       structuredData.amenityFeature.push({
         "@type": "LocationFeatureSpecification",
         "name": "浴室設計",
@@ -244,7 +244,7 @@ function updateStructuredData(shop, imageUrl) {
     structuredData.touristType = ["輪椅使用者", "行動不便者", "輪椅族"];
   }
   
-  // ========== 7. 更新 script tag ========== 
+  // ========== 8. 更新 script tag ========== 
   let script = document.getElementById('structured-data');
   if (script) {
     script.textContent = JSON.stringify(structuredData, null, 2);
@@ -256,7 +256,7 @@ function updateStructuredData(shop, imageUrl) {
     document.head.appendChild(script);
   }
   
-  // console.log('Structured Data:', structuredData);
+  console.log('Structured Data:', structuredData);
 }
 
 // ==================== Swiper Modal 控制函數 ==================== //
@@ -507,7 +507,7 @@ const imageUrl = (allImages[0]?.url) || `https://picsum.photos/800/600?random=${
               <img 
                 src="${img.url}" 
                 srcset="${generateResponsiveSrcset(img.url)}"
-                sizes="200px"
+                 sizes="200px"
                 alt="${generateAlt(img, index)}"
                 class="border-default h-32 w-48 object-cover rounded-2xl shadow-sm cursor-pointer hover:opacity-90 transition-opacity" 
                 loading="lazy"
@@ -522,32 +522,32 @@ const imageUrl = (allImages[0]?.url) || `https://picsum.photos/800/600?random=${
         <div class="swiper-button-next" style="color: #1e3a8a;"></div>
       </div>
       
-      <div id="imageModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4" onclick="closeImageModal()">
-        <button class="absolute top-4 right-4 text-white bg-white/20 hover:bg-white/30 rounded-full p-2 backdrop-blur-sm transition-colors z-10" onclick="closeImageModal()">
-          <i data-lucide="x" size="32" stroke-width="2.5"></i>
-        </button>
-        
-        <div class="swiper modal-swiper w-auto max-w-md" onclick="event.stopPropagation()" style="height: 80vh;">
+    <div id="imageModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4" onclick="closeImageModal()">
+      <button class="absolute top-4 right-4 text-white bg-white/20 hover:bg-white/30 rounded-full p-2 backdrop-blur-sm transition-colors z-10" onclick="closeImageModal()">
+        <i data-lucide="x" size="32" stroke-width="2.5"></i>
+      </button>
+      
+      <div class="swiper modal-swiper w-auto max-w-md" onclick="event.stopPropagation()" style="height: 80vh;">
           <div class="swiper-wrapper" style="align-items: center;">
             ${allImages.map((img, index) => `
               <div class="swiper-slide" style="display: flex; align-items: center; justify-content: center; height: 100%;">
                 <img 
                   src="${img.url}" 
                   srcset="${generateResponsiveSrcset(img.url)}"
-                  sizes="(max-width: 640px) 100vw, 800px"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1200px"
                   alt="${generateAlt(img, index)}"
                   class="max-h-[70vh] w-auto object-contain rounded-lg shadow-2xl"
-                  onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'"
-                >
-              </div>
-            `).join('')}
-          </div>
-          
-          <div class="swiper-button-prev" style="color: #1e3a8a;"></div>
-          <div class="swiper-button-next" style="color: #1e3a8a;"></div>
-          <div class="swiper-pagination !bottom-4"></div>
+                onerror="this.src='https://picsum.photos/800/600?random=${shop.id}'"
+              >
+            </div>
+          `).join('')}
         </div>
+        
+        <div class="swiper-button-prev" style="color: #1e3a8a;"></div>
+        <div class="swiper-button-next" style="color: #1e3a8a;"></div>
+        <div class="swiper-pagination !bottom-4"></div>
       </div>
+    </div>
     </div>
   ` : '';
 
@@ -664,6 +664,23 @@ const imageUrl = (allImages[0]?.url) || `https://picsum.photos/800/600?random=${
           </div>
         </section>
         ` : ''}
+        
+        <section class="border-default bg-retro-blue/5 rounded-2xl p-4">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm text-retro-blue/80">
+            ${shop.visitDate ? `
+            <div class="flex items-center">
+              <i data-lucide="calendar" size="16" class="mr-2"></i>
+              <span class="font-bold">拜訪日期: ${formatDate(shop.visitDate)}</span>
+            </div>
+            ` : ''}
+            ${shop.updatedAt ? `
+            <div class="flex items-center">
+              <i data-lucide="clock" size="16" class="mr-2"></i>
+              <span class="font-bold">更新日期: ${formatDate(shop.updatedAt)}</span>
+            </div>
+            ` : ''}
+          </div>
+        </section>
       </div>
     </div>
   `;
@@ -677,6 +694,40 @@ const imageUrl = (allImages[0]?.url) || `https://picsum.photos/800/600?random=${
 }
 
 // ========== 工具函式 ========== //
+
+
+
+/**
+ * 格式化為 ISO 8601 日期格式 (用於 Schema.org)
+ * @param {*} dateValue - Firestore Timestamp 或 Date 物件
+ * @returns {string} ISO 格式的日期字串 (YYYY-MM-DD)
+ */
+function formatISODate(dateValue) {
+  if (!dateValue) return '';
+  
+  let date;
+  
+  // 處理 Firestore Timestamp
+  if (dateValue && typeof dateValue.toDate === 'function') {
+    date = dateValue.toDate();
+  } 
+  // 處理 Date 物件
+  else if (dateValue instanceof Date) {
+    date = dateValue;
+  }
+  // 處理字串
+  else if (typeof dateValue === 'string') {
+    date = new Date(dateValue);
+  }
+  else {
+    return '';
+  }
+  
+  // 檢查是否為有效日期
+  if (isNaN(date.getTime())) return '';
+  
+  return date.toISOString().split('T')[0]; // YYYY-MM-DD
+}
 
 /**
  * 生成響應式圖片 srcset
@@ -692,7 +743,7 @@ function generateResponsiveSrcset(imageUrl) {
     // Firebase Storage URL 格式：
     // https://firebasestorage.googleapis.com/v0/b/bucket/o/path%2Ffile.webp?alt=media&token=xxx
     
-    // 找到 .webp 的位置（在 ? 之前）
+    // 找到 .webp 的位置(在 ? 之前)
     const queryIndex = imageUrl.indexOf('?');
     const urlWithoutQuery = queryIndex !== -1 ? imageUrl.substring(0, queryIndex) : imageUrl;
     
@@ -701,11 +752,11 @@ function generateResponsiveSrcset(imageUrl) {
       return '';
     }
     
-    // 找到檔名部分（去掉 .webp）
+    // 找到檔名部分(去掉 .webp)
     const lastDotIndex = urlWithoutQuery.lastIndexOf('.webp');
     const baseUrl = urlWithoutQuery.substring(0, lastDotIndex);
     
-    // 取得 query string（包含 token）
+    // 取得 query string(包含 token)
     const queryString = queryIndex !== -1 ? imageUrl.substring(queryIndex) : '';
     
     // 生成 srcset
@@ -800,4 +851,3 @@ function renderDetailItem(label, value, iconOrHtml, isHtml = false) {
     footerToggleBtn.addEventListener('click', toggleFooter);
     footerLabel.addEventListener('click', toggleFooter);
   }
-
