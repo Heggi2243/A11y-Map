@@ -788,7 +788,7 @@ function loadMoreShops() {
 
     // ========== 完整的 HTML 結構 ========== 
     const html = `
-      <a href="store.html?id=${shop.id}" target="_blank" rel="noopener noreferrer" class="border-default shop-card group bg-white rounded-3xl overflow-hidden flex flex-col md:flex-row relative transition-all duration-300 hover:shadow-xl hover:shadow-retro-blue/10 hover:-translate-y-1 cursor-pointer block ${!isCompatible ? 'opacity-75 grayscale-[0.5]' : ''}">
+      <a href="/store/${shop.id}" target="_blank" rel="noopener noreferrer" class="border-default shop-card group bg-white rounded-3xl overflow-hidden flex flex-col md:flex-row relative transition-all duration-300 hover:shadow-xl hover:shadow-retro-blue/10 hover:-translate-y-1 cursor-pointer block ${!isCompatible ? 'opacity-75 grayscale-[0.5]' : ''}">
         <div class="h-48 md:h-auto md:w-48 flex-shrink-0 relative overflow-hidden">
           <img 
             src="${shop.imageUrl}" 

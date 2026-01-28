@@ -7,6 +7,11 @@ const admin = require("firebase-admin");
 const axios = require('axios');
 const crypto = require('crypto'); // Node.js內建，不需安裝(接綠界相關)
 const nodemailer = require('nodemailer');
+const puppeteer = require('puppeteer-core');  // 改用 puppeteer-core
+const chromium = require('@sparticuz/chromium');  // 新增這行
+
+// 14天快取 = 1,209,600 秒
+const CACHE_MAX_AGE = 1209600;
 
 
 // 用process.env讀取環境變數
@@ -479,3 +484,298 @@ exports.ecpayCallback = functions.region('asia-east1').https.onRequest(async (re
     res.send('0|ERROR');
   }
 });
+
+
+exports.renderStore = functions
+  .region('asia-east1')
+  .runWith({
+    memory: '2GB',  // 增加記憶體
+    timeoutSeconds: 120,
+    maxInstances: 5
+  })
+  .https.onRequest(async (req, res) => {
+    
+    const shopId = req.path.replace('/store/', '').replace('/', '');
+    
+    if (!shopId) {
+      return res.redirect(301, '/');
+    }
+    
+    // ========== 修正的 User-Agent 偵測 ==========
+    const userAgent = req.headers['user-agent'] || '';
+    const lowerUserAgent = userAgent.toLowerCase();
+    
+    const isBot = (
+      lowerUserAgent.includes('googlebot') ||
+      lowerUserAgent.includes('google-inspectiontool') ||
+      lowerUserAgent.includes('bingbot') ||
+      lowerUserAgent.includes('yandex') ||
+      lowerUserAgent.includes('baiduspider') ||
+      lowerUserAgent.includes('twitterbot') ||
+      lowerUserAgent.includes('facebookexternalhit') ||
+      lowerUserAgent.includes('rogerbot') ||
+      lowerUserAgent.includes('linkedinbot') ||
+      lowerUserAgent.includes('embedly') ||
+      lowerUserAgent.includes('showyoubot') ||
+      lowerUserAgent.includes('outbrain') ||
+      lowerUserAgent.includes('pinterest') ||
+      lowerUserAgent.includes('slackbot') ||
+      lowerUserAgent.includes('vkshare') ||
+      lowerUserAgent.includes('w3c_validator') ||
+      lowerUserAgent.includes('applebot') ||
+      lowerUserAgent.includes('whatsapp')
+    );
+    // =============================================
+    
+    // 記錄請求
+    console.log('[REQUEST]', {
+      shopId: shopId,
+      isBot: isBot,
+      userAgent: userAgent.substring(0, 80)  // 增加長度，看完整 UA
+    });
+    
+    // 如果不是爬蟲，直接重導向
+    if (!isBot) {
+      return res.redirect(302, `/store.html?id=${shopId}`);
+    }
+    
+    // 爬蟲請求 - 進行 SSR
+    try {
+      console.log(`[SSR] Rendering for bot: ${shopId}`);
+      
+      const startTime = Date.now();
+      const html = await renderPage(shopId);
+      const renderTime = Date.now() - startTime;
+      
+      console.log(`[SSR] Rendered ${shopId} in ${renderTime}ms`);
+      
+      // 設定快取 14 天
+      res.set('Cache-Control', `public, max-age=${CACHE_MAX_AGE}, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate=86400`);
+      res.set('X-Render-Time', `${renderTime}ms`);
+      res.status(200).send(html);
+      
+    } catch (error) {
+      console.error(`[SSR] Error rendering ${shopId}:`, error);
+      
+      // 錯誤時返回基本 HTML
+      const fallbackHtml = await getFallbackHTML(shopId);
+      res.set('Cache-Control', 'no-cache');
+      res.status(200).send(fallbackHtml);
+    }
+});
+
+async function renderPage(shopId) {
+  let browser;
+  
+  try {
+    console.log(`[SSR] Starting render for ${shopId}`);
+    
+    // 使用 Chromium for Cloud Functions
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),  // 關鍵！使用 chromium 的執行檔
+      headless: chromium.headless,
+    });
+    
+    console.log(`[SSR] Browser launched`);
+    
+    const page = await browser.newPage();
+    
+    // 設定資源阻擋（節省記憶體）
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+      const resourceType = request.resourceType();
+      const url = request.url();
+      
+      if (
+        resourceType === 'font' ||
+        resourceType === 'media' ||
+        resourceType === 'image' ||
+        url.includes('googletagmanager') ||
+        url.includes('analytics')
+      ) {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+    
+    await page.setUserAgent('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
+    await page.setViewport({ width: 375, height: 812 });
+    
+    const url = `https://a11y-map.web.app/store.html?id=${shopId}`;
+    console.log(`[SSR] Navigating to ${url}`);
+    
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
+      timeout: 45000
+    });
+    
+    console.log(`[SSR] Page loaded, waiting for content`);
+    
+    // 等待關鍵內容
+    try {
+      await page.waitForSelector('#shop-detail-container h1', {
+        timeout: 25000
+      });
+      
+      console.log(`[SSR] Content found!`);
+      await page.waitForTimeout(2000);
+      
+    } catch (e) {
+      console.error(`[SSR] Timeout:`, e.message);
+      
+      // 即使超時也繼續
+      const content = await page.content();
+      if (content.length < 5000) {
+        throw new Error('Content too short');
+      }
+    }
+    
+    const html = await page.content();
+    console.log(`[SSR] Success! HTML length: ${html.length}`);
+    
+    return html;
+    
+  } catch (error) {
+    console.error(`[SSR] Error:`, error.message);
+    throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+      console.log(`[SSR] Browser closed`);
+    }
+  }
+}
+
+async function getFallbackHTML(shopId) {
+  const db = admin.firestore();
+  
+  try {
+    const doc = await db.collection('stores').doc(shopId).get();
+    
+    if (!doc.exists) {
+      return getDefaultHTML();
+    }
+    
+    const shop = doc.data();
+    const name = shop.name || '未命名店家';
+    const category = Array.isArray(shop.category) ? shop.category.join(', ') : (shop.category || '其他');
+    const description = shop.description || `${name} - ${category}類無障礙友善店家`;
+    const imageUrl = (shop.store_cover?.[0] || shop.entrance_photo?.[0] || shop.interior_photo?.[0]) || 'https://a11y-map.web.app/img/og-default.jpg';
+    
+    // 建立更豐富的內容
+    const facilities = [];
+    if (shop.ramp) facilities.push(`坡道: ${shop.ramp}`);
+    if (shop.doorWidthCm) facilities.push(`門寬: ${shop.doorWidthCm}`);
+    if (shop.restroom) facilities.push(`廁所: ${shop.restroom}`);
+    if (shop.circulation) facilities.push(`動線: ${shop.circulation}`);
+    
+    return `<!DOCTYPE html>
+    <html lang="zh-TW">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${escapeHtml(name)} - 無障礙${escapeHtml(category)} | 暢行無阻 A11y-Map</title>
+      <meta name="description" content="${escapeHtml(description.substring(0, 150))}">
+      <meta name="keywords" content="無障礙,輪椅友善,${escapeHtml(category)},${escapeHtml(name)},${escapeHtml(shop.address || '')}">
+      
+      <!-- Open Graph -->
+      <meta property="og:type" content="website">
+      <meta property="og:title" content="${escapeHtml(name)} - 無障礙${escapeHtml(category)}">
+      <meta property="og:description" content="${escapeHtml(description.substring(0, 200))}">
+      <meta property="og:image" content="${imageUrl}">
+      <meta property="og:url" content="https://a11y-map.web.app/store/${shopId}">
+      
+      <!-- 結構化資料 -->
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "${category.includes('餐飲') ? 'Restaurant' : 'LocalBusiness'}",
+        "name": "${escapeHtml(name)}",
+        "description": "${escapeHtml(description)}",
+        "image": "${imageUrl}",
+        "address": {
+          "@type": "PostalAddress",
+          "addressCountry": "TW",
+          "streetAddress": "${escapeHtml(shop.address || '')}"
+        },
+        ${shop.convenience ? `
+        "review": {
+          "@type": "Review",
+          "author": {
+            "@type": "Person",
+            "name": "暢行無阻 A11y-Map"
+          },
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": ${shop.convenience},
+            "bestRating": "5"
+          }
+        },` : ''}
+        "url": "https://a11y-map.web.app/store/${shopId}"
+      }
+      </script>
+      
+      <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+        h1 { color: #1e40af; }
+        .facility { background: #eff6ff; padding: 8px 12px; margin: 4px; display: inline-block; border-radius: 4px; }
+        img { max-width: 100%; height: auto; border-radius: 8px; }
+        .btn { display: inline-block; background: #1e40af; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <h1>${escapeHtml(name)}</h1>
+      <img src="${imageUrl}" alt="${escapeHtml(name)}" loading="lazy">
+      
+      <p><strong>類別：</strong>${escapeHtml(category)}</p>
+      ${shop.address ? `<p><strong>地址：</strong>${escapeHtml(shop.address)}</p>` : ''}
+      ${shop.convenience ? `<p><strong>便利度：</strong>${shop.convenience} / 5</p>` : ''}
+      
+      <h2>無障礙設施</h2>
+      ${facilities.map(f => `<span class="facility">${escapeHtml(f)}</span>`).join('')}
+      
+      <h2>詳細說明</h2>
+      <p>${escapeHtml(description)}</p>
+      
+      <a href="/store.html?id=${shopId}" class="btn">查看完整互動式頁面</a>
+      
+      <noscript>
+        <p><a href="/store.html?id=${shopId}">點擊這裡查看完整頁面</a></p>
+      </noscript>
+    </body>
+    </html>`;
+    
+  } catch (error) {
+    console.error('[SSR] Fallback HTML error:', error);
+    return getDefaultHTML();
+  }
+}
+
+function getDefaultHTML() {
+    return `<!DOCTYPE html>
+  <html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8">
+    <title>暢行無阻 A11y-Map - 無障礙友善店家</title>
+    <meta name="description" content="提供台灣各地無障礙友善店家資訊">
+    <meta http-equiv="refresh" content="0; url=/">
+  </head>
+  <body>
+    <h1>暢行無阻 A11y-Map</h1>
+    <p>載入中...</p>
+  </body>
+  </html>`;
+}
+
+function escapeHtml(unsafe) {
+  if (!unsafe) return '';
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
