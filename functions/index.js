@@ -957,6 +957,12 @@ async function getFallbackHTML(shopId) {
   
   ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(name)} - 無障礙友善店家" loading="lazy">` : ''}
   
+  ${shop.entrance_photo && shop.entrance_photo.length > 0 ? 
+    shop.entrance_photo.map(photo => 
+      `<img src="${photo}" alt="${escapeHtml(name)} 無障礙出入口實況" loading="lazy">`
+    ).join('') 
+  : ''}
+
   <div class="info-grid">
     <div class="info-item">
       <strong>類別：</strong>${escapeHtml(category)}
