@@ -12,6 +12,7 @@ const elements = {
   logoutBtn: document.getElementById('logout-btn'),
   tableBody: document.getElementById('table-body'),
   searchInput: document.getElementById('search-input'), // 新增
+  generateFallbackBtn: document.getElementById('generateFallback'),
 };
 
 // Firebase 配置
@@ -42,6 +43,113 @@ auth.onAuthStateChanged(async (user) => {
   console.log('已登入:', user.uid);
   await loadStoreList();
 });
+
+// ============================================
+// Fallback HTML 產生器（給 SEO / 爬蟲）
+// ============================================
+
+/**
+ * 簡單的 HTML escape，避免內容破壞標籤結構
+ */
+function escapeHtml(text = '') {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * 取得依 createdAt 由新到舊排序後的前 N 筆資料
+ */
+function getLatestStoresByCreatedAt(limit = 10) {
+  if (!Array.isArray(allStore) || allStore.length === 0) return [];
+
+  const storesWithCreatedAt = allStore.filter(store => store.createdAt);
+
+  const sorted = storesWithCreatedAt.sort((a, b) => {
+    const getTime = (value) => {
+      if (!value) return 0;
+      // Firestore Timestamp 物件
+      if (typeof value.toMillis === 'function') {
+        return value.toMillis();
+      }
+      // ISO 字串或一般日期字串
+      const t = new Date(value).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+
+    return getTime(b.createdAt) - getTime(a.createdAt);
+  });
+
+  return sorted.slice(0, limit);
+}
+
+/**
+ * 根據規格產生 Fallback 用的純 HTML 字串
+ */
+function buildFallbackHtml() {
+  const latestStores = getLatestStoresByCreatedAt(10);
+
+  if (latestStores.length === 0) {
+    return '<!-- 目前沒有可用的店家資料供 Fallback 使用 -->';
+  }
+
+  const articles = latestStores.map(store => {
+    const name = escapeHtml(store.name || '');
+    const address = escapeHtml(store.address || '');
+    const ramp = escapeHtml(store.ramp || '');
+    const steps = escapeHtml(store.steps || '');
+    const doorWidthCm = escapeHtml(store.doorWidthCm || '');
+    const restroom = escapeHtml(store.restroom || '');
+    const description = escapeHtml(store.description || '');
+    const visitDate = escapeHtml(store.visitDate || '');
+
+    // href 目前沒有明確規格，先給一個可用的 placeholder
+    const href = '#';
+
+    return [
+      '<article class="seo-fallback">',
+      `  <h3><a href="${href}">${name}</a></h3>`,
+      `  <p>地址：${address}</p>`,
+      `  <p>【無障礙資訊】坡道設置：${ramp}、階梯狀況：${steps}、門寬：${doorWidthCm}、廁所：${restroom}</p>`,
+      `  <p>參訪心得：${description}</p>`,
+      `  <p>參訪日期：${visitDate}</p>`,
+      '</article>'
+    ].join('\n');
+  });
+
+  return articles.join('\n\n');
+}
+
+/**
+ * 點擊「生成Fallback」按鈕時，產生 HTML 並讓使用者複製
+ */
+async function handleGenerateFallbackClick() {
+  const html = buildFallbackHtml();
+
+  console.log('生成的 Fallback HTML：\n', html);
+
+  // 嘗試直接複製到剪貼簿（若瀏覽器/環境允許）
+  try {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      await navigator.clipboard.writeText(html);
+      alert('已生成並複製Fallback HTML到剪貼簿！\n若失敗，可從console中手動複製。');
+      return;
+    }
+  } catch (err) {
+    // 如果剪貼簿權限失敗就 fallback 到 prompt
+    console.warn('無法寫入剪貼簿，改用提示視窗供複製：', err);
+  }
+
+  // 最保險的方式：用 prompt 讓使用者自行複製
+  window.prompt('以下為生成的 Fallback HTML，請手動全選後複製：', html);
+}
+
+if (elements.generateFallbackBtn) {
+  elements.generateFallbackBtn.addEventListener('click', handleGenerateFallbackClick);
+}
 
 // ============================================
 // 登出功能
