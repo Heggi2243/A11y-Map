@@ -664,89 +664,350 @@ async function getFallbackHTML(shopId) {
     const category = Array.isArray(shop.category) ? shop.category.join(', ') : (shop.category || '其他');
     const description = shop.description || `${name} - ${category}類無障礙友善店家`;
     const imageUrl = (shop.store_cover?.[0] || shop.entrance_photo?.[0] || shop.interior_photo?.[0]) || 'https://a11y-map.web.app/img/og-default.jpg';
+    const address = shop.address || '';
     
-    // 建立更豐富的內容
+    // 格式化日期函數
+    const formatDate = (dateValue) => {
+      if (!dateValue) return '';
+      let date;
+      if (dateValue && typeof dateValue.toDate === 'function') {
+        date = dateValue.toDate();
+      } else if (dateValue instanceof Date) {
+        date = dateValue;
+      } else if (typeof dateValue === 'string') {
+        date = new Date(dateValue);
+      } else {
+        return '';
+      }
+      if (isNaN(date.getTime())) return '';
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}年${month}月${day}日`;
+    };
+    
+    const formatISODate = (dateValue) => {
+      if (!dateValue) return '';
+      let date;
+      if (dateValue && typeof dateValue.toDate === 'function') {
+        date = dateValue.toDate();
+      } else if (dateValue instanceof Date) {
+        date = dateValue;
+      } else if (typeof dateValue === 'string') {
+        date = new Date(dateValue);
+      } else {
+        return '';
+      }
+      if (isNaN(date.getTime())) return '';
+      return date.toISOString().split('T')[0];
+    };
+    
+    // 建立設施資訊
     const facilities = [];
-    if (shop.ramp) facilities.push(`坡道: ${shop.ramp}`);
-    if (shop.doorWidthCm) facilities.push(`門寬: ${shop.doorWidthCm}`);
-    if (shop.restroom) facilities.push(`廁所: ${shop.restroom}`);
-    if (shop.circulation) facilities.push(`動線: ${shop.circulation}`);
+    if (shop.ramp) facilities.push({ label: '坡道', value: shop.ramp });
+    if (shop.doorWidthCm) facilities.push({ label: '門寬', value: shop.doorWidthCm });
+    if (shop.restroom) facilities.push({ label: '廁所', value: shop.restroom });
+    if (shop.circulation) facilities.push({ label: '動線', value: shop.circulation });
+    if (shop.steps && Array.isArray(shop.steps)) {
+      facilities.push({ label: '階梯', value: shop.steps.join(', ') });
+    }
+    
+    // 協助需求
+    const assistance = Array.isArray(shop.assistance) 
+      ? shop.assistance.join('、') 
+      : shop.assistance || '';
+    
+    // 日期資訊
+    const visitDate = formatDate(shop.visitDate);
+    const visitDateISO = formatISODate(shop.visitDate);
+    const updatedAt = formatDate(shop.updatedAt);
+    const updatedAtISO = formatISODate(shop.updatedAt);
+    
+    // 判斷商家類型
+    let businessType = 'LocalBusiness';
+    if (category.includes('餐飲')) {
+      businessType = 'Restaurant';
+    } else if (category.includes('住宿')) {
+      businessType = 'LodgingBusiness';
+    } else if (category.includes('購物')) {
+      businessType = 'Store';
+    } else if (category.includes('景點')) {
+      businessType = 'TouristAttraction';
+    }
+    
+    // 建立無障礙設施特徵（給 Schema.org）
+    const amenityFeatures = [];
+    if (shop.ramp?.includes('平緩') || shop.ramp?.includes('順行')) {
+      amenityFeatures.push({
+        "@type": "LocationFeatureSpecification",
+        "name": "無障礙入口",
+        "value": true
+      });
+    }
+    if (shop.restroom?.includes('無障礙')) {
+      amenityFeatures.push({
+        "@type": "LocationFeatureSpecification",
+        "name": "無障礙廁所",
+        "value": true
+      });
+    }
+    if (shop.doorWidthCm?.includes('寬敞')) {
+      amenityFeatures.push({
+        "@type": "LocationFeatureSpecification",
+        "name": "輪椅友善門寬",
+        "value": true
+      });
+    }
     
     return `<!DOCTYPE html>
-    <html lang="zh-TW">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${escapeHtml(name)} - 無障礙${escapeHtml(category)} | 暢行無阻 A11y-Map</title>
-      <meta name="description" content="${escapeHtml(description.substring(0, 150))}">
-      <meta name="keywords" content="無障礙,輪椅友善,${escapeHtml(category)},${escapeHtml(name)},${escapeHtml(shop.address || '')}">
-      
-      <!-- Open Graph -->
-      <meta property="og:type" content="website">
-      <meta property="og:title" content="${escapeHtml(name)} - 無障礙${escapeHtml(category)}">
-      <meta property="og:description" content="${escapeHtml(description.substring(0, 200))}">
-      <meta property="og:image" content="${imageUrl}">
-      <meta property="og:url" content="https://a11y-map.web.app/store/${shopId}">
-      
-      <!-- 結構化資料 -->
-      <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "${category.includes('餐飲') ? 'Restaurant' : 'LocalBusiness'}",
-        "name": "${escapeHtml(name)}",
-        "description": "${escapeHtml(description)}",
-        "image": "${imageUrl}",
-        "address": {
-          "@type": "PostalAddress",
-          "addressCountry": "TW",
-          "streetAddress": "${escapeHtml(shop.address || '')}"
-        },
-        ${shop.convenience ? `
-        "review": {
-          "@type": "Review",
-          "author": {
-            "@type": "Person",
-            "name": "暢行無阻 A11y-Map"
-          },
-          "reviewRating": {
-            "@type": "Rating",
-            "ratingValue": ${shop.convenience},
-            "bestRating": "5"
-          }
-        },` : ''}
-        "url": "https://a11y-map.web.app/store/${shopId}"
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(name)} - 無障礙${escapeHtml(category)} | 暢行無阻 A11y-Map</title>
+  <meta name="description" content="${escapeHtml(description.substring(0, 150))}">
+  <meta name="keywords" content="無障礙,輪椅友善,${escapeHtml(category)},${escapeHtml(name)},${escapeHtml(address)}">
+  
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="暢行無阻 A11y-Map">
+  <meta property="og:title" content="${escapeHtml(name)} - 無障礙${escapeHtml(category)}">
+  <meta property="og:description" content="${escapeHtml(description.substring(0, 200))}">
+  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:url" content="https://a11y-map.web.app/store/${shopId}">
+  
+  <!-- 結構化資料 -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "${businessType}",
+    "name": "${escapeHtml(name)}",
+    "description": "${escapeHtml(description)}",
+    "image": "${imageUrl}",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "TW",
+      "streetAddress": "${escapeHtml(address)}"
+    },
+    ${shop.convenience ? `
+    "review": {
+      "@type": "Review",
+      "datePublished": "${shop.visitDate}",
+      "author": {
+        "@type": "Person",
+        "name": "暢行無阻 A11y-Map"
+      },
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": ${shop.convenience},
+        "bestRating": "5",
+        "worstRating": "1"
       }
-      </script>
-      
-      <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-        h1 { color: #1e40af; }
-        .facility { background: #eff6ff; padding: 8px 12px; margin: 4px; display: inline-block; border-radius: 4px; }
-        img { max-width: 100%; height: auto; border-radius: 8px; }
-        .btn { display: inline-block; background: #1e40af; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; margin-top: 20px; }
-      </style>
-    </head>
-    <body>
-      <h1>${escapeHtml(name)}</h1>
-      <img src="${imageUrl}" alt="${escapeHtml(name)}" loading="lazy">
-      
-      <p><strong>類別：</strong>${escapeHtml(category)}</p>
-      ${shop.address ? `<p><strong>地址：</strong>${escapeHtml(shop.address)}</p>` : ''}
-      ${shop.convenience ? `<p><strong>便利度：</strong>${shop.convenience} / 5</p>` : ''}
-      
-      <h2>無障礙設施</h2>
-      ${facilities.map(f => `<span class="facility">${escapeHtml(f)}</span>`).join('')}
-      
-      <h2>詳細說明</h2>
-      <p>${escapeHtml(description)}</p>
-      
-      <a href="/store.html?id=${shopId}" class="btn">查看完整互動式頁面</a>
-      
-      <noscript>
-        <p><a href="/store.html?id=${shopId}">點擊這裡查看完整頁面</a></p>
-      </noscript>
-    </body>
-    </html>`;
+    },` : ''}
+    ${amenityFeatures.length > 0 ? `
+    "amenityFeature": ${JSON.stringify(amenityFeatures)},` : ''}
+    ${visitDateISO ? `"datePublished": "${visitDateISO}",` : ''}
+    ${updatedAtISO ? `"dateModified": "${updatedAtISO}",` : ''}
+    ${shop.latitude && shop.longitude ? `
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": ${shop.latitude},
+      "longitude": ${shop.longitude}
+    },` : ''}
+    "url": "https://a11y-map.web.app/store/${shopId}",
+    "isAccessibleForFree": true
+  }
+  </script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 20px; 
+      line-height: 1.6; 
+      color: #1e293b;
+      background: #f8fafc;
+    }
+    h1 { 
+      color: #1e40af; 
+      font-size: 2rem; 
+      margin-bottom: 1rem;
+      font-weight: 800;
+    }
+    h2 { 
+      color: #1e40af; 
+      font-size: 1.5rem; 
+      margin-top: 2rem; 
+      margin-bottom: 1rem;
+      font-weight: 700;
+      border-bottom: 3px solid #3b82f6;
+      padding-bottom: 0.5rem;
+    }
+    img { 
+      max-width: 100%; 
+      height: auto; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      margin: 1.5rem 0;
+    }
+    .info-grid {
+      display: grid;
+      gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+    .info-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid #3b82f6;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .info-item strong {
+      color: #1e40af;
+      display: inline-block;
+      min-width: 100px;
+    }
+    .facilities {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .facility { 
+      background: #dbeafe; 
+      color: #1e40af;
+      padding: 0.5rem 1rem; 
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid #93c5fd;
+    }
+    .description {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      line-height: 1.8;
+      margin: 1.5rem 0;
+    }
+    .assistance-box {
+      background: #fef3c7;
+      border: 2px solid #fbbf24;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+    .assistance-box strong {
+      color: #92400e;
+    }
+    .dates {
+      display: flex;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      font-size: 0.875rem;
+      color: #64748b;
+      flex-wrap: wrap;
+    }
+    .dates span {
+      background: #f1f5f9;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+    }
+    .btn { 
+      display: inline-block; 
+      background: #1e40af; 
+      color: white; 
+      padding: 1rem 2rem; 
+      text-decoration: none; 
+      border-radius: 8px; 
+      margin-top: 2rem;
+      font-weight: 700;
+      transition: background 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .btn:hover {
+      background: #1e3a8a;
+    }
+    .rating {
+      display: inline-flex;
+      align-items: center;
+      background: #fef3c7;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #92400e;
+      margin: 0.5rem 0;
+    }
+    .rating::before {
+      content: "⭐";
+      margin-right: 0.5rem;
+    }
+    @media (max-width: 640px) {
+      body { padding: 1rem; }
+      h1 { font-size: 1.5rem; }
+      h2 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1>${escapeHtml(name)}</h1>
+  
+  ${imageUrl ? `<img src="${imageUrl}" alt="${escapeHtml(name)} - 無障礙友善店家" loading="lazy">` : ''}
+  
+  <div class="info-grid">
+    <div class="info-item">
+      <strong>類別：</strong>${escapeHtml(category)}
+    </div>
+    ${address ? `
+    <div class="info-item">
+      <strong>地址：</strong>${escapeHtml(address)}
+    </div>` : ''}
+    ${shop.convenience ? `
+    <div class="info-item">
+      <strong>便利度：</strong><span class="rating">${shop.convenience} / 5</span>
+    </div>` : ''}
+    ${shop.avgCost ? `
+    <div class="info-item">
+      <strong>平均消費：</strong>${escapeHtml(shop.avgCost)}元
+    </div>` : ''}
+  </div>
+  
+  ${facilities.length > 0 ? `
+  <h2>無障礙設施</h2>
+  <div class="facilities">
+    ${facilities.map(f => `<span class="facility">${escapeHtml(f.label)}: ${escapeHtml(f.value)}</span>`).join('')}
+  </div>` : ''}
+  
+  ${assistance ? `
+  <div class="assistance-box">
+    <strong>🤝 協助需求：</strong>${escapeHtml(assistance)}
+    ${shop.assistanceOther ? `<br><small>其他說明: ${escapeHtml(shop.assistanceOther)}</small>` : ''}
+  </div>` : ''}
+  
+  <h2>詳細說明</h2>
+  <div class="description">
+    ${escapeHtml(description).replace(/\n/g, '<br>')}
+  </div>
+  
+  ${(visitDate || updatedAt) ? `
+  <div class="dates">
+    ${visitDate ? `<span>📅 拜訪日期: ${visitDate}</span>` : ''}
+    ${updatedAt ? `<span>🔄 更新日期: ${updatedAt}</span>` : ''}
+  </div>` : ''}
+  
+  <a href="/store.html?id=${shopId}" class="btn">查看完整互動式頁面 →</a>
+  
+  <noscript>
+    <p style="margin-top: 1rem; padding: 1rem; background: #fee; border-radius: 8px;">
+      您的瀏覽器未啟用 JavaScript。
+      <a href="/store.html?id=${shopId}" style="color: #1e40af; font-weight: bold;">點擊這裡</a>查看完整頁面。
+    </p>
+  </noscript>
+</body>
+</html>`;
     
   } catch (error) {
     console.error('[SSR] Fallback HTML error:', error);
