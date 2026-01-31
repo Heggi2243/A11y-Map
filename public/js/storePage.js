@@ -2,7 +2,7 @@
 // storePage Controller
 // ============================================
 
-import { handleLogout, createPagination, getPageSlice } from '../utils/basic.js';
+import { handleLogout, createPagination, getPageSlice, formatDate } from '../utils/basic.js';
 
 
 /**
@@ -13,6 +13,7 @@ const elements = {
   tableBody: document.getElementById('table-body'),
   searchInput: document.getElementById('search-input'), // 新增
   generateFallbackBtn: document.getElementById('generateFallback'),
+  createSiteMapBtn: document.getElementById('createSiteMap'),
 };
 
 // Firebase 配置
@@ -106,14 +107,12 @@ function buildFallbackHtml() {
     const description = escapeHtml(store.description || '');
     const visitDate = escapeHtml(store.visitDate || '');
 
-    // href 目前沒有明確規格，先給一個可用的 placeholder
-    const href = '#';
 
     return [
       '<article class="seo-fallback">',
-      `  <h3><a href="${href}">${name}</a></h3>`,
+      `  <h3><a href="/store/${store.id}">${name}</a></h3>`,
       `  <p>地址：${address}</p>`,
-      `  <p>【無障礙資訊】坡道設置：${ramp}、階梯狀況：${steps}、門寬：${doorWidthCm}、廁所：${restroom}</p>`,
+      `  <p>【無障礙資訊】<strong>坡道設置：${ramp}</strong>、<strong>階梯狀況：${steps}</strong>、<strong>門寬：${doorWidthCm}</strong>、<strong>廁所：${restroom}</strong></p>`,
       `  <p>參訪心得：${description}</p>`,
       `  <p>參訪日期：${visitDate}</p>`,
       '</article>'
@@ -149,6 +148,161 @@ async function handleGenerateFallbackClick() {
 
 if (elements.generateFallbackBtn) {
   elements.generateFallbackBtn.addEventListener('click', handleGenerateFallbackClick);
+}
+
+// ============================================
+// Sitemap XML 產生器（給 SEO / 爬蟲）
+// ============================================
+
+/**
+ * XML escape，避免內容破壞 XML 結構
+ */
+function escapeXml(text = '') {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/**
+ * 處理 entrance_photo，可能是陣列或單一值
+ */
+function getEntrancePhotos(store) {
+  const storeName = store.name || store.id || '未知店家';
+  
+  if (!store.entrance_photo) {
+    console.log(`📷 [${storeName}] 沒有出入口照片`);
+    return [];
+  }
+  
+  if (Array.isArray(store.entrance_photo)) {
+    const validPhotos = store.entrance_photo.filter(photo => photo && typeof photo === 'string');
+    console.log(`📷 [${storeName}] 找到 ${validPhotos.length} 張出入口照片（原始資料：${store.entrance_photo.length} 筆）`);
+    return validPhotos;
+  }
+  
+  console.log(`📷 [${storeName}] 找到 1 張出入口照片（單一值格式）`);
+  return [store.entrance_photo];
+}
+
+/**
+ * 生成單一店家的 sitemap URL 區塊
+ */
+function generateStoreUrlBlock(store) {
+  const storeId = store.id || '';
+  const loc = `https://a11y-map.web.app/store/${storeId}`;
+  const lastmod = store.updatedAt ? formatDate(store.updatedAt) : '';
+  const storeName = escapeXml(store.name || '');
+  const entrancePhotos = getEntrancePhotos(store);
+  
+  let urlBlock = `  <url>
+    <loc>${escapeXml(loc)}</loc>
+    <lastmod>${escapeXml(lastmod)}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+`;
+  
+  // 如果有出入口照片，加入 image:image 區塊
+  if (entrancePhotos.length > 0) {
+    entrancePhotos.forEach(photoUrl => {
+      if (photoUrl) {
+        urlBlock += `    
+    <image:image>
+      <image:loc>${escapeXml(photoUrl)}</image:loc>
+      <image:title>${storeName}的出入口實景照</image:title>
+    </image:image>
+`;
+      }
+    });
+  }
+  
+  urlBlock += `    
+  </url>`;
+  
+  return urlBlock;
+}
+
+/**
+ * 生成完整的 sitemap.xml 內容
+ */
+async function generateSitemapXml() {
+  try {
+    // 確保資料已載入
+    if (allStore.length === 0) {
+      console.log('🔄 正在載入店家資料...');
+      await loadStoreList();
+    }
+    
+    if (allStore.length === 0) {
+      alert('❌ 目前沒有店家資料可供生成 sitemap');
+      return '';
+    }
+    
+    console.log(`🚀 開始生成 sitemap.xml，共 ${allStore.length} 筆店家資料`);
+    
+    // XML 標頭與命名空間
+    const xmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">`;
+    
+    // 生成所有店家的 URL 區塊
+    console.log('📝 正在處理每家店家的資料...');
+    const urlBlocks = allStore.map((store, index) => {
+      const progress = `[${index + 1}/${allStore.length}]`;
+      console.log(`${progress} 處理店家：${store.name || store.id || '未知'}`);
+      return generateStoreUrlBlock(store);
+    });
+    
+    console.log('✅ 所有店家資料處理完成！');
+    
+    // 組合完整的 sitemap.xml
+    const sitemapXml = `${xmlHeader}
+${urlBlocks.join('\n\n')}
+</urlset>`;
+    
+    console.log(`✨ sitemap.xml 生成完成！總長度：${sitemapXml.length} 字元`);
+    
+    return sitemapXml;
+    
+  } catch (error) {
+    console.error('❌ 生成 sitemap.xml 失敗:', error);
+    alert('❌ 生成 sitemap.xml 失敗: ' + error.message);
+    return '';
+  }
+}
+
+/**
+ * 點擊「生成sitemap」按鈕時，產生 sitemap.xml 並讓使用者複製
+ */
+async function handleCreateSiteMapClick() {
+  const sitemapXml = await generateSitemapXml();
+  
+  if (!sitemapXml) {
+    return;
+  }
+  
+  console.log('生成的 sitemap.xml：\n', sitemapXml);
+  
+  // 嘗試直接複製到剪貼簿（若瀏覽器/環境允許）
+  try {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      await navigator.clipboard.writeText(sitemapXml);
+      alert('✅ 已生成並複製 sitemap.xml 到剪貼簿！\n若失敗，可從 console 中手動複製。');
+      return;
+    }
+  } catch (err) {
+    // 如果剪貼簿權限失敗就 fallback 到 prompt
+    console.warn('無法寫入剪貼簿，改用提示視窗供複製：', err);
+  }
+  
+  // 最保險的方式：用 prompt 讓使用者自行複製
+  window.prompt('以下為生成的 sitemap.xml，請手動全選後複製：', sitemapXml);
+}
+
+if (elements.createSiteMapBtn) {
+  elements.createSiteMapBtn.addEventListener('click', handleCreateSiteMapClick);
 }
 
 // ============================================

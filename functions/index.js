@@ -725,7 +725,7 @@ async function getFallbackHTML(shopId) {
     
     // 判斷商家類型
     let businessType = 'LocalBusiness';
-    if (category.includes('餐飲')) {
+    if (category.includes('美食')) {
       businessType = 'Restaurant';
     } else if (category.includes('住宿')) {
       businessType = 'LodgingBusiness';

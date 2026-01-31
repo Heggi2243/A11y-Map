@@ -129,7 +129,7 @@ function updateStructuredData(shop, imageUrl) {
   // ========== 1. 判斷更精確的 @type ========== 
   let businessType = "LocalBusiness"; // 預設
   
-  if (category.includes('餐飲')) {
+  if (category.includes('美食')) {
     businessType = "Restaurant"; // 餐廳
   } else if (category.includes('住宿')) {
     businessType = "LodgingBusiness"; // 住宿
@@ -472,7 +472,7 @@ const imageUrl = (allImages[0]?.url) || `https://picsum.photos/800/600?random=${
       case 'entrance':
         return `${baseName} 門口與階梯狀況 (${index + 1})`;
       case 'interior':
-        return category.includes('餐飲') 
+        return category.includes('美食') 
           ? `${baseName} 餐飲與店內環境 (${index + 1})`
           : `${baseName} 店內環境 (${index + 1})`;
       default:

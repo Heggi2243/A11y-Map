@@ -74,7 +74,7 @@ export const FORM_SCHEMA = {
           "selectionType": "multiple",   
           "required": true,
           "options": [
-            {"value": "餐飲", "label": "餐飲"},
+            {"value": "美食", "label": "美食"},
             {"value": "景點", "label": "景點"},
             {"value": "購物", "label": "購物"},
             {"value": "住宿", "label": "住宿"},
