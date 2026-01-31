@@ -2,27 +2,529 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <loc>https://a11y-map.web.app/store/20260125002</loc>
-    <lastmod>2026/01/25</lastmod>
+    <loc>https://a11y-map.web.app/store/20260131001</loc>
+    <lastmod></lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     
     <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260125002_02.webp?alt=media&amp;token=24b4e12d-67b0-4c38-8f07-ac49624ff865</image:loc>
-      <image:title>台北101觀景台的出入口實景照</image:title>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260131001_02.webp?alt=media&amp;token=41e83211-93ab-4afe-bb64-dbcb9789927d</image:loc>
+      <image:title>加恩美學牙醫診所的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260131001_03.webp?alt=media&amp;token=64b6b123-d7d1-4c9b-9e97-57795122408d</image:loc>
+      <image:title>加恩美學牙醫診所的出入口實景照</image:title>
     </image:image>
     
   </url>
 
   <url>
-    <loc>https://a11y-map.web.app/store/20260125001</loc>
-    <lastmod>2026/01/25</lastmod>
+    <loc>https://a11y-map.web.app/store/20260130001</loc>
+    <lastmod>2026/01/31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     
     <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260125001_02.webp?alt=media&amp;token=862d80a2-f1ae-4576-8d0c-fd93a931ba55</image:loc>
-      <image:title>圍圍爐爐頂級麻辣火鍋-信義ATT店的出入口實景照</image:title>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260130001_02.webp?alt=media&amp;token=2b63c7fe-573b-4eb1-bafe-902843330c70</image:loc>
+      <image:title>老井極上燒肉 美村店的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260130001_03.webp?alt=media&amp;token=168c8904-01bb-42b4-8fe6-b5e60d1dac1b</image:loc>
+      <image:title>老井極上燒肉 美村店的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260122001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260122001_02.webp?alt=media&amp;token=71742855-e684-423c-be91-44998f98f162</image:loc>
+      <image:title>威爾貝克咖啡 信陽店的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251123002</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251123002_02.webp?alt=media&amp;token=80313fa5-bd27-4043-a48c-bf91eaa6f093</image:loc>
+      <image:title>飽貝bo&apos;bagel的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251123003</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251123003_01.webp?alt=media&amp;token=e6c2008d-7ced-4cf0-a929-932ac4e3eccb</image:loc>
+      <image:title>coco.Brownies 可可布朗 - 光復-大巨蛋店的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251123003_02.webp?alt=media&amp;token=28212718-8f51-4449-b28a-0a4454760855</image:loc>
+      <image:title>coco.Brownies 可可布朗 - 光復-大巨蛋店的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251203001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251203001_02.webp?alt=media&amp;token=32164b8a-35cf-4259-aacd-50e3e5471728</image:loc>
+      <image:title>浪金生魚片的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251208001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251208001_02.webp?alt=media&amp;token=4e64e33d-8935-4983-8173-33368b7fcf6d</image:loc>
+      <image:title>hoyohoyo早午餐的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251208002</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251208002_02.webp?alt=media&amp;token=aa00c2d4-52a6-4b4c-9ee6-4ded10592232</image:loc>
+      <image:title>檜意森活村的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251208003</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251208003_02.webp?alt=media&amp;token=cd9cc915-bc0c-458a-858b-acdd3973671f</image:loc>
+      <image:title>景大渡假莊園的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251208003_03.webp?alt=media&amp;token=47ce6969-1ceb-4a29-ba97-23603b2619c8</image:loc>
+      <image:title>景大渡假莊園的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251209001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251209001_02.webp?alt=media&amp;token=954479e5-c977-445b-a2cc-3a4b50180913</image:loc>
+      <image:title>亞米亞米義大利麵專賣店的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251212001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251212001_10.webp?alt=media&amp;token=f07d901e-2fb2-4c59-87e8-ddf66c3b08ef</image:loc>
+      <image:title>合掌村(華山市場店)的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251214001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251214001_27.webp?alt=media&amp;token=0ef5c3d7-eab1-4857-b22d-9eaf95ac507d</image:loc>
+      <image:title>士林廚房(萬麗酒店)的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251214002</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251214002_04.webp?alt=media&amp;token=f3c20f61-8910-481f-9b09-72664eb92851</image:loc>
+      <image:title>士林官邸公園的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251214002_05.webp?alt=media&amp;token=036f3afb-8d06-4cee-80fa-40d32f0f8186</image:loc>
+      <image:title>士林官邸公園的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251214002_06.webp?alt=media&amp;token=eacd3402-f45f-4cb0-8a7d-91834b149683</image:loc>
+      <image:title>士林官邸公園的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251216001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251216001_05.webp?alt=media&amp;token=e9e3ed46-84b1-47bf-b1d5-a5386176776c</image:loc>
+      <image:title>JIAMI呷米友善餐廳的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251216001_06.webp?alt=media&amp;token=8be6dd62-fcf8-4d0a-ab18-52ade56208d8</image:loc>
+      <image:title>JIAMI呷米友善餐廳的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251220001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251220001_07.webp?alt=media&amp;token=f25f7e96-92b4-46b9-b2d4-c6f6bd7c9b2b</image:loc>
+      <image:title>好事食品的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251220001_08.webp?alt=media&amp;token=76aa9b63-113a-45f3-9df8-1b795523a442</image:loc>
+      <image:title>好事食品的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251221001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251221001_02.webp?alt=media&amp;token=f3655926-ab84-439a-8738-0df29aa7ee18</image:loc>
+      <image:title>管麵素食麵館的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251221001_03.webp?alt=media&amp;token=298c818c-3790-4e8b-a65a-1337eca12d49</image:loc>
+      <image:title>管麵素食麵館的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251221001_04.webp?alt=media&amp;token=0f43d853-8395-4f72-a20b-7029b606da05</image:loc>
+      <image:title>管麵素食麵館的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251224001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251224001_02.webp?alt=media&amp;token=21f1c6e0-87f6-49f7-b0e0-da273a46b011</image:loc>
+      <image:title>Don&apos;ts Don&apos;ts Pasta 懂吃懂吃.義式小廚的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251224001_03.webp?alt=media&amp;token=15b55ada-8d10-4495-8a62-ea914caee80c</image:loc>
+      <image:title>Don&apos;ts Don&apos;ts Pasta 懂吃懂吃.義式小廚的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251226001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251226001_02.webp?alt=media&amp;token=b892dc65-27ec-44f9-af79-fbca151615b4</image:loc>
+      <image:title>肉次方 燒肉放題 板橋江子翠店的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251226001_03.webp?alt=media&amp;token=12cc77be-c3e8-4691-b9e5-e522a6a7a855</image:loc>
+      <image:title>肉次方 燒肉放題 板橋江子翠店的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251226002</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251226002_02.webp?alt=media&amp;token=9efd6aa6-a01c-4737-a02e-67ce25a0e9b5</image:loc>
+      <image:title>Space Time Bistro&amp;Bar | 東區貓咪餐酒館的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20251228001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251228001_11.webp?alt=media&amp;token=7ede142c-0198-48f6-ab40-4d77f80a6ff5</image:loc>
+      <image:title>特製汕頭麵-秀田灶豐小吃的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260103001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260103001_02.webp?alt=media&amp;token=f75aa209-1537-4873-b25a-0f7674eb2337</image:loc>
+      <image:title>御品元冰火湯圓的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260104001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260104001_02.webp?alt=media&amp;token=d830b237-93a2-4713-9a33-d7975ac74d21</image:loc>
+      <image:title>郁坊小館的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260106001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260106001_10.webp?alt=media&amp;token=cfb98aea-4e42-4ee1-9df8-27ab6c080170</image:loc>
+      <image:title>Burger Yellow 鹿肉牛肉漢堡 炸魚薯條 奶昔 美食 美式餐廳的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260106001_11.webp?alt=media&amp;token=937a975a-1c5a-4d2a-91f0-2993dc58ed86</image:loc>
+      <image:title>Burger Yellow 鹿肉牛肉漢堡 炸魚薯條 奶昔 美食 美式餐廳的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260106001_12.webp?alt=media&amp;token=4a3af335-463a-4d7f-8ab2-dc5491e2b948</image:loc>
+      <image:title>Burger Yellow 鹿肉牛肉漢堡 炸魚薯條 奶昔 美食 美式餐廳的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260111001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260111001_02.webp?alt=media&amp;token=f1632b7d-d955-4d2a-804f-307c8c79dc47</image:loc>
+      <image:title>祝您行運的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260111001_03.webp?alt=media&amp;token=030278a8-ece1-4b2b-a5c1-537c54c7d42c</image:loc>
+      <image:title>祝您行運的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260111001_04.webp?alt=media&amp;token=0489a87d-1c85-43dc-ade6-919d78a14dcc</image:loc>
+      <image:title>祝您行運的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260113001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260113001_02.webp?alt=media&amp;token=dcf81804-411c-4557-99ba-1c811fccbb5b</image:loc>
+      <image:title>勝十蘭 南陽店的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260113001_03.webp?alt=media&amp;token=96a78ebc-5268-4a82-bba4-5fdf4f19df1b</image:loc>
+      <image:title>勝十蘭 南陽店的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260117001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260117001_02.webp?alt=media&amp;token=d932f82d-c410-448c-a36b-e69d4ad9347d</image:loc>
+      <image:title>老曹餛飩的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260117001_03.webp?alt=media&amp;token=f7e47e62-5e34-47fc-9f46-daf17c043418</image:loc>
+      <image:title>老曹餛飩的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260117002</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260117002_02.webp?alt=media&amp;token=fbe1e545-756a-4aca-a188-6bd67a5009b3</image:loc>
+      <image:title>淨膚寶SkinBar的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260117002_03.webp?alt=media&amp;token=dc4ba552-d287-4bec-96e7-cd247f6b04c7</image:loc>
+      <image:title>淨膚寶SkinBar的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260118001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260118001_02.webp?alt=media&amp;token=8495ca88-6c45-4874-839a-862f1d71863d</image:loc>
+      <image:title>侯媽媽韓式小館的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260118001_03.webp?alt=media&amp;token=3e55952a-f29a-4c08-b31f-2dd9f41517ec</image:loc>
+      <image:title>侯媽媽韓式小館的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260118001_04.webp?alt=media&amp;token=b8fb3035-de40-4325-a414-4451e77a30c3</image:loc>
+      <image:title>侯媽媽韓式小館的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260118001_05.webp?alt=media&amp;token=7198c333-edc5-4f5e-8b48-3a9c837f7af8</image:loc>
+      <image:title>侯媽媽韓式小館的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260120001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260120001_02.webp?alt=media&amp;token=f3c009b0-c7e2-41ef-a888-7199bf105de8</image:loc>
+      <image:title>香港廣東粥的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260120001_03.webp?alt=media&amp;token=a615400a-d0a0-442d-b2d5-d068d19a8b0c</image:loc>
+      <image:title>香港廣東粥的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260124001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260124001_02.webp?alt=media&amp;token=8b3598db-d100-4561-a448-09a326eea04e</image:loc>
+      <image:title>BANCO棒可 窯烤PIZZA 自製生麵 世貿店的出入口實景照</image:title>
+    </image:image>
+    
+  </url>
+
+  <url>
+    <loc>https://a11y-map.web.app/store/20260129001</loc>
+    <lastmod>2026/01/30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260129001_02.webp?alt=media&amp;token=8a5171fe-151c-4166-a907-4b6945865165</image:loc>
+      <image:title>藝奇 日式料理 台北衡陽店的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260129001_03.webp?alt=media&amp;token=4a4c93b1-d9e6-4512-aa72-e99a2c2b0877</image:loc>
+      <image:title>藝奇 日式料理 台北衡陽店的出入口實景照</image:title>
+    </image:image>
+    
+    <image:image>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260129001_04.webp?alt=media&amp;token=b5b56f7c-17fc-4c7b-a4fc-e9ed5f2be41c</image:loc>
+      <image:title>藝奇 日式料理 台北衡陽店的出入口實景照</image:title>
     </image:image>
     
   </url>
@@ -56,73 +558,27 @@
   </url>
 
   <url>
-    <loc>https://a11y-map.web.app/store/20260124001</loc>
-    <lastmod>2026/01/29</lastmod>
+    <loc>https://a11y-map.web.app/store/20260125002</loc>
+    <lastmod>2026/01/25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     
     <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260124001_02.webp?alt=media&amp;token=8b3598db-d100-4561-a448-09a326eea04e</image:loc>
-      <image:title>BANCO棒可 窯烤PIZZA 自製生麵 世貿店的出入口實景照</image:title>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260125002_02.webp?alt=media&amp;token=24b4e12d-67b0-4c38-8f07-ac49624ff865</image:loc>
+      <image:title>台北101觀景台的出入口實景照</image:title>
     </image:image>
     
   </url>
 
   <url>
-    <loc>https://a11y-map.web.app/store/20260122001</loc>
-    <lastmod>2026/01/23</lastmod>
+    <loc>https://a11y-map.web.app/store/20260125001</loc>
+    <lastmod>2026/01/25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     
     <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260122001_02.webp?alt=media&amp;token=71742855-e684-423c-be91-44998f98f162</image:loc>
-      <image:title>威爾貝克咖啡 信陽店的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20260120001</loc>
-    <lastmod>2026/01/21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260120001_02.webp?alt=media&amp;token=f3c009b0-c7e2-41ef-a888-7199bf105de8</image:loc>
-      <image:title>香港廣東粥的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260120001_03.webp?alt=media&amp;token=a615400a-d0a0-442d-b2d5-d068d19a8b0c</image:loc>
-      <image:title>香港廣東粥的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20260118001</loc>
-    <lastmod></lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260118001_02.webp?alt=media&amp;token=8495ca88-6c45-4874-839a-862f1d71863d</image:loc>
-      <image:title>侯媽媽韓式小館的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260118001_03.webp?alt=media&amp;token=3e55952a-f29a-4c08-b31f-2dd9f41517ec</image:loc>
-      <image:title>侯媽媽韓式小館的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260118001_04.webp?alt=media&amp;token=b8fb3035-de40-4325-a414-4451e77a30c3</image:loc>
-      <image:title>侯媽媽韓式小館的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260118001_05.webp?alt=media&amp;token=7198c333-edc5-4f5e-8b48-3a9c837f7af8</image:loc>
-      <image:title>侯媽媽韓式小館的出入口實景照</image:title>
+      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260125001_02.webp?alt=media&amp;token=862d80a2-f1ae-4576-8d0c-fd93a931ba55</image:loc>
+      <image:title>圍圍爐爐頂級麻辣火鍋-信義ATT店的出入口實景照</image:title>
     </image:image>
     
   </url>
@@ -164,132 +620,6 @@
   </url>
 
   <url>
-    <loc>https://a11y-map.web.app/store/20260117002</loc>
-    <lastmod>2026/01/23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260117002_02.webp?alt=media&amp;token=fbe1e545-756a-4aca-a188-6bd67a5009b3</image:loc>
-      <image:title>淨膚寶SkinBar的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260117002_03.webp?alt=media&amp;token=dc4ba552-d287-4bec-96e7-cd247f6b04c7</image:loc>
-      <image:title>淨膚寶SkinBar的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20260117001</loc>
-    <lastmod></lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260117001_02.webp?alt=media&amp;token=d932f82d-c410-448c-a36b-e69d4ad9347d</image:loc>
-      <image:title>老曹餛飩的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260117001_03.webp?alt=media&amp;token=f7e47e62-5e34-47fc-9f46-daf17c043418</image:loc>
-      <image:title>老曹餛飩的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20260113001</loc>
-    <lastmod>2026/01/14</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260113001_02.webp?alt=media&amp;token=dcf81804-411c-4557-99ba-1c811fccbb5b</image:loc>
-      <image:title>勝十蘭 南陽店的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260113001_03.webp?alt=media&amp;token=96a78ebc-5268-4a82-bba4-5fdf4f19df1b</image:loc>
-      <image:title>勝十蘭 南陽店的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20260111001</loc>
-    <lastmod>2026/01/12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260111001_02.webp?alt=media&amp;token=f1632b7d-d955-4d2a-804f-307c8c79dc47</image:loc>
-      <image:title>祝您行運的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260111001_03.webp?alt=media&amp;token=030278a8-ece1-4b2b-a5c1-537c54c7d42c</image:loc>
-      <image:title>祝您行運的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260111001_04.webp?alt=media&amp;token=0489a87d-1c85-43dc-ade6-919d78a14dcc</image:loc>
-      <image:title>祝您行運的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20260106001</loc>
-    <lastmod>2026/01/13</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260106001_10.webp?alt=media&amp;token=cfb98aea-4e42-4ee1-9df8-27ab6c080170</image:loc>
-      <image:title>Burger Yellow 鹿肉牛肉漢堡 炸魚薯條 奶昔 美食 美式餐廳的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260106001_11.webp?alt=media&amp;token=937a975a-1c5a-4d2a-91f0-2993dc58ed86</image:loc>
-      <image:title>Burger Yellow 鹿肉牛肉漢堡 炸魚薯條 奶昔 美食 美式餐廳的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260106001_12.webp?alt=media&amp;token=4a3af335-463a-4d7f-8ab2-dc5491e2b948</image:loc>
-      <image:title>Burger Yellow 鹿肉牛肉漢堡 炸魚薯條 奶昔 美食 美式餐廳的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20260104001</loc>
-    <lastmod>2026/01/15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260104001_02.webp?alt=media&amp;token=d830b237-93a2-4713-9a33-d7975ac74d21</image:loc>
-      <image:title>郁坊小館的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20260103001</loc>
-    <lastmod>2026/01/08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20260103001_02.webp?alt=media&amp;token=f75aa209-1537-4873-b25a-0f7674eb2337</image:loc>
-      <image:title>御品元冰火湯圓的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
     <loc>https://a11y-map.web.app/store/20260101001</loc>
     <lastmod>2026/01/08</lastmod>
     <changefreq>monthly</changefreq>
@@ -308,50 +638,6 @@
   </url>
 
   <url>
-    <loc>https://a11y-map.web.app/store/20251228001</loc>
-    <lastmod>2026/01/15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251228001_11.webp?alt=media&amp;token=7ede142c-0198-48f6-ab40-4d77f80a6ff5</image:loc>
-      <image:title>特製汕頭麵-秀田灶豐小吃的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251226002</loc>
-    <lastmod>2026/01/19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251226002_02.webp?alt=media&amp;token=9efd6aa6-a01c-4737-a02e-67ce25a0e9b5</image:loc>
-      <image:title>Space Time Bistro&amp;Bar | 東區貓咪餐酒館的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251226001</loc>
-    <lastmod>2026/01/29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251226001_02.webp?alt=media&amp;token=b892dc65-27ec-44f9-af79-fbca151615b4</image:loc>
-      <image:title>肉次方 燒肉放題 板橋江子翠店的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251226001_03.webp?alt=media&amp;token=12cc77be-c3e8-4691-b9e5-e522a6a7a855</image:loc>
-      <image:title>肉次方 燒肉放題 板橋江子翠店的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
     <loc>https://a11y-map.web.app/store/20251225001</loc>
     <lastmod>2026/01/08</lastmod>
     <changefreq>monthly</changefreq>
@@ -363,231 +649,5 @@
     </image:image>
     
   </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251224001</loc>
-    <lastmod>2026/01/08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251224001_02.webp?alt=media&amp;token=21f1c6e0-87f6-49f7-b0e0-da273a46b011</image:loc>
-      <image:title>Don&apos;ts Don&apos;ts Pasta 懂吃懂吃.義式小廚的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251224001_03.webp?alt=media&amp;token=15b55ada-8d10-4495-8a62-ea914caee80c</image:loc>
-      <image:title>Don&apos;ts Don&apos;ts Pasta 懂吃懂吃.義式小廚的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251221001</loc>
-    <lastmod>2026/01/09</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251221001_02.webp?alt=media&amp;token=f3655926-ab84-439a-8738-0df29aa7ee18</image:loc>
-      <image:title>管麵素食麵館的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251221001_03.webp?alt=media&amp;token=298c818c-3790-4e8b-a65a-1337eca12d49</image:loc>
-      <image:title>管麵素食麵館的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251221001_04.webp?alt=media&amp;token=0f43d853-8395-4f72-a20b-7029b606da05</image:loc>
-      <image:title>管麵素食麵館的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251220001</loc>
-    <lastmod>2026/01/09</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251220001_07.webp?alt=media&amp;token=f25f7e96-92b4-46b9-b2d4-c6f6bd7c9b2b</image:loc>
-      <image:title>好事食品的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251220001_08.webp?alt=media&amp;token=76aa9b63-113a-45f3-9df8-1b795523a442</image:loc>
-      <image:title>好事食品的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251216001</loc>
-    <lastmod>2026/01/09</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251216001_05.webp?alt=media&amp;token=e9e3ed46-84b1-47bf-b1d5-a5386176776c</image:loc>
-      <image:title>JIAMI呷米友善餐廳的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251216001_06.webp?alt=media&amp;token=8be6dd62-fcf8-4d0a-ab18-52ade56208d8</image:loc>
-      <image:title>JIAMI呷米友善餐廳的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251214002</loc>
-    <lastmod>2026/01/09</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251214002_04.webp?alt=media&amp;token=f3c20f61-8910-481f-9b09-72664eb92851</image:loc>
-      <image:title>士林官邸公園的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251214002_05.webp?alt=media&amp;token=036f3afb-8d06-4cee-80fa-40d32f0f8186</image:loc>
-      <image:title>士林官邸公園的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251214002_06.webp?alt=media&amp;token=eacd3402-f45f-4cb0-8a7d-91834b149683</image:loc>
-      <image:title>士林官邸公園的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251214001</loc>
-    <lastmod>2026/01/12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251214001_27.webp?alt=media&amp;token=0ef5c3d7-eab1-4857-b22d-9eaf95ac507d</image:loc>
-      <image:title>士林廚房(萬麗酒店)的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251212001</loc>
-    <lastmod>2026/01/09</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251212001_10.webp?alt=media&amp;token=f07d901e-2fb2-4c59-87e8-ddf66c3b08ef</image:loc>
-      <image:title>合掌村(華山市場店)的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251209001</loc>
-    <lastmod>2026/01/09</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251209001_02.webp?alt=media&amp;token=954479e5-c977-445b-a2cc-3a4b50180913</image:loc>
-      <image:title>亞米亞米義大利麵專賣店的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251208003</loc>
-    <lastmod>2026/01/26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251208003_02.webp?alt=media&amp;token=cd9cc915-bc0c-458a-858b-acdd3973671f</image:loc>
-      <image:title>景大渡假莊園的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251208003_03.webp?alt=media&amp;token=47ce6969-1ceb-4a29-ba97-23603b2619c8</image:loc>
-      <image:title>景大渡假莊園的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251208002</loc>
-    <lastmod>2025/12/10</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251208002_02.webp?alt=media&amp;token=aa00c2d4-52a6-4b4c-9ee6-4ded10592232</image:loc>
-      <image:title>檜意森活村的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251208001</loc>
-    <lastmod>2026/01/26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251208001_02.webp?alt=media&amp;token=4e64e33d-8935-4983-8173-33368b7fcf6d</image:loc>
-      <image:title>hoyohoyo早午餐的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251203001</loc>
-    <lastmod>2026/01/18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251203001_02.webp?alt=media&amp;token=32164b8a-35cf-4259-aacd-50e3e5471728</image:loc>
-      <image:title>浪金生魚片的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251123003</loc>
-    <lastmod>2026/01/02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251123003_01.webp?alt=media&amp;token=e6c2008d-7ced-4cf0-a929-932ac4e3eccb</image:loc>
-      <image:title>coco.Brownies 可可布朗 - 光復-大巨蛋店的出入口實景照</image:title>
-    </image:image>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251123003_02.webp?alt=media&amp;token=28212718-8f51-4449-b28a-0a4454760855</image:loc>
-      <image:title>coco.Brownies 可可布朗 - 光復-大巨蛋店的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
-
-  <url>
-    <loc>https://a11y-map.web.app/store/20251123002</loc>
-    <lastmod>2026/01/02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    
-    <image:image>
-      <image:loc>https://firebasestorage.googleapis.com/v0/b/a11y-map.firebasestorage.app/o/stores%2Fentrance_photo%2F20251123002_02.webp?alt=media&amp;token=80313fa5-bd27-4043-a48c-bf91eaa6f093</image:loc>
-      <image:title>飽貝bo&apos;bagel的出入口實景照</image:title>
-    </image:image>
-    
-  </url>
+    </urlset>
 </urlset>

@@ -1213,6 +1213,8 @@ function initEventListeners() {
     tab.addEventListener('click', () => {
       const category = tab.dataset.category;
       switchCategory(category);
+      // 滾動到頂部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
 
