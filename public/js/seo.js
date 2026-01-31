@@ -338,8 +338,7 @@ async function generateSitemapXml(stores) {
     console.log('✅ 所有店家資料處理完成！');
     
     // 組合完整的 sitemap.xml
-    const sitemapXml = `${urlBlocks.join('\n\n')}
-    </urlset>`;
+    const sitemapXml = `${urlBlocks.join('\n\n')}`;
     
     console.log(`✨ sitemap.xml 生成完成！總長度：${sitemapXml.length} 字元`);
     
