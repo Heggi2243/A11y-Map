@@ -534,9 +534,9 @@ function formatDistance(meters, useColor = false) {
 function hasActiveFilters() {
   return (
     state.userSettings.wheelchairSize !== DEFAULT_USER_SETTINGS.wheelchairSize ||
-    state.userSettings.nearbyModeEnabled !== DEFAULT_USER_SETTINGS.nearbyModeEnabled ||
+    state.userSettings.nearbyMode !== DEFAULT_USER_SETTINGS.nearbyMode ||
     state.userSettings.needsFriendlyEnvironment !== DEFAULT_USER_SETTINGS.needsFriendlyEnvironment ||
-    state.userSettings.needsAccessibleRestroom !== DEFAULT_USER_SETTINGS.needsAccessibleRestroom
+    state.userSettings.needsA11yWC !== DEFAULT_USER_SETTINGS.needsA11yWC
   );
 }
 
