@@ -252,12 +252,14 @@ function generateCheckMacValue(params, hashKey, hashIV) {
 - **[優化]** 定位快取改為每三分鐘更新一次。
 - **[新增]** 「其他」類別商店，讓收錄的商店更具多元性。
 
-### 2026/01/26 **Version 1.3.0**
+### 2026/02/01 **Version 1.3.0**
 - **[新增]** 針對住宿類商店的價格評比、無障礙評級、相關標籤、表單新增更細緻的判斷。
+- **[優化]** 修復「個人化篩選」UI。
 - **[優化]** SEO關鍵字以及Schema.org。
 - **[優化]** 後臺資料管理介面。
 - **[優化]** 使用lazy loading提升載入速度。
 - **[優化]** 根據設備響應式載入圖片(另有安裝firebase插件Resize Images)。
+- **[新增]** 後台新增頁面「SEO管理」，生成fallback、sitemap資料。
 
 
 ## 📄 版權聲明 (Copyright & License)
